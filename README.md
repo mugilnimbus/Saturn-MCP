@@ -84,23 +84,39 @@ The [benchmark procedure and full results](bench/README.md) show how to reproduc
 
 ## Quick start
 
-1. Clone the repository and open it:
+1. Check that the tools are installed. Each command prints a version:
+   ```bash
+   git --version
+   uv --version
+   node --version
+   ```
+2. Install what is missing:
+
+   | Missing | Install |
+   |---|---|
+   | `uv` on Linux or macOS | `curl -LsSf https://astral.sh/uv/install.sh \| sh`, then open a new terminal |
+   | `uv` on Windows | `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 \| iex"`, then open a new terminal |
+   | `git` | [git-scm.com/downloads](https://git-scm.com/downloads) |
+   | `node` | [nodejs.org](https://nodejs.org/en/download). Version `24.22.0` is pinned in `.nvmrc` |
+
+   `uv` also finds Python 3.12 for you, so you do not need to install Python yourself.
+3. Clone the repository and open it:
    ```bash
    git clone https://github.com/mugilnimbus/Saturn-MCP.git saturn-mcp
    cd saturn-mcp
    ```
-2. Install the locked dependencies and build the dashboard:
+4. Install the locked dependencies and build the dashboard:
    ```bash
-   python scripts/setup.py
+   uv run --no-project python scripts/setup.py
    ```
-3. Start Saturn:
+5. Start Saturn:
    ```bash
    uv run --project services/saturn --no-sync saturn serve
    ```
-4. Open `http://127.0.0.1:9000/`.
-5. In **Settings**, choose an optional worker model.
-6. In **Connections**, preview and install the client configuration.
-7. Start a new Claude Code session, or restart Codex.
+6. Open `http://127.0.0.1:9000/`.
+7. In **Settings**, choose an optional worker model.
+8. In **Connections**, preview and install the client configuration.
+9. Start a new Claude Code session, or restart Codex.
 
 | About setup | Detail |
 |---|---|
@@ -108,7 +124,7 @@ The [benchmark procedure and full results](bench/README.md) show how to reproduc
 | How it tests | It checks health and the built dashboard with a disposable service, then stops that service |
 | What it keeps | Existing environment files |
 | What it does not do | Connect clients, install global commands, or download models. It never changes PATH |
-| Unattended | `python scripts/setup.py --yes`. Run it again after dependency changes |
+| Unattended | `uv run --no-project python scripts/setup.py --yes`. Run it again after dependency changes |
 | Saturn home | `~/.saturn`. Set `SATURN_HOME` before setup and serve to use another. The checkout's `.env` is not used by setup |
 | Startup settings | See [Configuration](#configuration) |
 
