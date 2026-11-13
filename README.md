@@ -128,6 +128,37 @@ The [benchmark procedure and full results](bench/README.md) show how to reproduc
 | Saturn home | `~/.saturn`. Set `SATURN_HOME` before setup and serve to use another. The checkout's `.env` is not used by setup |
 | Startup settings | See [Configuration](#configuration) |
 
+### Connect Claude Code and Codex
+
+1. Start Saturn in one terminal and leave it running:
+   ```bash
+   uv run --project services/saturn --no-sync saturn serve
+   ```
+2. In a second, interactive terminal, connect Claude Code:
+   ```bash
+   uv run --project services/saturn --no-sync saturn connect claude --preset standard
+   ```
+3. Connect Codex:
+   ```bash
+   uv run --project services/saturn --no-sync saturn connect codex --preset standard
+   ```
+4. Read the changes Saturn shows for each client, then confirm.
+5. Start a new Claude Code session. Restart Codex.
+6. In Codex, run `/hooks` and trust the Saturn hook.
+7. Check the result:
+   ```bash
+   uv run --project services/saturn --no-sync saturn doctor
+   ```
+
+| Option | What it does |
+|---|---|
+| Dashboard | **Connections** previews and installs the same changes with a click |
+| `--preset` | `standard`: read tools run without asking, and the client asks before Saturn runs a command. `read-only`: no command running. `hands-off`: nothing asks |
+| `--no-hooks` | Leaves out the shell hooks |
+| `--print` | Shows the entries without writing them |
+| Connected already | Run `saturn disconnect claude` or `saturn disconnect codex` first, or Saturn adds a second harness such as `claude-code-2` |
+| Undo | `saturn disconnect <client>`, or `saturn uninstall` for every client |
+
 ### Optional terminal setup and global command
 
 1. Run any terminal command from the project root as `uv run --project services/saturn --no-sync saturn <command>`, for example `... saturn doctor`.
