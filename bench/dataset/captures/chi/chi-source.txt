@@ -1,0 +1,14 @@
+17:// Recoverer is a middleware that recovers from panics, logs the panic (and a
+22:func Recoverer(next http.Handler) http.Handler {
+29:					panic(rvr)
+40:					w.WriteHeader(http.StatusInternalServerError)
+54:func PrintPrettyStack(rvr any) {
+61:func printPrettyStack(rvr any, useColor bool) {
+76:func (s prettyStack) parse(debugStack []byte, rvr any, useColor bool) ([]byte, error) {
+81:	cW(buf, useColor, bCyan, " panic: ")
+89:	// locate panic line, as we may have nested panics
+92:		if strings.HasPrefix(stack[i], "panic(") {
+118:func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, error) {
+132:func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (string, error) {
+135:		return "", errors.New("not a func call line")
+172:func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (string, error) {

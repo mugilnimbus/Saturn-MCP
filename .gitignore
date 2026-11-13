@@ -1,0 +1,41 @@
+# Disposable: rebuilt by commands
+/var/
+.venv/
+node_modules/
+dist/
+build/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+coverage/
+.coverage
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Spike output and the code graph
+.spikes/*/out/
+.spikes/*/.venv/
+graphify-out/
+
+# Tool and editor folders, never committed
+.claude/
+.codex/
+.vscode/
+.idea/
+.DS_Store
+
+# Existing project output and legacy paths
+/docs/private/
+/.plan/
+.artifacts/
+/data/
+*.db
+*.db-wal
+*.db-shm
+.env.*.example
+!.env.example

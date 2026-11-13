@@ -1,0 +1,195 @@
+/* App layout and feature styles. Tokens come from tokens.css and shared components from components.css
+   (both are copies of the global design system: change the look there, not here).
+   This file holds only layout: the shell with a resizable side panel, a fluid type and spacing scale that
+   follows the app's width, and the pieces the screens need. */
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--text); font: var(--weight-body) var(--text-base)/var(--line) var(--font); overflow: hidden; }
+#app { height: 100%; }
+[hidden] { display: none !important; }
+.app { height: 100%; container: app / inline-size; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- fluid scale: text and spacing follow the app width ---------- */
+.shell {
+  --text-caption: clamp(12px, 11px + 0.12cqi, 14px);
+  --text-base: clamp(14px, 12.6px + 0.28cqi, 17px);
+  --text-title: clamp(18px, 15px + 0.42cqi, 23px);
+  --text-large: clamp(21px, 17px + 0.6cqi, 28px);
+  --text-display: clamp(26px, 20px + 1cqi, 36px);
+  --space-3: clamp(8px, 6px + 0.45cqi, 13px);
+  --space-4: clamp(13px, 8px + 0.8cqi, 21px);
+  --space-5: clamp(21px, 12px + 1.4cqi, 34px);
+  --row-height: clamp(44px, 40px + 0.9cqi, 55px);
+  --nav-w: clamp(220px, 20cqi, 300px);
+  font-size: var(--text-base);
+  height: 100%; min-height: 0;
+  grid-template-columns: var(--nav-w) 5px minmax(0, 1fr);
+}
+:root[data-density="compact"] .shell { --space-3: 8px; --space-4: 13px; --row-height: 44px; }
+
+/* ---------- shell ---------- */
+.sidebar { min-height: 0; overflow-y: auto; align-content: stretch; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--space-3); padding: var(--space-3); }
+.nav { display: grid; gap: 2px; align-content: start; }
+.side-foot { display: grid; gap: var(--space-2); padding-top: var(--space-3); border-top: 1px solid var(--border); }
+/* The current page is marked quietly: accent text, a soft tint, and a thin bar on the edge. No glowing capsule. */
+.sidebar .nav-item { position: relative; }
+.sidebar .nav-item:hover { color: var(--text); background: var(--accent-soft); }
+.sidebar .nav-item[aria-current="page"] { color: var(--accent-bright); background: var(--accent-soft); border-color: transparent; box-shadow: none; font-weight: var(--weight-semibold); }
+.sidebar .nav-item[aria-current="page"]::before { content: ""; position: absolute; left: 0; top: 11px; bottom: 11px; width: 3px; border-radius: var(--radius-pill); background: var(--accent); }
+.sidebar .nav-item:focus-visible { box-shadow: var(--focus-ring); }
+.brand { display: flex; align-items: center; gap: var(--space-2); padding: 0 var(--space-2); min-height: 40px; }
+.brand strong { font-size: var(--text-title); }
+.brand-mark { width: 28px; height: 28px; flex: none; }
+.resizer { cursor: col-resize; background: transparent; border: 0; padding: 0; position: relative; }
+.resizer::after { content: ""; position: absolute; inset: 0 2px; background: var(--border); transition: background var(--dur); }
+.resizer:hover::after, .resizer:focus-visible::after, .resizer.dragging::after { background: var(--accent); }
+.resizer:focus-visible { outline: none; }
+.main { min-height: 0; min-width: 0; display: flex; flex-direction: column; }
+/* The top bar exists only on narrow screens; on wide ones the side panel carries its contents. */
+.topbar { display: none; gap: var(--space-2); min-height: 52px; padding: 0 var(--space-3); flex: none; }
+.crumb { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewport { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overflow-x: hidden; }
+.view { display: none; }
+.view.on { display: grid; }
+.page { grid-template-columns: minmax(0, 1fr); width: 100%; max-width: 1240px; margin: 0 auto; padding: var(--space-4); gap: var(--space-4); align-content: start; box-sizing: border-box; }
+.tabbar { border-top: 1px solid var(--border); background: var(--bg); justify-content: space-around; padding: 4px 0; }
+.tabbar { flex: none; }
+.tabbar .nav-item { flex: 1 1 0; flex-direction: column; gap: 2px; width: auto; min-width: 0; font-size: 12px; min-height: 52px; padding: 0 2px; justify-content: center; }
+.tabbar .nav-item[aria-current="page"] { color: var(--accent-bright); font-weight: var(--weight-semibold); }
+.tabbar .nav-item[aria-current="page"] { box-shadow: none; border-color: transparent; background: transparent; }
+.only-narrow { display: none; }
+
+/* ---------- small pieces ---------- */
+.icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.icon-btn { width: 36px; height: 36px; min-height: 36px; padding: 0; border-radius: var(--radius-sm); border-color: transparent; background: transparent; box-shadow: none; color: var(--text-muted); }
+.icon-btn:hover { color: var(--text); border-color: var(--border-strong); }
+.muted-text { color: var(--text-muted); }
+.grow { flex: 1; min-width: 0; }
+.hstack { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.card h2, .card h3 { margin: 0; font-size: var(--text-base); font-weight: var(--weight-semibold); }
+.card h2.large { font-size: var(--text-large); }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px var(--space-4); margin: 0; font-size: var(--text-caption); }
+.kv dt { color: var(--text-muted); } .kv dd { margin: 0; }
+.section-title { margin: 0; font-size: var(--text-caption); font-weight: var(--weight-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; }
+.btn.sm { min-height: 32px; padding: 0 var(--space-3); border-radius: var(--radius-sm); font-size: var(--text-caption); font-weight: var(--weight-semibold); gap: 4px; }
+.banner { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); border: 1px solid var(--warning); border-radius: var(--radius-md); color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); font-size: var(--text-caption); font-weight: var(--weight-medium); }
+.danger-zone { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+
+/* popover menus */
+.menu { position: fixed; z-index: 30; min-width: 190px; padding: 4px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--bg); box-shadow: var(--edge), var(--shadow-2); display: none; }
+.menu.open { display: grid; }
+.menu button { display: flex; align-items: center; gap: var(--space-2); min-height: 38px; padding: 0 var(--space-3); border: 0; border-radius: var(--radius-sm); background: transparent; color: var(--text); font: var(--weight-medium) var(--text-caption) var(--font); text-align: left; cursor: pointer; }
+.menu button:hover, .menu button:focus-visible { background: var(--accent-soft); outline: none; }
+.menu button.danger { color: var(--danger); }
+.menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; width: 100%; }
+
+/* toasts and dialogs */
+.toasts { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: grid; gap: var(--space-2); width: min(420px, calc(100vw - 32px)); pointer-events: none; }
+.toasts .toast { pointer-events: auto; background: var(--bg); font-size: var(--text-caption); }
+.toast[data-tone="ok"] { border-color: var(--success); }
+.toast[data-tone="warn"] { border-color: var(--warning); }
+.toast[data-tone="bad"] { border-color: var(--danger); }
+.dialog h2 { margin: 0; font-size: var(--text-title); }
+.dialog ul { margin: 0; padding-left: 1.2em; font-size: var(--text-caption); color: var(--text-muted); }
+
+/* forms and lists */
+.cols-auto { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.form { display: grid; gap: var(--space-3); }
+.list-row { min-height: var(--row-height); cursor: default; }
+button.list-row { cursor: pointer; }
+.list-row .main-text { min-width: 0; display: grid; }
+.list-row .main-text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list-row .main-text small { color: var(--text-muted); font-size: var(--text-caption); }
+.master-detail { display: grid; gap: var(--space-4); grid-template-columns: minmax(280px, 1fr) minmax(0, 1.618fr); align-items: start; }
+.master-detail > * { min-width: 0; }
+/* The list uses the height the window has: it scrolls inside itself, and the detail beside it stays in view. */
+.master-detail .list { max-height: max(320px, calc(100dvh - var(--list-offset, 250px))); overflow: auto; }
+.list-row .main-text .mono { font-size: calc(var(--text-base) * 0.875); color: var(--text); }
+.list-row .end { white-space: nowrap; flex: none; }
+.tag { flex: none; min-width: 52px; text-align: center; padding: 2px var(--space-2); border-radius: var(--radius-sm); border: 1px solid var(--border-strong); color: var(--text-muted); font-size: var(--text-caption); font-weight: var(--weight-semibold); }
+/* Until something is picked the list has the whole width, so long commands can be read; picking splits the view. */
+.master-detail:not(.picked) { grid-template-columns: minmax(0, 1fr); }
+.master-detail:not(.picked) .detail { display: none; }
+.list-row .main-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-height: var(--target-min); }
+.tabpanel { display: none; } .tabpanel.on { display: grid; gap: var(--space-4); }
+.savebar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); border-top: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--bg)); }
+.theme-choice { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-lg); border: 1px solid var(--border-strong); cursor: pointer; background: transparent; color: var(--text); text-align: left; font: inherit; }
+.theme-choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: var(--neon); }
+.swatch { height: 70px; border-radius: var(--radius-md); border: 1px solid var(--border); }
+
+/* ---------- page furniture shared by every screen ---------- */
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-3); flex-wrap: wrap; }
+.page-head h1 { margin: 0; }
+.lede { margin: 0; max-width: 78ch; color: var(--text-muted); }
+.lede b { color: var(--text); font-weight: var(--weight-semibold); }
+.chapter { display: grid; gap: var(--space-3); min-width: 0; }
+.chapter > .section-title { display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.chapter > .section-title span { text-transform: none; letter-spacing: 0; font-weight: var(--weight-medium); }
+.two-col { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1.618fr) minmax(0, 1fr); align-items: start; }
+.two-col > * { min-width: 0; }
+.link { color: var(--accent-bright); }
+.note-card { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); }
+.note-card .icon { color: var(--text-muted); }
+.note-card p { margin: 0; }
+
+.stats { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.chips .chip { color: var(--text-muted); font-weight: var(--weight-medium); }
+
+/* ---------- motion: it explains a change, is short, and switches off ---------- */
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes slide-in { from { opacity: 0; transform: translateX(13px); } }
+.page > * { animation: rise 520ms var(--ease) both; }
+.page > *:nth-child(2) { animation-delay: 60ms; }
+.page > *:nth-child(3) { animation-delay: 120ms; }
+.page > *:nth-child(4) { animation-delay: 180ms; }
+.page > *:nth-child(5) { animation-delay: 240ms; }
+.page > *:nth-child(n + 6) { animation-delay: 300ms; }
+.master-detail.picked .detail > * { animation: slide-in 440ms var(--ease) both; }
+.reveal { animation: rise 380ms var(--ease) both; }
+a.list-row, button.list-row { transition: background var(--dur) var(--ease); }
+a.list-row:hover, button.list-row:hover { background: var(--accent-soft); }
+@media (prefers-reduced-motion: reduce) {
+  .page > *, .master-detail.picked .detail > *, .reveal { animation: none; }
+}
+
+/* ---------- storytelling screen ---------- */
+.story { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; }
+.gauge-card { display: grid; justify-items: center; gap: var(--space-2); text-align: center; }
+.gauge { width: clamp(150px, 118px + 3.2cqi, 190px); }
+.gauge .center { padding: 18%; }
+.gauge .center .large { font-size: var(--text-large); line-height: 1.1; }
+.gauge .center small { font-size: var(--text-caption); line-height: 1.2; margin-top: 2px; }
+/* graphs run edge to edge along the tile's bottom, fading from the line into the tile */
+.tile { --tile-pad: var(--space-4); padding: var(--tile-pad); overflow: hidden; }
+.tile .value { font-size: var(--text-large); font-variant-numeric: tabular-nums; }
+.tile .spark { --h: inherit; height: 64px; width: calc(100% + 2 * var(--tile-pad)); margin: 0 calc(-1 * var(--tile-pad)) calc(-1 * var(--tile-pad)); }
+.spark .point { fill: none; stroke: var(--h); stroke-width: 5; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.spark .stop-top { stop-color: var(--h); stop-opacity: 0.55; }
+.spark .stop-bottom { stop-color: var(--h); stop-opacity: 0; }
+.tile-skeleton { min-height: 144px; }
+
+/* ---------- responsive by the app's own width ---------- */
+@container app (max-width: 900px) {
+  .viewport, .sidebar { scrollbar-width: none; -ms-overflow-style: none; }
+  .viewport::-webkit-scrollbar, .sidebar::-webkit-scrollbar { display: none; }
+  .story { grid-template-columns: 1fr; }
+  .master-detail, .two-col { grid-template-columns: 1fr; }
+  .master-detail .list { max-height: none; }
+}
+@container app (max-width: 760px) {
+  .toasts { bottom: 76px; }
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .sidebar, .resizer { display: none; }
+  .topbar { display: flex; }
+  .tabbar { display: flex; }
+  .only-narrow { display: inline-flex; }
+  .hide-narrow { display: none; }
+  .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+  .tile { min-height: 110px; --tile-pad: var(--space-3); }
+  .seg button { padding: 0 var(--space-3); }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .page-head .display { font-size: var(--text-large); }
+}

@@ -1,0 +1,76 @@
+======================================= test session starts ========================================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0 -- <checkout>/services/saturn/.venv/bin/python
+rootdir: <checkout>/var/bench/acquisition/click-controlled
+configfile: pyproject.toml
+collecting ... collected 14 items
+
+tests/test_types/test_IntRange.py::test_range[type0-3-3] PASSED                              [  7%]
+tests/test_types/test_IntRange.py::test_range[type1-5-5] PASSED                              [ 14%]
+tests/test_types/test_IntRange.py::test_range[type2-100-100] PASSED                          [ 21%]
+tests/test_types/test_IntRange.py::test_range[type3-5-5] PASSED                              [ 28%]
+tests/test_types/test_IntRange.py::test_range[type4--100--100] PASSED                        [ 35%]
+tests/test_types/test_IntRange.py::test_range[type5--1-0] PASSED                             [ 42%]
+tests/test_types/test_IntRange.py::test_range[type6-6-5] PASSED                              [ 50%]
+tests/test_types/test_IntRange.py::test_range[type7-0-1] FAILED                              [ 57%]
+tests/test_types/test_IntRange.py::test_range[type8-5-4] FAILED                              [ 64%]
+tests/test_types/test_IntRange.py::test_range_fail[type0-6-6 is not in the range 0<=x<=5.] PASSED [ 71%]
+tests/test_types/test_IntRange.py::test_range_fail[type1-4-4 is not in the range x>=5.] PASSED [ 78%]
+tests/test_types/test_IntRange.py::test_range_fail[type2-6-6 is not in the range x<=5.] PASSED [ 85%]
+tests/test_types/test_IntRange.py::test_range_fail[type3-0-0<x<=5] PASSED                    [ 92%]
+tests/test_types/test_IntRange.py::test_range_fail[type4-5-0<=x<5] PASSED                    [100%]
+
+============================================= FAILURES =============================================
+______________________________________ test_range[type7-0-1] _______________________________________
+
+type = <IntRange x>0 clamped>, value = '0', expect = 1
+
+    @pytest.mark.parametrize(
+        ("type", "value", "expect"),
+        [
+            (click.IntRange(0, 5), "3", 3),
+            (click.IntRange(5), "5", 5),
+            (click.IntRange(5), "100", 100),
+            (click.IntRange(max=5), "5", 5),
+            (click.IntRange(max=5), "-100", -100),
+            (click.IntRange(0, clamp=True), "-1", 0),
+            (click.IntRange(max=5, clamp=True), "6", 5),
+            (click.IntRange(0, min_open=True, clamp=True), "0", 1),
+            (click.IntRange(max=5, max_open=True, clamp=True), "5", 4),
+        ],
+    )
+    def test_range(type, value, expect):
+>       assert type.convert(value, None, None) == expect
+E       AssertionError: assert -1 == 1
+E        +  where -1 = convert('0', None, None)
+E        +    where convert = <IntRange x>0 clamped>.convert
+
+../click/tests/test_types/test_IntRange.py:21: AssertionError
+______________________________________ test_range[type8-5-4] _______________________________________
+
+type = <IntRange x<5 clamped>, value = '5', expect = 4
+
+    @pytest.mark.parametrize(
+        ("type", "value", "expect"),
+        [
+            (click.IntRange(0, 5), "3", 3),
+            (click.IntRange(5), "5", 5),
+            (click.IntRange(5), "100", 100),
+            (click.IntRange(max=5), "5", 5),
+            (click.IntRange(max=5), "-100", -100),
+            (click.IntRange(0, clamp=True), "-1", 0),
+            (click.IntRange(max=5, clamp=True), "6", 5),
+            (click.IntRange(0, min_open=True, clamp=True), "0", 1),
+            (click.IntRange(max=5, max_open=True, clamp=True), "5", 4),
+        ],
+    )
+    def test_range(type, value, expect):
+>       assert type.convert(value, None, None) == expect
+E       AssertionError: assert 6 == 4
+E        +  where 6 = convert('5', None, None)
+E        +    where convert = <IntRange x<5 clamped>.convert
+
+../click/tests/test_types/test_IntRange.py:21: AssertionError
+===================================== short test summary info ======================================
+FAILED tests/test_types/test_IntRange.py::test_range[type7-0-1] - AssertionError: assert -1 == 1
+FAILED tests/test_types/test_IntRange.py::test_range[type8-5-4] - AssertionError: assert 6 == 4
+=================================== 2 failed, 12 passed in 0.02s ===================================

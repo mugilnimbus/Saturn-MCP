@@ -1,0 +1,226 @@
+readme.md:1:# p-limit
+readme.md:3:> Run multiple promise-returning & async functions with limited concurrency
+readme.md:5:*Works in Node.js and browsers.*
+readme.md:7:## Install
+readme.md:9:```sh
+readme.md:10:npm install p-limit
+readme.md:11:```
+readme.md:13:## Usage
+readme.md:15:```js
+readme.md:16:import pLimit from 'p-limit';
+readme.md:18:const limit = pLimit(1);
+readme.md:20:const input = [
+readme.md:21:	limit(() => fetchSomething('foo')),
+readme.md:22:	limit(() => fetchSomething('bar')),
+readme.md:23:	limit(() => doSomething())
+readme.md:24:];
+readme.md:26:// Only one promise is run at once
+readme.md:27:const result = await Promise.all(input);
+readme.md:28:console.log(result);
+readme.md:29:```
+readme.md:31:## API
+readme.md:33:### pLimit(concurrency) <sup>default export</sup>
+readme.md:35:Returns a `limit` function.
+readme.md:37:#### concurrency
+readme.md:39:Type: `number | object`\
+readme.md:40:Minimum: `1`
+readme.md:42:Concurrency limit.
+readme.md:44:You can pass a number or an options object with a `concurrency` property.
+readme.md:46:#### rejectOnClear
+readme.md:48:Type: `boolean`\
+readme.md:49:Default: `false`
+readme.md:51:Reject pending promises with an `AbortError` when `clearQueue()` is called.
+readme.md:52:This is recommended if you await the returned promises, for example with `Promise.all`, so pending tasks do not remain unresolved after `clearQueue()`.
+readme.md:54:```js
+readme.md:55:import pLimit from 'p-limit';
+readme.md:57:const limit = pLimit({concurrency: 1});
+readme.md:58:```
+readme.md:60:### limit(fn, ...args)
+readme.md:62:Returns the promise returned by calling `fn(...args)`.
+readme.md:64:#### fn
+readme.md:66:Type: `Function`
+readme.md:68:Promise-returning/async function.
+readme.md:70:#### args
+readme.md:72:Any arguments to pass through to `fn`.
+readme.md:74:Support for passing arguments on to the `fn` is provided in order to be able to avoid creating unnecessary closures. You probably don't need this optimization unless you're pushing a *lot* of functions.
+readme.md:76:Warning: Avoid calling the same `limit` function inside a function that is already limited by it. This can create a deadlock where inner tasks never run. Use a separate limiter for inner tasks.
+readme.md:78:### limit.map(iterable, mapperFunction)
+readme.md:80:Process an iterable of inputs with limited concurrency.
+readme.md:82:The mapper function receives the item value and its index.
+readme.md:84:Returns a promise equivalent to `Promise.all(Array.from(iterable, (item, index) => limit(mapperFunction, item, index)))`.
+readme.md:86:If the iterable throws during iteration, the returned promise rejects with that error. Mapper functions that were already scheduled still run, and their results are discarded.
+readme.md:88:This is a convenience function for processing inputs that arrive in batches. For more complex use cases, see [p-map](https://github.com/sindresorhus/p-map).
+readme.md:90:### limit.activeCount
+readme.md:92:The number of promises that are currently running.
+readme.md:94:### limit.pendingCount
+readme.md:96:The number of promises that are waiting to run (i.e. their internal `fn` was not called yet).
+readme.md:98:### limit.clearQueue()
+readme.md:100:Discard pending promises that are waiting to run.
+readme.md:102:This might be useful if you want to tear down the queue at the end of your program's lifecycle or discard any function calls referencing an intermediary state of your app.
+readme.md:104:Note: This does not cancel promises that are already running.
+readme.md:106:When `rejectOnClear` is enabled, pending promises are rejected with an `AbortError`.
+readme.md:107:This is recommended if you await the returned promises, for example with `Promise.all`, so pending tasks do not remain unresolved after `clearQueue()`.
+readme.md:109:### limit.concurrency
+readme.md:111:Get or set the concurrency limit.
+readme.md:113:### limitFunction(fn, options) <sup>named export</sup>
+readme.md:115:Returns a function with limited concurrency.
+readme.md:117:The returned function manages its own concurrent executions, allowing you to call it multiple times without exceeding the specified concurrency limit.
+readme.md:119:Ideal for scenarios where you need to control the number of simultaneous executions of a single function, rather than managing concurrency across multiple functions.
+readme.md:121:```js
+readme.md:122:import {limitFunction} from 'p-limit';
+readme.md:124:const limitedFunction = limitFunction(async () => {
+readme.md:125:	return doSomething();
+readme.md:126:}, {concurrency: 1});
+readme.md:128:const input = Array.from({length: 10}, limitedFunction);
+readme.md:130:// Only one promise is run at once.
+readme.md:131:await Promise.all(input);
+readme.md:132:```
+readme.md:134:#### fn
+readme.md:136:Type: `Function`
+readme.md:138:Promise-returning/async function.
+readme.md:140:#### options
+readme.md:142:Type: `object`
+readme.md:144:#### concurrency
+readme.md:146:Type: `number`\
+readme.md:147:Minimum: `1`
+readme.md:149:Concurrency limit.
+readme.md:151:#### rejectOnClear
+readme.md:153:Type: `boolean`\
+readme.md:154:Default: `false`
+readme.md:156:Reject pending promises with an `AbortError` when `clearQueue()` is called.
+readme.md:157:This is recommended if you await the returned promises, for example with `Promise.all`, so pending tasks do not remain unresolved after `clearQueue()`.
+readme.md:159:### limitedFunction.clearQueue()
+readme.md:161:Discard pending calls that have not started yet.
+readme.md:163:When `rejectOnClear` is enabled, pending promises are rejected with an `AbortError`. Otherwise, their promises remain unresolved.
+readme.md:165:This does not cancel calls that are already running.
+readme.md:167:## Recipes
+readme.md:169:See [recipes.md](recipes.md) for common use cases and patterns.
+readme.md:171:## FAQ
+readme.md:173:### How is this different from the [`p-queue`](https://github.com/sindresorhus/p-queue) package?
+readme.md:175:This package is only about limiting the number of concurrent executions, while `p-queue` is a fully featured queue implementation with lots of different options, introspection, and ability to pause the queue.
+readme.md:177:## Related
+readme.md:179:- [p-throttle](https://github.com/sindresorhus/p-throttle) - Throttle promise-returning & async functions
+readme.md:180:- [p-debounce](https://github.com/sindresorhus/p-debounce) - Debounce promise-returning & async functions
+readme.md:181:- [p-map](https://github.com/sindresorhus/p-map) - Run promise-returning & async functions concurrently with different inputs
+readme.md:182:- [p-all](https://github.com/sindresorhus/p-all) - Run promise-returning & async functions concurrently with optional limited concurrency
+readme.md:183:- [More…](https://github.com/sindresorhus/promise-fun)
+index.js:1:import Queue from 'yocto-queue';
+index.js:3:export default function pLimit(concurrency) {
+index.js:4:	let rejectOnClear = false;
+index.js:6:	if (typeof concurrency === 'object') {
+index.js:7:		({concurrency, rejectOnClear = false} = concurrency);
+index.js:8:	}
+index.js:10:	validateConcurrency(concurrency);
+index.js:12:	if (typeof rejectOnClear !== 'boolean') {
+index.js:13:		throw new TypeError('Expected `rejectOnClear` to be a boolean');
+index.js:14:	}
+index.js:16:	const queue = new Queue();
+index.js:17:	let activeCount = 0;
+index.js:19:	const resumeNext = () => {
+index.js:20:		// Process the next queued function if we're under the concurrency limit
+index.js:21:		if (activeCount < concurrency && queue.size > 0) {
+index.js:22:			activeCount++;
+index.js:23:			queue.dequeue().run();
+index.js:24:		}
+index.js:25:	};
+index.js:27:	const next = () => {
+index.js:28:		activeCount--;
+index.js:29:		resumeNext();
+index.js:30:	};
+index.js:32:	const run = async (function_, resolve, arguments_) => {
+index.js:33:		// Execute the function and capture the result promise
+index.js:34:		const result = (async () => function_(...arguments_))();
+index.js:36:		// Resolve immediately with the promise (don't wait for completion)
+index.js:37:		resolve(result);
+index.js:39:		// Wait for the function to complete (success or failure)
+index.js:40:		// We catch errors here to prevent unhandled rejections,
+index.js:41:		// but the original promise rejection is preserved for the caller
+index.js:42:		try {
+index.js:43:			await result;
+index.js:44:		} catch {}
+index.js:46:		// Decrement active count and process next queued function
+index.js:47:		next();
+index.js:48:	};
+index.js:50:	const enqueue = (function_, resolve, reject, arguments_) => {
+index.js:51:		const queueItem = {reject};
+index.js:53:		// Queue the internal resolve function instead of the run function
+index.js:54:		// to preserve the asynchronous execution context.
+index.js:55:		new Promise(internalResolve => { // eslint-disable-line promise/param-names
+index.js:56:			queueItem.run = internalResolve;
+index.js:57:			queue.enqueue(queueItem);
+index.js:58:		}).then(run.bind(undefined, function_, resolve, arguments_)); // eslint-disable-line promise/prefer-await-to-then
+index.js:60:		// Start processing immediately if we haven't reached the concurrency limit
+index.js:61:		if (activeCount < concurrency) {
+index.js:62:			resumeNext();
+index.js:63:		}
+index.js:64:	};
+index.js:66:	const generator = (function_, ...arguments_) => new Promise((resolve, reject) => {
+index.js:67:		enqueue(function_, resolve, reject, arguments_);
+index.js:68:	});
+index.js:70:	Object.defineProperties(generator, {
+index.js:71:		activeCount: {
+index.js:72:			get: () => activeCount,
+index.js:73:		},
+index.js:74:		pendingCount: {
+index.js:75:			get: () => queue.size,
+index.js:76:		},
+index.js:77:		clearQueue: {
+index.js:78:			value() {
+index.js:79:				if (!rejectOnClear) {
+index.js:80:					queue.clear();
+index.js:81:					return;
+index.js:82:				}
+index.js:84:				const abortError = AbortSignal.abort().reason;
+index.js:86:				while (queue.size > 0) {
+index.js:87:					queue.dequeue().reject(abortError);
+index.js:88:				}
+index.js:89:			},
+index.js:90:		},
+index.js:91:		concurrency: {
+index.js:92:			get: () => concurrency,
+index.js:94:			set(newConcurrency) {
+index.js:95:				validateConcurrency(newConcurrency);
+index.js:96:				concurrency = newConcurrency;
+index.js:98:				queueMicrotask(() => {
+index.js:99:					// eslint-disable-next-line no-unmodified-loop-condition
+index.js:100:					while (activeCount < concurrency && queue.size > 0) {
+index.js:101:						resumeNext();
+index.js:102:					}
+index.js:103:				});
+index.js:104:			},
+index.js:105:		},
+index.js:106:		map: {
+index.js:107:			async value(iterable, function_) {
+index.js:108:				const promises = [];
+index.js:110:				try {
+index.js:111:					Array.from(iterable, (value, index) => {
+index.js:112:						const promise = generator(function_, value, index);
+index.js:113:						promises.push(promise);
+index.js:114:						return promise;
+index.js:115:					});
+index.js:116:				} catch (error) {
+index.js:117:					// The iterable threw, so `Promise.all` never observes the already scheduled promises. Observe them here to avoid unhandled rejections.
+index.js:118:					for (const promise of promises) {
+index.js:119:						promise.catch(() => {}); // eslint-disable-line promise/prefer-await-to-then
+index.js:120:					}
+index.js:122:					throw error;
+index.js:123:				}
+index.js:125:				return Promise.all(promises);
+index.js:126:			},
+index.js:127:		},
+index.js:128:	});
+index.js:130:	return generator;
+index.js:131:}
+index.js:133:export function limitFunction(function_, options) {
+index.js:134:	const limit = pLimit(options);
+index.js:136:	const limitedFunction = (...arguments_) => limit(() => function_(...arguments_));
+index.js:137:	Object.defineProperty(limitedFunction, 'clearQueue', {
+index.js:138:		value: limit.clearQueue,
+index.js:139:	});
+index.js:141:	return limitedFunction;
+index.js:142:}
+index.js:144:function validateConcurrency(concurrency) {
+index.js:145:	if (!((Number.isInteger(concurrency) || concurrency === Number.POSITIVE_INFINITY) && concurrency > 0)) {
+index.js:146:		throw new TypeError('Expected `concurrency` to be a number from 1 and up');
+index.js:147:	}
+index.js:148:}

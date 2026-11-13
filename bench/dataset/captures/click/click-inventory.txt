@@ -1,0 +1,1621 @@
+docs/parameter-types.md:1:(parameter-types)=
+docs/parameter-types.md:3:# Parameter Types
+docs/parameter-types.md:5:```{currentmodule} click
+docs/parameter-types.md:6:```
+docs/parameter-types.md:8:When the parameter type is set using `type`, Click will leverage the type to make your life easier, for example adding
+docs/parameter-types.md:9:data to your help pages. Most examples are done with options, but types are available to options and arguments.
+docs/parameter-types.md:11:```{contents}
+docs/parameter-types.md:12:---
+docs/parameter-types.md:13:depth: 2
+docs/parameter-types.md:14:local: true
+docs/parameter-types.md:15:---
+docs/parameter-types.md:16:```
+docs/parameter-types.md:18:## Built-in Types Examples
+docs/parameter-types.md:20:(choice-opts)=
+docs/parameter-types.md:22:### Choice
+docs/parameter-types.md:24:Sometimes, you want to have a parameter be a choice of a list of values. In that case you can use {class}`Choice` type.
+docs/parameter-types.md:25:It can be instantiated with a list of valid values. The originally passed choice will be returned, not the str passed on
+docs/parameter-types.md:26:the command line. Token normalization functions and `case_sensitive=False` can cause the two to be different but still
+docs/parameter-types.md:27:match. {meth}`Choice.normalize_choice` for more info.
+docs/parameter-types.md:30:Example:
+docs/parameter-types.md:32:```{eval-rst}
+docs/parameter-types.md:33:.. click:example::
+docs/parameter-types.md:35:    import enum
+docs/parameter-types.md:37:    class HashType(enum.Enum):
+docs/parameter-types.md:38:        MD5 = enum.auto()
+docs/parameter-types.md:39:        SHA1 = enum.auto()
+docs/parameter-types.md:41:    @click.command()
+docs/parameter-types.md:42:    @click.option('--hash-type',
+docs/parameter-types.md:43:                  type=click.Choice(HashType, case_sensitive=False))
+docs/parameter-types.md:44:    def digest(hash_type: HashType):
+docs/parameter-types.md:45:        click.echo(hash_type)
+docs/parameter-types.md:47:What it looks like:
+docs/parameter-types.md:49:.. click:run::
+docs/parameter-types.md:51:    invoke(digest, args=['--hash-type=MD5'])
+docs/parameter-types.md:52:    println()
+docs/parameter-types.md:53:    invoke(digest, args=['--hash-type=md5'])
+docs/parameter-types.md:54:    println()
+docs/parameter-types.md:55:    invoke(digest, args=['--hash-type=foo'])
+docs/parameter-types.md:56:    println()
+docs/parameter-types.md:57:    invoke(digest, args=['--help'])
+docs/parameter-types.md:58:```
+docs/parameter-types.md:60:Any iterable may be passed to {class}`Choice`. If an `Enum` is passed, the names of the enum members will be used as
+docs/parameter-types.md:61:valid choices.
+docs/parameter-types.md:63:Choices work with options that have `multiple=True`. If a `default` value is given with `multiple=True`, it should be a
+docs/parameter-types.md:64:list or tuple of valid choices.
+docs/parameter-types.md:66:Choices should be unique after normalization, see {meth}`Choice.normalize_choice` for more info.
+docs/parameter-types.md:68:```{versionchanged} 7.1
+docs/parameter-types.md:69:The resulting value from an option will always be one of the originally passed choices
+docs/parameter-types.md:70:regardless of `case_sensitive`.
+docs/parameter-types.md:71:```
+docs/parameter-types.md:73:```{versionchanged} 8.4.0
+docs/parameter-types.md:74:{class}`Choice` is now generic. Parameterize it with the choice value type
+docs/parameter-types.md:75:({class}`!Choice[HashType]` for an enum, {class}`!Choice[str]` for plain
+docs/parameter-types.md:76:strings) to enable type-checked consumers.
+docs/parameter-types.md:77:```
+docs/parameter-types.md:79:(ranges)=
+docs/parameter-types.md:81:### Int and Float Ranges
+docs/parameter-types.md:83:The {class}`IntRange` type extends the {data}`INT` type to ensure the value is contained in the given range. The
+docs/parameter-types.md:84:{class}`FloatRange` type does the same for {data}`FLOAT`.
+docs/parameter-types.md:86:If `min` or `max` is omitted, that side is *unbounded*. Any value in that direction is accepted. By default, both bounds
+docs/parameter-types.md:87:are *closed*, which means the boundary value is included in the accepted range. `min_open` and `max_open` can be used to
+docs/parameter-types.md:88:exclude that boundary from the range.
+docs/parameter-types.md:90:If `clamp` mode is enabled, a value that is outside the range is set to the boundary instead of failing. For example,
+docs/parameter-types.md:91:the range `0, 5` would return `5` for the value `10`, or `0` for the value `-1`. When using {class}`FloatRange`, `clamp`
+docs/parameter-types.md:92:can only be enabled if both bounds are *closed* (the default).
+docs/parameter-types.md:94:```{eval-rst}
+docs/parameter-types.md:95:.. click:example::
+docs/parameter-types.md:97:    @click.command()
+docs/parameter-types.md:98:    @click.option("--count", type=click.IntRange(0, 20, clamp=True))
+docs/parameter-types.md:99:    @click.option("--digit", type=click.IntRange(0, 9))
+docs/parameter-types.md:100:    def repeat(count, digit):
+docs/parameter-types.md:101:        click.echo(str(digit) * count)
+docs/parameter-types.md:103:.. click:run::
+docs/parameter-types.md:105:    invoke(repeat, args=['--count=100', '--digit=5'])
+docs/parameter-types.md:106:    invoke(repeat, args=['--count=6', '--digit=12'])
+docs/parameter-types.md:107:```
+docs/parameter-types.md:109:## Built-in Types Listing
+docs/parameter-types.md:111:The supported parameter {ref}`click-api-types` are
+docs/parameter-types.md:113:- `str` / {data}`click.STRING`: The default parameter type which indicates unicode strings.
+docs/parameter-types.md:115:- `int` / {data}`click.INT`: A parameter that only accepts integers.
+docs/parameter-types.md:117:- `float` / {data}`click.FLOAT`: A parameter that only accepts floating point values.
+docs/parameter-types.md:119:- `bool` / {data}`click.BOOL`: A parameter that accepts boolean values. This is automatically used for boolean flags.
+docs/parameter-types.md:120:  The string values "1", "true", "t", "yes", "y", and "on" convert to `True`. "0", "false", "f", "no", "n", and "off"
+docs/parameter-types.md:121:  convert to `False`.
+docs/parameter-types.md:123:- {data}`click.UUID`: A parameter that accepts UUID values. This is not automatically guessed but represented as
+docs/parameter-types.md:124:  {class}`uuid.UUID`.
+docs/parameter-types.md:126:```{eval-rst}
+docs/parameter-types.md:127:*   .. autoclass:: Choice
+docs/parameter-types.md:128:       :noindex:
+docs/parameter-types.md:129:```
+docs/parameter-types.md:131:```{eval-rst}
+docs/parameter-types.md:132:*   .. autoclass:: DateTime
+docs/parameter-types.md:133:       :noindex:
+docs/parameter-types.md:134:```
+docs/parameter-types.md:136:```{eval-rst}
+docs/parameter-types.md:137:*   .. autoclass:: File
+docs/parameter-types.md:138:       :noindex:
+docs/parameter-types.md:139:```
+docs/parameter-types.md:141:```{eval-rst}
+docs/parameter-types.md:142:*   .. autoclass:: FloatRange
+docs/parameter-types.md:143:       :noindex:
+docs/parameter-types.md:144:```
+docs/parameter-types.md:146:```{eval-rst}
+docs/parameter-types.md:147:*   .. autoclass:: IntRange
+docs/parameter-types.md:148:       :noindex:
+docs/parameter-types.md:149:```
+docs/parameter-types.md:151:```{eval-rst}
+docs/parameter-types.md:152:*   .. autoclass:: Path
+docs/parameter-types.md:153:       :noindex:
+docs/parameter-types.md:154:```
+docs/parameter-types.md:156:(type-inference)=
+docs/parameter-types.md:158:## How Click Infers a Type
+docs/parameter-types.md:160:When `type` is not given, Click infers it from `default`. Only the defaults listed below
+docs/parameter-types.md:161:are recognized. Every other default gives {data}`STRING`.
+docs/parameter-types.md:163:| `default`                                        | Inferred type                                   |
+docs/parameter-types.md:164:| ------------------------------------------------ | ----------------------------------------------- |
+docs/parameter-types.md:165:| not given, or `None`                             | {data}`STRING`                                  |
+docs/parameter-types.md:166:| `"git"`                                          | {data}`STRING`                                  |
+docs/parameter-types.md:167:| `5`                                              | {data}`INT`                                     |
+docs/parameter-types.md:168:| `1.5`                                            | {data}`FLOAT`                                   |
+docs/parameter-types.md:169:| `True`                                           | {data}`BOOL`                                    |
+docs/parameter-types.md:170:| `[]` or `()`                                     | {data}`STRING`                                  |
+docs/parameter-types.md:171:| `[1, 2]` or `(1, 2)`                             | {data}`INT`                                     |
+docs/parameter-types.md:172:| `[1.5, 2.5]`                                     | {data}`FLOAT`                                   |
+docs/parameter-types.md:173:| `[1, "git"]`                                     | {data}`INT`                                     |
+docs/parameter-types.md:174:| `[(1, "git")]`                                   | {class}`Tuple` of ({data}`INT`, {data}`STRING`) |
+docs/parameter-types.md:175:| `{1, 2}` or `frozenset({1, 2})`                  | {data}`STRING`                                  |
+docs/parameter-types.md:176:| `{"a": 1}`                                       | {data}`STRING`                                  |
+docs/parameter-types.md:177:| {class}`uuid.UUID` or {class}`datetime.datetime` | {data}`STRING`                                  |
+docs/parameter-types.md:178:| `b"git"`, or any other object                    | {data}`STRING`                                  |
+docs/parameter-types.md:180:A `list` or `tuple` gives the type of its **first item only**, so `[1, "git"]` gives
+docs/parameter-types.md:181:{data}`INT` and the second item is converted with it. A first item that is itself a
+docs/parameter-types.md:182:`list` or `tuple` gives a {class}`Tuple`, which also sets `nargs`.
+docs/parameter-types.md:184:A `set`, a `frozenset`, a `dict`, and a type Click ships but does not guess, such as
+docs/parameter-types.md:185:{class}`uuid.UUID`, all land in the last group. Their default is converted with
+docs/parameter-types.md:186:{data}`STRING`, so the command receives the `str()` form of the value.
+docs/parameter-types.md:188:```{eval-rst}
+docs/parameter-types.md:189:.. click:example::
+docs/parameter-types.md:191:    @click.command()
+docs/parameter-types.md:192:    @click.option('--count', default=5)
+docs/parameter-types.md:193:    @click.option('--tag', default={'git'})
+docs/parameter-types.md:194:    def show(count, tag):
+docs/parameter-types.md:195:        click.echo(f"count is {type(count).__name__}, tag is {type(tag).__name__}")
+docs/parameter-types.md:197:.. click:run::
+docs/parameter-types.md:199:    invoke(show, args=[])
+docs/parameter-types.md:200:```
+docs/parameter-types.md:202:When `type` is given a callable Click does not recognize, that callable is called on the
+docs/parameter-types.md:203:string coming from the command line, and a `ValueError` it raises is reported as a bad
+docs/parameter-types.md:204:parameter. A container is rarely useful there, because calling it on a string splits the
+docs/parameter-types.md:205:string: `set` turns `"git"` into `{"g", "i", "t"}`. Pass a {class}`ParamType` instead,
+docs/parameter-types.md:206:as described in [](#how-to-implement-custom-types).
+docs/parameter-types.md:208:## How to Implement Custom Types
+docs/parameter-types.md:210:To implement a custom type, you need to subclass the {class}`ParamType` class. For simple cases, passing a Python
+docs/parameter-types.md:211:function that fails with a `ValueError` is also supported, though discouraged. Override the {meth}`~ParamType.convert`
+docs/parameter-types.md:212:method to convert the value from a string to the correct type.
+docs/parameter-types.md:214:{class}`ParamType` is generic in the converted value type: parameterize it with
+docs/parameter-types.md:215:the type returned by `convert` so that consumers (and type checkers) can rely
+docs/parameter-types.md:216:on the narrowed return type.
+docs/parameter-types.md:218:The following code implements an integer type that accepts hex and octal numbers in addition to normal integers, and
+docs/parameter-types.md:219:converts them into regular integers.
+docs/parameter-types.md:221:```python
+docs/parameter-types.md:222:import click
+docs/parameter-types.md:225:class BasedIntParamType(click.ParamType[int]):
+docs/parameter-types.md:226:    name = "integer"
+docs/parameter-types.md:228:    def convert(self, value, param, ctx) -> int:
+docs/parameter-types.md:229:        if isinstance(value, int):
+docs/parameter-types.md:230:            return value
+docs/parameter-types.md:232:        try:
+docs/parameter-types.md:233:            if value[:2].lower() == "0x":
+docs/parameter-types.md:234:                return int(value[2:], 16)
+docs/parameter-types.md:235:            elif value[:1] == "0":
+docs/parameter-types.md:236:                return int(value, 8)
+docs/parameter-types.md:237:            return int(value, 10)
+docs/parameter-types.md:238:        except ValueError:
+docs/parameter-types.md:239:            self.fail(f"{value!r} is not a valid integer", param, ctx)
+docs/parameter-types.md:242:BASED_INT = BasedIntParamType()
+docs/parameter-types.md:243:```
+docs/parameter-types.md:245:The {attr}`~ParamType.name` attribute is optional and is used for documentation. Call {meth}`~ParamType.fail` if
+docs/parameter-types.md:246:conversion fails. The `param` and `ctx` arguments may be `None` in some cases such as prompts.
+docs/parameter-types.md:248:Values from user input or the command line will be strings, but default values and Python arguments may already be the
+docs/parameter-types.md:249:correct type. The custom type should check at the top if the value is already valid and pass it through to support those
+docs/parameter-types.md:250:cases.
+docs/parameter-types.md:252:```{versionchanged} 8.4.0
+docs/parameter-types.md:253:{class}`ParamType` is now a generic abstract base class. Parameterize it with
+docs/parameter-types.md:254:the converted value type ({class}`!ParamType[int]` for an integer-returning
+docs/parameter-types.md:255:type) so that {meth}`~ParamType.convert` and downstream consumers carry the
+docs/parameter-types.md:256:narrowed type.
+docs/parameter-types.md:257:```
+src/click/exceptions.py:1:from __future__ import annotations
+src/click/exceptions.py:3:import collections.abc as cabc
+src/click/exceptions.py:4:import typing as t
+src/click/exceptions.py:5:from gettext import gettext as _
+src/click/exceptions.py:6:from gettext import ngettext
+src/click/exceptions.py:8:from ._compat import get_text_stderr
+src/click/exceptions.py:9:from .globals import resolve_color_default
+src/click/exceptions.py:10:from .utils import echo
+src/click/exceptions.py:11:from .utils import format_filename
+src/click/exceptions.py:13:if t.TYPE_CHECKING:
+src/click/exceptions.py:14:    from .core import Command
+src/click/exceptions.py:15:    from .core import Context
+src/click/exceptions.py:16:    from .core import Parameter
+src/click/exceptions.py:19:def _join_param_hints(param_hint: cabc.Sequence[str] | str | None) -> str | None:
+src/click/exceptions.py:20:    if param_hint is not None and not isinstance(param_hint, str):
+src/click/exceptions.py:21:        return " / ".join(repr(x) for x in param_hint)
+src/click/exceptions.py:23:    return param_hint
+src/click/exceptions.py:26:def _format_possibilities(possibilities: list[str]) -> str:
+src/click/exceptions.py:27:    possibility_str = ", ".join(repr(p) for p in sorted(possibilities))
+src/click/exceptions.py:28:    return ngettext(
+src/click/exceptions.py:29:        "Did you mean {possibility}?",
+src/click/exceptions.py:30:        "(Did you mean one of: {possibilities}?)",
+src/click/exceptions.py:31:        len(possibilities),
+src/click/exceptions.py:32:    ).format(possibility=possibility_str, possibilities=possibility_str)
+src/click/exceptions.py:35:class ClickException(Exception):
+src/click/exceptions.py:36:    """An exception that Click can handle and show to the user."""
+src/click/exceptions.py:38:    #: The exit code for this exception.
+src/click/exceptions.py:39:    exit_code: t.ClassVar[int] = 1
+src/click/exceptions.py:41:    show_color: t.Final[bool | None]
+src/click/exceptions.py:42:    message: t.Final[str]
+src/click/exceptions.py:44:    def __init__(self, message: str) -> None:
+src/click/exceptions.py:45:        super().__init__(message)
+src/click/exceptions.py:46:        # The context will be removed by the time we print the message, so cache
+src/click/exceptions.py:47:        # the color settings here to be used later on (in `show`)
+src/click/exceptions.py:48:        self.show_color = resolve_color_default()
+src/click/exceptions.py:49:        self.message = message
+src/click/exceptions.py:51:    def format_message(self) -> str:
+src/click/exceptions.py:52:        return self.message
+src/click/exceptions.py:54:    def __str__(self) -> str:
+src/click/exceptions.py:55:        return self.message
+src/click/exceptions.py:57:    def show(self, file: t.IO[t.Any] | None = None) -> None:
+src/click/exceptions.py:58:        if file is None:
+src/click/exceptions.py:59:            file = get_text_stderr()
+src/click/exceptions.py:61:        echo(
+src/click/exceptions.py:62:            _("Error: {message}").format(message=self.format_message()),
+src/click/exceptions.py:63:            file=file,
+src/click/exceptions.py:64:            color=self.show_color,
+src/click/exceptions.py:65:        )
+src/click/exceptions.py:68:class UsageError(ClickException):
+src/click/exceptions.py:69:    """An internal exception that signals a usage error.  This typically
+src/click/exceptions.py:70:    aborts any further handling.
+src/click/exceptions.py:72:    :param message: the error message to display.
+src/click/exceptions.py:73:    :param ctx: optionally the context that caused this error.  Click will
+src/click/exceptions.py:74:                fill in the context automatically in some situations.
+src/click/exceptions.py:75:    """
+src/click/exceptions.py:77:    exit_code: t.ClassVar[int] = 2
+src/click/exceptions.py:79:    ctx: Context | None
+src/click/exceptions.py:80:    cmd: t.Final[Command | None]
+src/click/exceptions.py:82:    def __init__(self, message: str, ctx: Context | None = None) -> None:
+src/click/exceptions.py:83:        super().__init__(message)
+src/click/exceptions.py:84:        self.ctx = ctx
+src/click/exceptions.py:85:        self.cmd = self.ctx.command if self.ctx else None
+src/click/exceptions.py:87:    def show(self, file: t.IO[t.Any] | None = None) -> None:
+src/click/exceptions.py:88:        if file is None:
+src/click/exceptions.py:89:            file = get_text_stderr()
+src/click/exceptions.py:90:        color = None
+src/click/exceptions.py:91:        hint = ""
+src/click/exceptions.py:92:        if (
+src/click/exceptions.py:93:            self.ctx is not None
+src/click/exceptions.py:94:            and self.ctx.command.get_help_option(self.ctx) is not None
+src/click/exceptions.py:95:        ):
+src/click/exceptions.py:96:            help_names = self.ctx.command.get_help_option_names(self.ctx)
+src/click/exceptions.py:97:            # Pick the longest name (like ``--help`` over ``-h``) for
+src/click/exceptions.py:98:            # readability in error messages.
+src/click/exceptions.py:99:            hint = _("Try '{command} {option}' for help.").format(
+src/click/exceptions.py:100:                command=self.ctx.command_path,
+src/click/exceptions.py:101:                option=max(help_names, key=len),
+src/click/exceptions.py:102:            )
+src/click/exceptions.py:103:            hint = f"{hint}\n"
+src/click/exceptions.py:104:        if self.ctx is not None:
+src/click/exceptions.py:105:            color = self.ctx.color
+src/click/exceptions.py:106:            echo(f"{self.ctx.get_usage()}\n{hint}", file=file, color=color)
+src/click/exceptions.py:107:        echo(
+src/click/exceptions.py:108:            _("Error: {message}").format(message=self.format_message()),
+src/click/exceptions.py:109:            file=file,
+src/click/exceptions.py:110:            color=color,
+src/click/exceptions.py:111:        )
+src/click/exceptions.py:114:class BadParameter(UsageError):
+src/click/exceptions.py:115:    """An exception that formats out a standardized error message for a
+src/click/exceptions.py:116:    bad parameter.  This is useful when thrown from a callback or type as
+src/click/exceptions.py:117:    Click will attach contextual information to it (for instance, which
+src/click/exceptions.py:118:    parameter it is).
+src/click/exceptions.py:120:    .. versionadded:: 2.0
+src/click/exceptions.py:122:    :param param: the parameter object that caused this error.  This can
+src/click/exceptions.py:123:                  be left out, and Click will attach this info itself
+src/click/exceptions.py:124:                  if possible.
+src/click/exceptions.py:125:    :param param_hint: a string that shows up as parameter name.  This
+src/click/exceptions.py:126:                       can be used as alternative to `param` in cases
+src/click/exceptions.py:127:                       where custom validation should happen.  If it is
+src/click/exceptions.py:128:                       a string it's used as such, if it's a list then
+src/click/exceptions.py:129:                       each item is quoted and separated.
+src/click/exceptions.py:130:    """
+src/click/exceptions.py:132:    param: Parameter | None
+src/click/exceptions.py:133:    param_hint: cabc.Sequence[str] | str | None
+src/click/exceptions.py:135:    def __init__(
+src/click/exceptions.py:136:        self,
+src/click/exceptions.py:137:        message: str,
+src/click/exceptions.py:138:        ctx: Context | None = None,
+src/click/exceptions.py:139:        param: Parameter | None = None,
+src/click/exceptions.py:140:        param_hint: cabc.Sequence[str] | str | None = None,
+src/click/exceptions.py:141:    ) -> None:
+src/click/exceptions.py:142:        super().__init__(message, ctx)
+src/click/exceptions.py:143:        self.param = param
+src/click/exceptions.py:144:        self.param_hint = param_hint
+src/click/exceptions.py:146:    def format_message(self) -> str:
+src/click/exceptions.py:147:        if self.param_hint is not None:
+src/click/exceptions.py:148:            param_hint = self.param_hint
+src/click/exceptions.py:149:        elif self.param is not None:
+src/click/exceptions.py:150:            param_hint = self.param.get_error_hint(self.ctx)
+src/click/exceptions.py:151:        else:
+src/click/exceptions.py:152:            return _("Invalid value: {message}").format(message=self.message)
+src/click/exceptions.py:154:        return _("Invalid value for {param_hint}: {message}").format(
+src/click/exceptions.py:155:            param_hint=_join_param_hints(param_hint), message=self.message
+src/click/exceptions.py:156:        )
+src/click/exceptions.py:159:class MissingParameter(BadParameter):
+src/click/exceptions.py:160:    """Raised if click required an option or argument but it was not
+src/click/exceptions.py:161:    provided when invoking the script.
+src/click/exceptions.py:163:    .. versionadded:: 4.0
+src/click/exceptions.py:165:    :param param_type: a string that indicates the type of the parameter.
+src/click/exceptions.py:166:                       The default is to inherit the parameter type from
+src/click/exceptions.py:167:                       the given `param`.  Valid values are ``'parameter'``,
+src/click/exceptions.py:168:                       ``'option'`` or ``'argument'``.
+src/click/exceptions.py:169:    """
+src/click/exceptions.py:171:    param_type: t.Final[str | None]
+src/click/exceptions.py:173:    def __init__(
+src/click/exceptions.py:174:        self,
+src/click/exceptions.py:175:        message: str | None = None,
+src/click/exceptions.py:176:        ctx: Context | None = None,
+src/click/exceptions.py:177:        param: Parameter | None = None,
+src/click/exceptions.py:178:        param_hint: cabc.Sequence[str] | str | None = None,
+src/click/exceptions.py:179:        param_type: str | None = None,
+src/click/exceptions.py:180:    ) -> None:
+src/click/exceptions.py:181:        super().__init__(message or "", ctx, param, param_hint)
+src/click/exceptions.py:182:        self.param_type = param_type
+src/click/exceptions.py:184:    def format_message(self) -> str:
+src/click/exceptions.py:185:        if self.param_hint is not None:
+src/click/exceptions.py:186:            param_hint: cabc.Sequence[str] | str | None = self.param_hint
+src/click/exceptions.py:187:        elif self.param is not None:
+src/click/exceptions.py:188:            param_hint = self.param.get_error_hint(self.ctx)
+src/click/exceptions.py:189:        else:
+src/click/exceptions.py:190:            param_hint = None
+src/click/exceptions.py:192:        param_hint = _join_param_hints(param_hint)
+src/click/exceptions.py:193:        param_hint = f" {param_hint}" if param_hint else ""
+src/click/exceptions.py:195:        param_type = self.param_type
+src/click/exceptions.py:196:        if param_type is None and self.param is not None:
+src/click/exceptions.py:197:            param_type = self.param.param_type_name
+src/click/exceptions.py:199:        msg = self.message
+src/click/exceptions.py:200:        if self.param is not None:
+src/click/exceptions.py:201:            msg_extra = self.param.type.get_missing_message(
+src/click/exceptions.py:202:                param=self.param, ctx=self.ctx
+src/click/exceptions.py:203:            )
+src/click/exceptions.py:204:            if msg_extra:
+src/click/exceptions.py:205:                if msg:
+src/click/exceptions.py:206:                    msg += f". {msg_extra}"
+src/click/exceptions.py:207:                else:
+src/click/exceptions.py:208:                    msg = msg_extra
+src/click/exceptions.py:210:        msg = f" {msg}" if msg else ""
+src/click/exceptions.py:212:        # Translate param_type for known types.
+src/click/exceptions.py:213:        if param_type == "argument":
+src/click/exceptions.py:214:            missing = _("Missing argument")
+src/click/exceptions.py:215:        elif param_type == "option":
+src/click/exceptions.py:216:            missing = _("Missing option")
+src/click/exceptions.py:217:        elif param_type == "parameter":
+src/click/exceptions.py:218:            missing = _("Missing parameter")
+src/click/exceptions.py:219:        else:
+src/click/exceptions.py:220:            missing = _("Missing {param_type}").format(param_type=param_type)
+src/click/exceptions.py:222:        return f"{missing}{param_hint}.{msg}"
+src/click/exceptions.py:224:    def __str__(self) -> str:
+src/click/exceptions.py:225:        if not self.message:
+src/click/exceptions.py:226:            param_name = self.param.name if self.param else None
+src/click/exceptions.py:227:            return _("Missing parameter: {param_name}").format(param_name=param_name)
+src/click/exceptions.py:228:        else:
+src/click/exceptions.py:229:            return self.message
+src/click/exceptions.py:232:class NoSuchOption(UsageError):
+src/click/exceptions.py:233:    """Raised if Click attempted to handle an option that does not exist.
+src/click/exceptions.py:235:    .. versionadded:: 4.0
+src/click/exceptions.py:236:    """
+src/click/exceptions.py:238:    option_name: t.Final[str]
+src/click/exceptions.py:239:    possibilities: t.Final[list[str] | None]
+src/click/exceptions.py:241:    def __init__(
+src/click/exceptions.py:242:        self,
+src/click/exceptions.py:243:        option_name: str,
+src/click/exceptions.py:244:        message: str | None = None,
+src/click/exceptions.py:245:        possibilities: cabc.Iterable[str] | None = None,
+src/click/exceptions.py:246:        ctx: Context | None = None,
+src/click/exceptions.py:247:    ) -> None:
+src/click/exceptions.py:248:        if message is None:
+src/click/exceptions.py:249:            message = _("No such option {name!r}.").format(name=option_name)
+src/click/exceptions.py:251:        super().__init__(message, ctx)
+src/click/exceptions.py:252:        self.option_name = option_name
+src/click/exceptions.py:254:        if possibilities:
+src/click/exceptions.py:255:            from difflib import get_close_matches
+src/click/exceptions.py:257:            possibilities_ = get_close_matches(option_name, possibilities)
+src/click/exceptions.py:258:        else:
+src/click/exceptions.py:259:            possibilities_ = None
+src/click/exceptions.py:260:        self.possibilities = possibilities_
+src/click/exceptions.py:262:    def format_message(self) -> str:
+src/click/exceptions.py:263:        if not self.possibilities:
+src/click/exceptions.py:264:            return self.message
+src/click/exceptions.py:265:        return f"{self.message} {_format_possibilities(self.possibilities)}"
+src/click/exceptions.py:268:class NoSuchCommand(UsageError):
+src/click/exceptions.py:269:    """Raised if Click attempted to handle a command that does not exist.
+src/click/exceptions.py:271:    .. versionadded:: 8.4.0
+src/click/exceptions.py:272:    """
+src/click/exceptions.py:274:    command_name: t.Final[str]
+src/click/exceptions.py:275:    possibilities: t.Final[list[str] | None]
+src/click/exceptions.py:277:    def __init__(
+src/click/exceptions.py:278:        self,
+src/click/exceptions.py:279:        command_name: str,
+src/click/exceptions.py:280:        message: str | None = None,
+src/click/exceptions.py:281:        possibilities: cabc.Iterable[str] | None = None,
+src/click/exceptions.py:282:        ctx: Context | None = None,
+src/click/exceptions.py:283:    ) -> None:
+src/click/exceptions.py:284:        if message is None:
+src/click/exceptions.py:285:            message = _("No such command {name!r}.").format(name=command_name)
+src/click/exceptions.py:287:        super().__init__(message, ctx)
+src/click/exceptions.py:288:        self.command_name = command_name
+src/click/exceptions.py:290:        if possibilities:
+src/click/exceptions.py:291:            from difflib import get_close_matches
+src/click/exceptions.py:293:            possibilities_ = get_close_matches(command_name, possibilities)
+src/click/exceptions.py:294:        else:
+src/click/exceptions.py:295:            possibilities_ = None
+src/click/exceptions.py:296:        self.possibilities = possibilities_
+src/click/exceptions.py:298:    def format_message(self) -> str:
+src/click/exceptions.py:299:        if not self.possibilities:
+src/click/exceptions.py:300:            return self.message
+src/click/exceptions.py:301:        return f"{self.message} {_format_possibilities(self.possibilities)}"
+src/click/exceptions.py:304:class BadOptionUsage(UsageError):
+src/click/exceptions.py:305:    """Raised if an option is generally supplied but the use of the option
+src/click/exceptions.py:306:    was incorrect.  This is for instance raised if the number of arguments
+src/click/exceptions.py:307:    for an option is not correct.
+src/click/exceptions.py:309:    .. versionadded:: 4.0
+src/click/exceptions.py:311:    :param option_name: the name of the option being used incorrectly.
+src/click/exceptions.py:312:    """
+src/click/exceptions.py:314:    option_name: t.Final[str]
+src/click/exceptions.py:316:    def __init__(
+src/click/exceptions.py:317:        self, option_name: str, message: str, ctx: Context | None = None
+src/click/exceptions.py:318:    ) -> None:
+src/click/exceptions.py:319:        super().__init__(message, ctx)
+src/click/exceptions.py:320:        self.option_name = option_name
+src/click/exceptions.py:323:class BadArgumentUsage(UsageError):
+src/click/exceptions.py:324:    """Raised if an argument is generally supplied but the use of the argument
+src/click/exceptions.py:325:    was incorrect.  This is for instance raised if the number of values
+src/click/exceptions.py:326:    for an argument is not correct.
+src/click/exceptions.py:328:    .. versionadded:: 6.0
+src/click/exceptions.py:329:    """
+src/click/exceptions.py:332:class NoArgsIsHelpError(UsageError):
+src/click/exceptions.py:333:    ctx: Context
+src/click/exceptions.py:335:    def __init__(self, ctx: Context) -> None:
+src/click/exceptions.py:336:        super().__init__(ctx.get_help(), ctx=ctx)
+src/click/exceptions.py:338:    def show(self, file: t.IO[t.Any] | None = None) -> None:
+src/click/exceptions.py:339:        echo(self.format_message(), file=file, err=True, color=self.ctx.color)
+src/click/exceptions.py:342:class FileError(ClickException):
+src/click/exceptions.py:343:    """Raised if a file cannot be opened."""
+src/click/exceptions.py:345:    ui_filename: t.Final[str]
+src/click/exceptions.py:346:    filename: t.Final[str]
+src/click/exceptions.py:348:    def __init__(self, filename: str, hint: str | None = None) -> None:
+src/click/exceptions.py:349:        if hint is None:
+src/click/exceptions.py:350:            hint = _("unknown error")
+src/click/exceptions.py:352:        super().__init__(hint)
+src/click/exceptions.py:353:        self.ui_filename = format_filename(filename)
+src/click/exceptions.py:354:        self.filename = filename
+src/click/exceptions.py:356:    def format_message(self) -> str:
+src/click/exceptions.py:357:        return _("Could not open file {filename!r}: {message}").format(
+src/click/exceptions.py:358:            filename=self.ui_filename, message=self.message
+src/click/exceptions.py:359:        )
+src/click/exceptions.py:362:class Abort(RuntimeError):
+src/click/exceptions.py:363:    """An internal signalling exception that signals Click to abort."""
+src/click/exceptions.py:366:class Exit(RuntimeError):
+src/click/exceptions.py:367:    """An exception that indicates that the application should exit with some
+src/click/exceptions.py:368:    status code.
+src/click/exceptions.py:370:    :param code: the status code to exit with.
+src/click/exceptions.py:371:    """
+src/click/exceptions.py:373:    __slots__ = ("exit_code",)
+src/click/exceptions.py:375:    exit_code: t.Final[int]
+src/click/exceptions.py:377:    def __init__(self, code: int = 0) -> None:
+src/click/exceptions.py:378:        self.exit_code = code
+src/click/types.py:1:from __future__ import annotations
+src/click/types.py:3:import abc
+src/click/types.py:4:import collections.abc as cabc
+src/click/types.py:5:import enum
+src/click/types.py:6:import os
+src/click/types.py:7:import stat
+src/click/types.py:8:import sys
+src/click/types.py:9:import typing as t
+src/click/types.py:10:import uuid
+src/click/types.py:11:from datetime import datetime
+src/click/types.py:12:from gettext import gettext as _
+src/click/types.py:13:from gettext import ngettext
+src/click/types.py:15:from ._compat import _get_argv_encoding
+src/click/types.py:16:from ._compat import open_stream
+src/click/types.py:17:from .exceptions import BadParameter
+src/click/types.py:18:from .utils import _LazyFile
+src/click/types.py:19:from .utils import _safecall
+src/click/types.py:20:from .utils import format_filename
+src/click/types.py:22:if t.TYPE_CHECKING:
+src/click/types.py:23:    import typing_extensions as te
+src/click/types.py:25:    from .core import Context
+src/click/types.py:26:    from .core import Parameter
+src/click/types.py:27:    from .shell_completion import CompletionItem
+src/click/types.py:29:_ValueT = t.TypeVar("_ValueT")
+src/click/types.py:30:_ValueT_contra = t.TypeVar("_ValueT_contra", contravariant=True)
+src/click/types.py:31:_ValueT_co = t.TypeVar("_ValueT_co", covariant=True)
+src/click/types.py:33:# The input type parameter of ParamType defaults to Any. TypeVar defaults
+src/click/types.py:34:# (PEP 696) landed in typing on Python 3.13, so type checkers get the
+src/click/types.py:35:# default from typing_extensions, which is never imported at runtime. On
+src/click/types.py:36:# older Pythons the runtime TypeVar carries no default;
+src/click/types.py:37:# ParamType.__class_getitem__ fills in the omitted parameter instead.
+src/click/types.py:38:if t.TYPE_CHECKING:
+src/click/types.py:39:    _InputT_contra = te.TypeVar("_InputT_contra", contravariant=True, default=t.Any)
+src/click/types.py:40:elif sys.version_info >= (3, 13):
+src/click/types.py:41:    _InputT_contra = t.TypeVar("_InputT_contra", contravariant=True, default=t.Any)
+src/click/types.py:42:else:
+src/click/types.py:43:    _InputT_contra = t.TypeVar("_InputT_contra", contravariant=True)
+src/click/types.py:45:_FloatValueT = t.TypeVar("_FloatValueT", bound=float)
+src/click/types.py:46:_FloatValueT_co = t.TypeVar("_FloatValueT_co", bound=float, covariant=True)
+src/click/types.py:48:if t.TYPE_CHECKING:
+src/click/types.py:49:    _PathT_co = te.TypeVar(
+src/click/types.py:50:        "_PathT_co", covariant=True, default="str | bytes | os.PathLike[str]"
+src/click/types.py:51:    )
+src/click/types.py:52:elif sys.version_info >= (3, 13):
+src/click/types.py:53:    _PathT_co = t.TypeVar(
+src/click/types.py:54:        "_PathT_co", covariant=True, default=str | bytes | os.PathLike[str]
+src/click/types.py:55:    )
+src/click/types.py:56:else:
+src/click/types.py:57:    _PathT_co = t.TypeVar("_PathT_co", covariant=True)
+src/click/types.py:60:class ParamTypeInfoDict(t.TypedDict):
+src/click/types.py:61:    param_type: str
+src/click/types.py:62:    name: str
+src/click/types.py:65:class ParamType(t.Generic[_ValueT_co, _InputT_contra], abc.ABC):
+src/click/types.py:66:    """Represents the type of a parameter. Validates and converts values
+src/click/types.py:67:    from the command line or Python into the correct type.
+src/click/types.py:69:    To implement a custom type, subclass and implement at least the
+src/click/types.py:70:    following:
+src/click/types.py:72:    -   The :attr:`name` class attribute must be set.
+src/click/types.py:73:    -   Calling an instance of the type with ``None`` must return
+src/click/types.py:74:        ``None``. This is already implemented by default.
+src/click/types.py:75:    -   :meth:`convert` must convert string values to the correct type.
+src/click/types.py:76:    -   :meth:`convert` must accept values that are already the correct
+src/click/types.py:77:        type.
+src/click/types.py:78:    -   It must be able to convert a value if the ``ctx`` and ``param``
+src/click/types.py:79:        arguments are ``None``. This can occur when converting prompt
+src/click/types.py:80:        input.
+src/click/types.py:82:    .. versionchanged:: 8.4.0
+src/click/types.py:83:        Now a generic abstract base class. Parameterize with the
+src/click/types.py:84:        converted value type (``ParamType[int]`` for an integer-returning
+src/click/types.py:85:        type) so that :meth:`convert` and downstream consumers carry the
+src/click/types.py:86:        narrowed return type.
+src/click/types.py:88:    .. versionchanged:: 8.5.0
+src/click/types.py:89:        Accepts a second optional type parameter for the input value type
+src/click/types.py:90:        that :meth:`convert` accepts (``ParamType[int, str]`` for a type
+src/click/types.py:91:        converting strings to integers), defaulting to ``Any``.
+src/click/types.py:92:    """
+src/click/types.py:94:    is_composite: t.ClassVar[bool] = False
+src/click/types.py:95:    arity: int = 1  # read-only
+src/click/types.py:97:    #: the descriptive name of this type
+src/click/types.py:98:    name: str
+src/click/types.py:100:    #: if a list of this type is expected and the value is pulled from a
+src/click/types.py:101:    #: string environment variable, this is what splits it up.  `None`
+src/click/types.py:102:    #: means any whitespace.  For all parameters the general rule is that
+src/click/types.py:103:    #: whitespace splits them up.  The exception are paths and files which
+src/click/types.py:104:    #: are split by ``os.path.pathsep`` by default (":" on Unix and ";" on
+src/click/types.py:105:    #: Windows).
+src/click/types.py:106:    envvar_list_splitter: t.ClassVar[str | None] = None
+src/click/types.py:108:    if sys.version_info < (3, 13):
+src/click/types.py:109:        # ``_InputT_contra`` carries its ``Any`` default only for type
+src/click/types.py:110:        # checkers: ``TypeVar(default=...)`` (PEP 696) is unavailable at
+src/click/types.py:111:        # runtime before Python 3.13. Fill in the omitted input type
+src/click/types.py:112:        # parameter by hand so ``ParamType[int]`` keeps working.
+src/click/types.py:113:        def __class_getitem__(cls, params: t.Any) -> t.Any:
+src/click/types.py:114:            if cls is ParamType:
+src/click/types.py:115:                if not isinstance(params, tuple):
+src/click/types.py:116:                    params = (params,)
+src/click/types.py:117:                if len(params) == 1:
+src/click/types.py:118:                    params = (*params, t.Any)
+src/click/types.py:119:            # Checkers cannot see Generic.__class_getitem__ through super().
+src/click/types.py:120:            return super().__class_getitem__(params)  # type: ignore[misc]
+src/click/types.py:122:    def to_info_dict(self) -> ParamTypeInfoDict:
+src/click/types.py:123:        """Gather information that could be useful for a tool generating
+src/click/types.py:124:        user-facing documentation.
+src/click/types.py:126:        Use :meth:`click.Context.to_info_dict` to traverse the entire
+src/click/types.py:127:        CLI structure.
+src/click/types.py:129:        .. versionadded:: 8.0
+src/click/types.py:130:        """
+src/click/types.py:131:        # The class name without the "ParamType" suffix.
+src/click/types.py:132:        param_type = type(self).__name__.partition("ParamType")[0]
+src/click/types.py:133:        param_type = param_type.partition("ParameterType")[0]
+src/click/types.py:135:        # Custom subclasses might not remember to set a name.
+src/click/types.py:136:        if hasattr(self, "name"):
+src/click/types.py:137:            name = self.name
+src/click/types.py:138:        else:
+src/click/types.py:139:            name = param_type
+src/click/types.py:141:        return {"param_type": param_type, "name": name}
+src/click/types.py:143:    @t.overload
+src/click/types.py:144:    def __call__(
+src/click/types.py:145:        self,
+src/click/types.py:146:        value: None,
+src/click/types.py:147:        param: Parameter | None = None,
+src/click/types.py:148:        ctx: Context | None = None,
+src/click/types.py:149:    ) -> None: ...
+src/click/types.py:151:    @t.overload
+src/click/types.py:152:    def __call__(
+src/click/types.py:153:        self,
+src/click/types.py:154:        value: _InputT_contra,
+src/click/types.py:155:        param: Parameter | None = None,
+src/click/types.py:156:        ctx: Context | None = None,
+src/click/types.py:157:    ) -> _ValueT_co: ...
+src/click/types.py:159:    def __call__(
+src/click/types.py:160:        self,
+src/click/types.py:161:        value: _InputT_contra | None,
+src/click/types.py:162:        param: Parameter | None = None,
+src/click/types.py:163:        ctx: Context | None = None,
+src/click/types.py:164:    ) -> _ValueT_co | None:
+src/click/types.py:165:        if value is not None:
+src/click/types.py:166:            return self.convert(value, param, ctx)
+src/click/types.py:167:        return None
+src/click/types.py:169:    def get_metavar(self, param: Parameter, ctx: Context) -> str | None:
+src/click/types.py:170:        """Returns the metavar default for this param if it provides one."""
+src/click/types.py:172:    def get_missing_message(self, param: Parameter, ctx: Context | None) -> str | None:
+src/click/types.py:173:        """Optionally might return extra information about a missing
+src/click/types.py:174:        parameter.
+src/click/types.py:176:        .. versionadded:: 2.0
+src/click/types.py:177:        """
+src/click/types.py:179:    def convert(
+src/click/types.py:180:        self, value: _InputT_contra, param: Parameter | None, ctx: Context | None
+src/click/types.py:181:    ) -> _ValueT_co:
+src/click/types.py:182:        """Convert the value to the correct type. This is not called if
+src/click/types.py:183:        the value is ``None`` (the missing value).
+src/click/types.py:185:        This must accept string values from the command line, as well as
+src/click/types.py:186:        values that are already the correct type. It may also convert
+src/click/types.py:187:        other compatible types.
+src/click/types.py:189:        The ``param`` and ``ctx`` arguments may be ``None`` in certain
+src/click/types.py:190:        situations, such as when converting prompt input.
+src/click/types.py:192:        If the value cannot be converted, call :meth:`fail` with a
+src/click/types.py:193:        descriptive message.
+src/click/types.py:195:        :param value: The value to convert.
+src/click/types.py:196:        :param param: The parameter that is using this type to convert
+src/click/types.py:197:            its value. May be ``None``.
+src/click/types.py:198:        :param ctx: The current context that arrived at this value. May
+src/click/types.py:199:            be ``None``.
+src/click/types.py:200:        """
+src/click/types.py:201:        # The default returns the value as-is so subclasses that only customize
+src/click/types.py:202:        # metadata are not forced to redeclare ``convert``.
+src/click/types.py:203:        return t.cast("_ValueT_co", value)
+src/click/types.py:205:    def split_envvar_value(self, rv: str) -> cabc.Sequence[str]:
+src/click/types.py:206:        """Given a value from an environment variable this splits it up
+src/click/types.py:207:        into small chunks depending on the defined envvar list splitter.
+src/click/types.py:209:        If the splitter is set to `None`, which means that whitespace splits,
+src/click/types.py:210:        then leading and trailing whitespace is ignored.  Otherwise, leading
+src/click/types.py:211:        and trailing splitters usually lead to empty items being included.
+src/click/types.py:212:        """
+src/click/types.py:213:        return (rv or "").split(self.envvar_list_splitter)
+src/click/types.py:215:    def fail(
+src/click/types.py:216:        self,
+src/click/types.py:217:        message: str,
+src/click/types.py:218:        param: Parameter | None = None,
+src/click/types.py:219:        ctx: Context | None = None,
+src/click/types.py:220:    ) -> t.NoReturn:
+src/click/types.py:221:        """Helper method to fail with an invalid value message."""
+src/click/types.py:222:        raise BadParameter(message, ctx=ctx, param=param)
+src/click/types.py:224:    def shell_complete(
+src/click/types.py:225:        self, ctx: Context, param: Parameter, incomplete: str
+src/click/types.py:226:    ) -> list[CompletionItem]:
+src/click/types.py:227:        """Return a list of
+src/click/types.py:228:        :class:`~click.shell_completion.CompletionItem` objects for the
+src/click/types.py:229:        incomplete value. Most types do not provide completions, but
+src/click/types.py:230:        some do, and this allows custom types to provide custom
+src/click/types.py:231:        completions as well.
+src/click/types.py:233:        :param ctx: Invocation context for this command.
+src/click/types.py:234:        :param param: The parameter that is requesting completion.
+src/click/types.py:235:        :param incomplete: Value being completed. May be empty.
+src/click/types.py:237:        .. versionadded:: 8.0
+src/click/types.py:238:        """
+src/click/types.py:239:        return []
+src/click/types.py:242:class CompositeParamType(ParamType[_ValueT_co]):
+src/click/types.py:243:    is_composite: t.ClassVar[bool] = True
+src/click/types.py:245:    @property
+src/click/types.py:246:    @abc.abstractmethod
+src/click/types.py:247:    def arity(self) -> int: ...  # type: ignore[override]
+src/click/types.py:250:if t.TYPE_CHECKING:
+src/click/types.py:251:    # on Python 3.10 this will raise a TypeError
+src/click/types.py:253:    class FuncParamTypeInfoDict(
+src/click/types.py:254:        ParamTypeInfoDict,
+src/click/types.py:255:        t.Generic[_ValueT_contra, _ValueT_co],
+src/click/types.py:256:    ):
+src/click/types.py:257:        func: t.Callable[[_ValueT_contra], _ValueT_co]
+src/click/types.py:258:else:
+src/click/types.py:260:    class FuncParamTypeInfoDict(ParamTypeInfoDict):
+src/click/types.py:261:        func: t.Callable[[t.Any], t.Any]
+src/click/types.py:264:class FuncParamType(ParamType[_ValueT_co], t.Generic[_ValueT_contra, _ValueT_co]):
+src/click/types.py:265:    name: str
+src/click/types.py:266:    func: t.Callable[[_ValueT_contra], _ValueT_co]
+src/click/types.py:268:    def __init__(self, func: t.Callable[[_ValueT_contra], _ValueT_co]) -> None:
+src/click/types.py:269:        self.name = func.__name__
+src/click/types.py:270:        self.func = func
+src/click/types.py:272:    def to_info_dict(self) -> FuncParamTypeInfoDict[_ValueT_contra, _ValueT_co]:
+src/click/types.py:273:        return {"func": self.func, **super().to_info_dict()}
+src/click/types.py:275:    def convert(
+src/click/types.py:276:        self, value: _ValueT_contra, param: Parameter | None, ctx: Context | None
+src/click/types.py:277:    ) -> _ValueT_co:
+src/click/types.py:278:        try:
+src/click/types.py:279:            return self.func(value)
+src/click/types.py:280:        except ValueError as exc:
+src/click/types.py:281:            message = str(exc)
+src/click/types.py:283:            if not message:
+src/click/types.py:284:                try:
+src/click/types.py:285:                    message = str(value)
+src/click/types.py:286:                except UnicodeError:
+src/click/types.py:287:                    message = t.cast("bytes", value).decode("utf-8", "replace")
+src/click/types.py:289:            self.fail(message, param, ctx)
+src/click/types.py:292:class UnprocessedParamType(ParamType[t.Any]):
+src/click/types.py:293:    name = "text"
+src/click/types.py:295:    def convert(
+src/click/types.py:296:        self, value: _ValueT, param: Parameter | None, ctx: Context | None
+src/click/types.py:297:    ) -> _ValueT:
+src/click/types.py:298:        return value
+src/click/types.py:300:    def __repr__(self) -> str:
+src/click/types.py:301:        return "UNPROCESSED"
+src/click/types.py:304:class StringParamType(ParamType[str]):
+src/click/types.py:305:    name = "text"
+src/click/types.py:307:    def convert(
+src/click/types.py:308:        self, value: t.Any, param: Parameter | None, ctx: Context | None
+src/click/types.py:309:    ) -> str:
+src/click/types.py:310:        if isinstance(value, bytes):
+src/click/types.py:311:            enc = _get_argv_encoding()
+src/click/types.py:312:            try:
+src/click/types.py:313:                return value.decode(enc)
+src/click/types.py:314:            except UnicodeError:
+src/click/types.py:315:                fs_enc = sys.getfilesystemencoding()
+src/click/types.py:316:                if fs_enc != enc:
+src/click/types.py:317:                    try:
+src/click/types.py:318:                        return value.decode(fs_enc)
+src/click/types.py:319:                    except UnicodeError:
+src/click/types.py:320:                        return value.decode("utf-8", "replace")
+src/click/types.py:321:                else:
+src/click/types.py:322:                    return value.decode("utf-8", "replace")
+src/click/types.py:323:        return str(value)
+src/click/types.py:325:    def __repr__(self) -> str:
+src/click/types.py:326:        return "STRING"
+src/click/types.py:329:if t.TYPE_CHECKING:
+src/click/types.py:330:    # on Python 3.10 this will raise a TypeError
+src/click/types.py:332:    class ChoiceInfoDict(ParamTypeInfoDict, t.Generic[_ValueT_co]):
+src/click/types.py:333:        choices: tuple[_ValueT_co, ...]
+src/click/types.py:334:        case_sensitive: bool
+src/click/types.py:335:else:
+src/click/types.py:337:    class ChoiceInfoDict(ParamTypeInfoDict):
+src/click/types.py:338:        choices: tuple[t.Any, ...]
+src/click/types.py:339:        case_sensitive: bool
+src/click/types.py:342:class Choice(ParamType[_ValueT_co], t.Generic[_ValueT_co]):
+src/click/types.py:343:    """The choice type allows a value to be checked against a fixed set
+src/click/types.py:344:    of supported values.
+src/click/types.py:346:    You may pass any iterable value which will be converted to a tuple
+src/click/types.py:347:    and thus will only be iterated once.
+src/click/types.py:349:    The resulting value will always be one of the originally passed choices.
+src/click/types.py:350:    See :meth:`normalize_choice` for more info on the mapping of strings
+src/click/types.py:351:    to choices. See :ref:`choice-opts` for an example.
+src/click/types.py:353:    :param case_sensitive: Set to false to make choices case
+src/click/types.py:354:        insensitive. Defaults to true.
+src/click/types.py:356:    .. versionchanged:: 8.4.0
+src/click/types.py:357:        Now generic in the choice value type. Parameterize with the type of
+src/click/types.py:358:        the choice values (``Choice[HashType]`` for an enum, ``Choice[str]``
+src/click/types.py:359:        for plain strings) to enable type-checked consumers.
+src/click/types.py:361:    .. versionchanged:: 8.2.0
+src/click/types.py:362:        Non-``str`` ``choices`` are now supported. It can additionally be any
+src/click/types.py:363:        iterable. Before you were not recommended to pass anything but a list or
+src/click/types.py:364:        tuple.
+src/click/types.py:366:    .. versionadded:: 8.2.0
+src/click/types.py:367:        Choice normalization can be overridden via :meth:`normalize_choice`.
+src/click/types.py:368:    """
+src/click/types.py:370:    name: str = "choice"
+src/click/types.py:372:    choices: tuple[_ValueT_co, ...]
+src/click/types.py:373:    case_sensitive: bool
+src/click/types.py:375:    def __init__(
+src/click/types.py:376:        self, choices: cabc.Iterable[_ValueT_co], case_sensitive: bool = True
+src/click/types.py:377:    ) -> None:
+src/click/types.py:378:        self.choices = tuple(choices)
+src/click/types.py:379:        self.case_sensitive = case_sensitive
+src/click/types.py:381:    def to_info_dict(self) -> ChoiceInfoDict[_ValueT_co]:
+src/click/types.py:382:        return {
+src/click/types.py:383:            "choices": self.choices,
+src/click/types.py:384:            "case_sensitive": self.case_sensitive,
+src/click/types.py:385:            **super().to_info_dict(),
+src/click/types.py:386:        }
+src/click/types.py:388:    def _normalized_mapping(
+src/click/types.py:389:        self, ctx: Context | None = None
+src/click/types.py:390:    ) -> cabc.Mapping[_ValueT_co, str]:
+src/click/types.py:391:        """
+src/click/types.py:392:        Returns mapping where keys are the original choices and the values are
+src/click/types.py:393:        the normalized values that are accepted via the command line.
+src/click/types.py:395:        This is a simple wrapper around :meth:`normalize_choice`, use that
+src/click/types.py:396:        instead which is supported.
+src/click/types.py:397:        """
+src/click/types.py:398:        return {
+src/click/types.py:399:            choice: self.normalize_choice(
+src/click/types.py:400:                choice=choice,
+src/click/types.py:401:                ctx=ctx,
+src/click/types.py:402:            )
+src/click/types.py:403:            for choice in self.choices
+src/click/types.py:404:        }
+src/click/types.py:406:    def normalize_choice(self, choice: object, ctx: Context | None) -> str:
+src/click/types.py:407:        """
+src/click/types.py:408:        Normalize a choice value, used to map a passed string to a choice.
+src/click/types.py:409:        Each choice must have a unique normalized value.
+src/click/types.py:411:        By default uses :meth:`Context.token_normalize_func` and if not case
+src/click/types.py:412:        sensitive, convert it to a casefolded value.
+src/click/types.py:414:        .. versionadded:: 8.2.0
+src/click/types.py:415:        """
+src/click/types.py:416:        normed_value = choice.name if isinstance(choice, enum.Enum) else str(choice)
+src/click/types.py:418:        if ctx is not None and ctx.token_normalize_func is not None:
+src/click/types.py:419:            normed_value = ctx.token_normalize_func(normed_value)
+src/click/types.py:421:        if not self.case_sensitive:
+src/click/types.py:422:            normed_value = normed_value.casefold()
+src/click/types.py:424:        return normed_value
+src/click/types.py:426:    def get_metavar(self, param: Parameter, ctx: Context) -> str | None:
+src/click/types.py:427:        if param.param_type_name == "option" and not param.show_choices:  # type: ignore[attr-defined]
+src/click/types.py:428:            choice_metavars = [
+src/click/types.py:429:                convert_type(type(choice)).name.upper() for choice in self.choices
+src/click/types.py:430:            ]
+src/click/types.py:431:            choices_str = "|".join([*dict.fromkeys(choice_metavars)])
+src/click/types.py:432:        else:
+src/click/types.py:433:            choices_str = "|".join(
+src/click/types.py:434:                [str(i) for i in self._normalized_mapping(ctx=ctx).values()]
+src/click/types.py:435:            )
+src/click/types.py:437:        # Use curly braces to indicate a required argument.
+src/click/types.py:438:        if param.required and param.param_type_name == "argument":
+src/click/types.py:439:            return f"{{{choices_str}}}"
+src/click/types.py:441:        # Use square braces to indicate an option or optional argument.
+src/click/types.py:442:        return f"[{choices_str}]"
+src/click/types.py:444:    def get_missing_message(self, param: Parameter, ctx: Context | None) -> str:
+src/click/types.py:445:        """
+src/click/types.py:446:        Message shown when no choice is passed.
+src/click/types.py:448:        .. versionchanged:: 8.2.0 Added ``ctx`` argument.
+src/click/types.py:449:        """
+src/click/types.py:450:        return _("Choose from:\n\t{choices}").format(
+src/click/types.py:451:            choices=",\n\t".join(self._normalized_mapping(ctx=ctx).values())
+src/click/types.py:452:        )
+src/click/types.py:454:    def convert(
+src/click/types.py:455:        self, value: t.Any, param: Parameter | None, ctx: Context | None
+src/click/types.py:456:    ) -> _ValueT_co:
+src/click/types.py:457:        """
+src/click/types.py:458:        For a given value from the parser, normalize it and find its
+src/click/types.py:459:        matching normalized value in the list of choices. Then return the
+src/click/types.py:460:        matched "original" choice.
+src/click/types.py:461:        """
+src/click/types.py:462:        normed_value = self.normalize_choice(choice=value, ctx=ctx)
+src/click/types.py:463:        normalized_mapping = self._normalized_mapping(ctx=ctx)
+src/click/types.py:465:        try:
+src/click/types.py:466:            return next(
+src/click/types.py:467:                original
+src/click/types.py:468:                for original, normalized in normalized_mapping.items()
+src/click/types.py:469:                if normalized == normed_value
+src/click/types.py:470:            )
+src/click/types.py:471:        except StopIteration:
+src/click/types.py:472:            self.fail(
+src/click/types.py:473:                self.get_invalid_choice_message(value=value, ctx=ctx),
+src/click/types.py:474:                param=param,
+src/click/types.py:475:                ctx=ctx,
+src/click/types.py:476:            )
+src/click/types.py:478:    def get_invalid_choice_message(self, value: t.Any, ctx: Context | None) -> str:
+src/click/types.py:479:        """Get the error message when the given choice is invalid.
+src/click/types.py:481:        :param value: The invalid value.
+src/click/types.py:483:        .. versionadded:: 8.2
+src/click/types.py:484:        """
+src/click/types.py:485:        choices_str = ", ".join(map(repr, self._normalized_mapping(ctx=ctx).values()))
+src/click/types.py:486:        return ngettext(
+src/click/types.py:487:            "{value!r} is not {choice}.",
+src/click/types.py:488:            "{value!r} is not one of {choices}.",
+src/click/types.py:489:            len(self.choices),
+src/click/types.py:490:        ).format(value=value, choice=choices_str, choices=choices_str)
+src/click/types.py:492:    def __repr__(self) -> str:
+src/click/types.py:493:        return _("Choice({choices})").format(choices=list(self.choices))
+src/click/types.py:495:    def shell_complete(
+src/click/types.py:496:        self, ctx: Context, param: Parameter, incomplete: str
+src/click/types.py:497:    ) -> list[CompletionItem]:
+src/click/types.py:498:        """Complete choices that start with the incomplete value.
+src/click/types.py:500:        :param ctx: Invocation context for this command.
+src/click/types.py:501:        :param param: The parameter that is requesting completion.
+src/click/types.py:502:        :param incomplete: Value being completed. May be empty.
+src/click/types.py:504:        .. versionadded:: 8.0
+src/click/types.py:505:        """
+src/click/types.py:506:        from click.shell_completion import CompletionItem
+src/click/types.py:508:        str_choices = [self.normalize_choice(choice, ctx) for choice in self.choices]
+src/click/types.py:509:        if self.case_sensitive:
+src/click/types.py:510:            matched = (c for c in str_choices if c.startswith(incomplete))
+src/click/types.py:511:        else:
+src/click/types.py:512:            incomplete = incomplete.lower()
+src/click/types.py:513:            matched = (c for c in str_choices if c.lower().startswith(incomplete))
+src/click/types.py:515:        return [CompletionItem(c) for c in matched]
+src/click/types.py:518:class DateTimeInfoDict(ParamTypeInfoDict):
+src/click/types.py:519:    formats: cabc.Sequence[str]
+src/click/types.py:522:class DateTime(ParamType[datetime]):
+src/click/types.py:523:    """The DateTime type converts date strings into `datetime` objects.
+src/click/types.py:525:    The format strings which are checked are configurable, but default to some
+src/click/types.py:526:    common (non-timezone aware) ISO 8601 formats.
+src/click/types.py:528:    When specifying *DateTime* formats, you should only pass a list or a tuple.
+src/click/types.py:529:    Other iterables, like generators, may lead to surprising results.
+src/click/types.py:531:    The format strings are processed using ``datetime.strptime``, and this
+src/click/types.py:532:    consequently defines the format strings which are allowed.
+src/click/types.py:534:    Parsing is tried using each format, in order, and the first format which
+src/click/types.py:535:    parses successfully is used.
+src/click/types.py:537:    :param formats: A list or tuple of date format strings, in the order in
+src/click/types.py:538:                    which they should be tried. Defaults to
+src/click/types.py:539:                    ``'%Y-%m-%d'``, ``'%Y-%m-%dT%H:%M:%S'``,
+src/click/types.py:540:                    ``'%Y-%m-%d %H:%M:%S'``.
+src/click/types.py:541:    """
+src/click/types.py:543:    name = "datetime"
+src/click/types.py:545:    formats: cabc.Sequence[str]
+src/click/types.py:547:    def __init__(self, formats: cabc.Sequence[str] | None = None):
+src/click/types.py:548:        self.formats = formats or [
+src/click/types.py:549:            "%Y-%m-%d",
+src/click/types.py:550:            "%Y-%m-%dT%H:%M:%S",
+src/click/types.py:551:            "%Y-%m-%d %H:%M:%S",
+src/click/types.py:552:        ]
+src/click/types.py:554:    def to_info_dict(self) -> DateTimeInfoDict:
+src/click/types.py:555:        return {"formats": self.formats, **super().to_info_dict()}
+src/click/types.py:557:    def get_metavar(self, param: Parameter, ctx: Context) -> str:
+src/click/types.py:558:        return f"[{'|'.join(self.formats)}]"
+src/click/types.py:560:    def _try_to_convert_date(self, value: t.Any, format: str) -> datetime | None:
+src/click/types.py:561:        try:
+src/click/types.py:562:            return datetime.strptime(value, format)
+src/click/types.py:563:        except ValueError:
+src/click/types.py:564:            return None
+src/click/types.py:566:    def convert(
+src/click/types.py:567:        self, value: t.Any, param: Parameter | None, ctx: Context | None
+src/click/types.py:568:    ) -> datetime:
+src/click/types.py:569:        if isinstance(value, datetime):
+src/click/types.py:570:            return value
+src/click/types.py:572:        for format in self.formats:
+src/click/types.py:573:            converted = self._try_to_convert_date(value, format)
+src/click/types.py:575:            if converted is not None:
+src/click/types.py:576:                return converted
+src/click/types.py:578:        formats_str = ", ".join(map(repr, self.formats))
+src/click/types.py:579:        self.fail(
+src/click/types.py:580:            ngettext(
+src/click/types.py:581:                "{value!r} does not match the format {format}.",
+src/click/types.py:582:                "{value!r} does not match the formats {formats}.",
+src/click/types.py:583:                len(self.formats),
+src/click/types.py:584:            ).format(value=value, format=formats_str, formats=formats_str),
+src/click/types.py:585:            param,
+src/click/types.py:586:            ctx,
+src/click/types.py:587:        )
+src/click/types.py:589:    def __repr__(self) -> str:
+src/click/types.py:590:        return "DateTime"
+src/click/types.py:593:class _NumberParamTypeBase(
+src/click/types.py:594:    ParamType[_ValueT_co], t.Generic[_ValueT_contra, _ValueT_co]
+src/click/types.py:595:):
+src/click/types.py:596:    _number_class: t.Callable[[_ValueT_contra], _ValueT_co]
+src/click/types.py:598:    def convert(
+src/click/types.py:599:        self, value: _ValueT_contra, param: Parameter | None, ctx: Context | None
+src/click/types.py:600:    ) -> _ValueT_co:
+src/click/types.py:601:        try:
+src/click/types.py:602:            return self._number_class(value)
+src/click/types.py:603:        except ValueError:
+src/click/types.py:604:            self.fail(
+src/click/types.py:605:                _("{value!r} is not a valid {number_type}.").format(
+src/click/types.py:606:                    value=value, number_type=self.name
+src/click/types.py:607:                ),
+src/click/types.py:608:                param,
+src/click/types.py:609:                ctx,
+src/click/types.py:610:            )
+src/click/types.py:613:if t.TYPE_CHECKING:
+src/click/types.py:614:    # on Python 3.10 this will raise a TypeError
+src/click/types.py:616:    class NumberRangeInfoDict(ParamTypeInfoDict, t.Generic[_FloatValueT_co]):
+src/click/types.py:617:        min: _FloatValueT_co | None
+src/click/types.py:618:        max: _FloatValueT_co | None
+src/click/types.py:619:        min_open: bool
+src/click/types.py:620:        max_open: bool
+src/click/types.py:621:        clamp: bool
+src/click/types.py:622:else:
+src/click/types.py:624:    class NumberRangeInfoDict(ParamTypeInfoDict):
+src/click/types.py:625:        min: t.Any | None
+src/click/types.py:626:        max: t.Any | None
+src/click/types.py:627:        min_open: bool
+src/click/types.py:628:        max_open: bool
+src/click/types.py:629:        clamp: bool
+src/click/types.py:632:class _NumberRangeBase(
+src/click/types.py:633:    _NumberParamTypeBase[_ValueT_contra, _FloatValueT_co],
+src/click/types.py:634:    t.Generic[_ValueT_contra, _FloatValueT_co],
+src/click/types.py:635:):
+src/click/types.py:636:    min: _FloatValueT_co | None
+src/click/types.py:637:    max: _FloatValueT_co | None
+src/click/types.py:638:    min_open: bool
+src/click/types.py:639:    max_open: bool
+src/click/types.py:640:    clamp: bool
+src/click/types.py:642:    def __init__(
+src/click/types.py:643:        self,
+src/click/types.py:644:        min: _FloatValueT_co | None = None,
+src/click/types.py:645:        max: _FloatValueT_co | None = None,
+src/click/types.py:646:        min_open: bool = False,
+src/click/types.py:647:        max_open: bool = False,
+src/click/types.py:648:        clamp: bool = False,
+src/click/types.py:649:    ) -> None:
+src/click/types.py:650:        self.min = min
+src/click/types.py:651:        self.max = max
+src/click/types.py:652:        self.min_open = min_open
+src/click/types.py:653:        self.max_open = max_open
+src/click/types.py:654:        self.clamp = clamp
+src/click/types.py:656:    def to_info_dict(self) -> NumberRangeInfoDict[_FloatValueT_co]:
+src/click/types.py:657:        return {
+src/click/types.py:658:            "min": self.min,
+src/click/types.py:659:            "max": self.max,
+src/click/types.py:660:            "min_open": self.min_open,
+src/click/types.py:661:            "max_open": self.max_open,
+src/click/types.py:662:            "clamp": self.clamp,
+src/click/types.py:663:            **super().to_info_dict(),
+src/click/types.py:664:        }
+src/click/types.py:666:    def convert(
+src/click/types.py:667:        self, value: _ValueT_contra, param: Parameter | None, ctx: Context | None
+src/click/types.py:668:    ) -> _FloatValueT_co:
+src/click/types.py:669:        import operator
+src/click/types.py:671:        rv = super().convert(value, param, ctx)
+src/click/types.py:672:        min = self.min
+src/click/types.py:673:        max = self.max
+src/click/types.py:674:        lt_min: bool = min is not None and (
+src/click/types.py:675:            operator.le if self.min_open else operator.lt
+src/click/types.py:676:        )(rv, min)
+src/click/types.py:677:        gt_max: bool = max is not None and (
+src/click/types.py:678:            operator.ge if self.max_open else operator.gt
+src/click/types.py:679:        )(rv, max)
+src/click/types.py:681:        if self.clamp:
+src/click/types.py:682:            if min is not None and lt_min:
+src/click/types.py:683:                return self._clamp(min, 1, self.min_open)
+src/click/types.py:685:            if max is not None and gt_max:
+src/click/types.py:686:                return self._clamp(max, -1, self.max_open)
+src/click/types.py:688:        if lt_min or gt_max:
+src/click/types.py:689:            self.fail(
+src/click/types.py:690:                _("{value} is not in the range {range}.").format(
+src/click/types.py:691:                    value=rv, range=self._describe_range()
+src/click/types.py:692:                ),
+src/click/types.py:693:                param,
+src/click/types.py:694:                ctx,
+src/click/types.py:695:            )
+src/click/types.py:697:        return rv
+src/click/types.py:699:    @abc.abstractmethod
+src/click/types.py:700:    def _clamp(
+src/click/types.py:701:        # Covariant type variables cannot be used in input positions, so we use a
+src/click/types.py:702:        # separate method-scoped type variable instead.
+src/click/types.py:703:        self: _NumberRangeBase[t.Any, _FloatValueT],
+src/click/types.py:704:        bound: _FloatValueT,
+src/click/types.py:705:        dir: t.Literal[1, -1],
+src/click/types.py:706:        open: bool,
+src/click/types.py:707:    ) -> _FloatValueT:
+src/click/types.py:708:        """Find the valid value to clamp to bound in the given
+src/click/types.py:709:        direction.
+src/click/types.py:711:        :param bound: The boundary value.
+src/click/types.py:712:        :param dir: 1 or -1 indicating the direction to move.
+src/click/types.py:713:        :param open: If true, the range does not include the bound.
+src/click/types.py:714:        """
+src/click/types.py:715:        ...
+src/click/types.py:717:    def _describe_range(self) -> str:
+src/click/types.py:718:        """Describe the range for use in help text."""
+src/click/types.py:719:        if self.min is None:
+src/click/types.py:720:            op = "<" if self.max_open else "<="
+src/click/types.py:721:            return f"x{op}{self.max}"
+src/click/types.py:723:        if self.max is None:
+src/click/types.py:724:            op = ">" if self.min_open else ">="
+src/click/types.py:725:            return f"x{op}{self.min}"
+src/click/types.py:727:        lop = "<" if self.min_open else "<="
+src/click/types.py:728:        rop = "<" if self.max_open else "<="
+src/click/types.py:729:        return f"{self.min}{lop}x{rop}{self.max}"
+src/click/types.py:731:    def __repr__(self) -> str:
+src/click/types.py:732:        clamp = " clamped" if self.clamp else ""
+src/click/types.py:733:        return f"<{type(self).__name__} {self._describe_range()}{clamp}>"
+src/click/types.py:736:class IntParamType(_NumberParamTypeBase[t.SupportsInt | t.SupportsIndex, int]):
+src/click/types.py:737:    name = "integer"
+src/click/types.py:738:    _number_class = int
+src/click/types.py:740:    def __repr__(self) -> str:
+src/click/types.py:741:        return "INT"
+src/click/types.py:744:class IntRange(_NumberRangeBase[int, int], IntParamType):
+src/click/types.py:745:    """Restrict an :data:`click.INT` value to a range of accepted
+src/click/types.py:746:    values. See :ref:`ranges`.
+src/click/types.py:748:    If ``min`` or ``max`` are not passed, any value is accepted in that
+src/click/types.py:749:    direction. If ``min_open`` or ``max_open`` are enabled, the
+src/click/types.py:750:    corresponding boundary is not included in the range.
+src/click/types.py:752:    If ``clamp`` is enabled, a value outside the range is clamped to the
+src/click/types.py:753:    boundary instead of failing.
+src/click/types.py:755:    .. versionchanged:: 8.0
+src/click/types.py:756:        Added the ``min_open`` and ``max_open`` parameters.
+src/click/types.py:757:    """
+src/click/types.py:759:    name = "integer range"
+src/click/types.py:761:    def _clamp(self, bound: int, dir: t.Literal[1, -1], open: bool) -> int:
+src/click/types.py:762:        if not open:
+src/click/types.py:763:            return bound
+src/click/types.py:765:        return bound + dir
+src/click/types.py:768:class FloatParamType(_NumberParamTypeBase[t.SupportsFloat | t.SupportsIndex, float]):
+src/click/types.py:769:    name = "float"
+src/click/types.py:770:    _number_class = float
+src/click/types.py:772:    def __repr__(self) -> str:
+src/click/types.py:773:        return "FLOAT"
+src/click/types.py:776:class FloatRange(_NumberRangeBase[float, float], FloatParamType):
+src/click/types.py:777:    """Restrict a :data:`click.FLOAT` value to a range of accepted
+src/click/types.py:778:    values. See :ref:`ranges`.
+src/click/types.py:780:    If ``min`` or ``max`` are not passed, any value is accepted in that
+src/click/types.py:781:    direction. If ``min_open`` or ``max_open`` are enabled, the
+src/click/types.py:782:    corresponding boundary is not included in the range.
+src/click/types.py:784:    If ``clamp`` is enabled, a value outside the range is clamped to the
+src/click/types.py:785:    boundary instead of failing. This is not supported if either
+src/click/types.py:786:    boundary is marked ``open``.
+src/click/types.py:788:    .. versionchanged:: 8.0
+src/click/types.py:789:        Added the ``min_open`` and ``max_open`` parameters.
+src/click/types.py:790:    """
+src/click/types.py:792:    name = "float range"
+src/click/types.py:794:    def __init__(
+src/click/types.py:795:        self,
+src/click/types.py:796:        min: float | None = None,
+src/click/types.py:797:        max: float | None = None,
+src/click/types.py:798:        min_open: bool = False,
+src/click/types.py:799:        max_open: bool = False,
+src/click/types.py:800:        clamp: bool = False,
+src/click/types.py:801:    ) -> None:
+src/click/types.py:802:        super().__init__(
+src/click/types.py:803:            min=min, max=max, min_open=min_open, max_open=max_open, clamp=clamp
+src/click/types.py:804:        )
+src/click/types.py:806:        if (min_open or max_open) and clamp:
+src/click/types.py:807:            raise TypeError("Clamping is not supported for open bounds.")
+src/click/types.py:809:    def _clamp(self, bound: float, dir: t.Literal[1, -1], open: bool) -> float:
+src/click/types.py:810:        if not open:
+src/click/types.py:811:            return bound
+src/click/types.py:813:        # Could use math.nextafter here, but clamping an
+src/click/types.py:814:        # open float range doesn't seem to be particularly useful. It's
+src/click/types.py:815:        # left up to the user to write a callback to do it if needed.
+src/click/types.py:816:        raise RuntimeError("Clamping is not supported for open bounds.")
+src/click/types.py:819:class BoolParamType(ParamType[bool]):
+src/click/types.py:820:    name = "boolean"
+src/click/types.py:822:    bool_states: dict[str, bool] = {
+src/click/types.py:823:        "1": True,
+src/click/types.py:824:        "0": False,
+src/click/types.py:825:        "yes": True,
+src/click/types.py:826:        "no": False,
+src/click/types.py:827:        "true": True,
+src/click/types.py:828:        "false": False,
+src/click/types.py:829:        "on": True,
+src/click/types.py:830:        "off": False,
+src/click/types.py:831:        "t": True,
+src/click/types.py:832:        "f": False,
+src/click/types.py:833:        "y": True,
+src/click/types.py:834:        "n": False,
+src/click/types.py:835:        # Absence of value is considered False.
+src/click/types.py:836:        "": False,
+src/click/types.py:837:    }
+src/click/types.py:838:    """A mapping of string values to boolean states.
+src/click/types.py:840:    Mapping is inspired by :py:attr:`configparser.ConfigParser.BOOLEAN_STATES`
+src/click/types.py:841:    and extends it.
+src/click/types.py:843:    .. caution::
+src/click/types.py:844:        String values are lower-cased, as the ``str_to_bool`` comparison function
+src/click/types.py:845:        below is case-insensitive.
+src/click/types.py:847:    .. warning::
+src/click/types.py:848:        The mapping is not exhaustive, and does not cover all possible boolean strings
+src/click/types.py:849:        representations. It will remains as it is to avoid endless bikeshedding.
+src/click/types.py:851:        Future work my be considered to make this mapping user-configurable from public
+src/click/types.py:852:        API.
+src/click/types.py:853:    """
+src/click/types.py:855:    @staticmethod
+src/click/types.py:856:    def str_to_bool(value: str | bool) -> bool | None:
+src/click/types.py:857:        """Convert a string to a boolean value.
+src/click/types.py:859:        If the value is already a boolean, it is returned as-is. If the value is a
+src/click/types.py:860:        string, it is stripped of whitespaces and lower-cased, then checked against
+src/click/types.py:861:        the known boolean states pre-defined in the `BoolParamType.bool_states` mapping
+src/click/types.py:862:        above.
+src/click/types.py:864:        Returns `None` if the value does not match any known boolean state.
+src/click/types.py:865:        """
+src/click/types.py:866:        if isinstance(value, bool):
+src/click/types.py:867:            return value
+src/click/types.py:868:        return BoolParamType.bool_states.get(value.strip().lower())
+src/click/types.py:870:    def convert(
+src/click/types.py:871:        self, value: t.Any, param: Parameter | None, ctx: Context | None
+src/click/types.py:872:    ) -> bool:
+src/click/types.py:873:        normalized = self.str_to_bool(value)
+src/click/types.py:874:        if normalized is None:
+src/click/types.py:875:            self.fail(
+src/click/types.py:876:                _(
+src/click/types.py:877:                    "{value!r} is not a valid boolean. Recognized values: {states}"
+src/click/types.py:878:                ).format(value=value, states=", ".join(sorted(self.bool_states))),
+src/click/types.py:879:                param,
+src/click/types.py:880:                ctx,
+src/click/types.py:881:            )
+src/click/types.py:882:        return normalized
+src/click/types.py:884:    def __repr__(self) -> str:
+src/click/types.py:885:        return "BOOL"
+src/click/types.py:888:class UUIDParameterType(ParamType[uuid.UUID]):
+src/click/types.py:889:    name = "uuid"
+src/click/types.py:891:    def convert(
+src/click/types.py:892:        self, value: uuid.UUID | str, param: Parameter | None, ctx: Context | None
+src/click/types.py:893:    ) -> uuid.UUID:
+src/click/types.py:894:        if isinstance(value, uuid.UUID):
+src/click/types.py:895:            return value
+src/click/types.py:897:        value = value.strip()
+src/click/types.py:899:        try:
+src/click/types.py:900:            return uuid.UUID(value)
+src/click/types.py:901:        except ValueError:
+src/click/types.py:902:            self.fail(
+src/click/types.py:903:                _("{value!r} is not a valid UUID.").format(value=value), param, ctx
+src/click/types.py:904:            )
+src/click/types.py:906:    def __repr__(self) -> str:
+src/click/types.py:907:        return "UUID"
+src/click/types.py:910:class FileInfoDict(ParamTypeInfoDict):
+src/click/types.py:911:    mode: str
+src/click/types.py:912:    encoding: str | None
+src/click/types.py:915:class File(ParamType[t.IO[t.Any]]):
+src/click/types.py:916:    """Declares a parameter to be a file for reading or writing.  The file
+src/click/types.py:917:    is automatically closed once the context tears down (after the command
+src/click/types.py:918:    finished working).
+src/click/types.py:920:    Files can be opened for reading or writing.  The special value ``-``
+src/click/types.py:921:    indicates stdin or stdout depending on the mode.
+src/click/types.py:923:    By default, the file is opened for reading text data, but it can also be
+src/click/types.py:924:    opened in binary mode or for writing.  The encoding parameter can be used
+src/click/types.py:925:    to force a specific encoding.
+src/click/types.py:927:    The `lazy` flag controls if the file should be opened immediately or upon
+src/click/types.py:928:    first IO. The default is to be non-lazy for standard input and output
+src/click/types.py:929:    streams as well as files opened for reading, `lazy` otherwise. When opening a
+src/click/types.py:930:    file lazily for reading, it is still opened temporarily for validation, but
+src/click/types.py:931:    will not be held open until first IO. lazy is mainly useful when opening
+src/click/types.py:932:    for writing to avoid creating the file until it is needed.
+src/click/types.py:934:    Files can also be opened atomically in which case all writes go into a
+src/click/types.py:935:    separate file in the same folder and upon completion the file will
+src/click/types.py:936:    be moved over to the original location.  This is useful if a file
+src/click/types.py:937:    regularly read by other users is modified.
+src/click/types.py:939:    See :ref:`file-args` for more information.
+src/click/types.py:941:    .. versionchanged:: 2.0
+src/click/types.py:942:        Added the ``atomic`` parameter.
+src/click/types.py:943:    """
+src/click/types.py:945:    name = "filename"
+src/click/types.py:946:    envvar_list_splitter: t.ClassVar[str] = os.path.pathsep
+src/click/types.py:948:    mode: str
+src/click/types.py:949:    encoding: str | None
+src/click/types.py:950:    errors: str | None
+src/click/types.py:951:    lazy: bool | None
+src/click/types.py:952:    atomic: bool
+src/click/types.py:954:    def __init__(
+src/click/types.py:955:        self,
+src/click/types.py:956:        mode: str = "r",
+src/click/types.py:957:        encoding: str | None = None,
+src/click/types.py:958:        errors: str | None = "strict",
+src/click/types.py:959:        lazy: bool | None = None,
+src/click/types.py:960:        atomic: bool = False,
+src/click/types.py:961:    ) -> None:
+src/click/types.py:962:        self.mode = mode
+src/click/types.py:963:        self.encoding = encoding
+src/click/types.py:964:        self.errors = errors
+src/click/types.py:965:        self.lazy = lazy
+src/click/types.py:966:        self.atomic = atomic
+src/click/types.py:968:    def to_info_dict(self) -> FileInfoDict:
+src/click/types.py:969:        return {
+src/click/types.py:970:            "mode": self.mode,
+src/click/types.py:971:            "encoding": self.encoding,
+src/click/types.py:972:            **super().to_info_dict(),
+src/click/types.py:973:        }
+src/click/types.py:975:    def resolve_lazy_flag(self, value: str | os.PathLike[str]) -> bool:
+src/click/types.py:976:        if self.lazy is not None:
+src/click/types.py:977:            return self.lazy
+src/click/types.py:978:        if os.fspath(value) == "-":
+src/click/types.py:979:            return False
+src/click/types.py:980:        elif "w" in self.mode:
+src/click/types.py:981:            return True
+src/click/types.py:982:        return False
+src/click/types.py:984:    def convert(
+src/click/types.py:985:        self,
+src/click/types.py:986:        value: str | os.PathLike[str] | t.IO[t.Any],
+src/click/types.py:987:        param: Parameter | None,
+src/click/types.py:988:        ctx: Context | None,
+src/click/types.py:989:    ) -> t.IO[t.Any]:
+src/click/types.py:990:        if _is_file_like(value):
+src/click/types.py:991:            return value
+src/click/types.py:993:        try:
+src/click/types.py:994:            lazy = self.resolve_lazy_flag(value)
+src/click/types.py:996:            if lazy:
+src/click/types.py:997:                lf = _LazyFile(
+src/click/types.py:998:                    value, self.mode, self.encoding, self.errors, atomic=self.atomic
+src/click/types.py:999:                )
+src/click/types.py:1001:                if ctx is not None:
+src/click/types.py:1002:                    ctx.call_on_close(lf.close_intelligently)
+src/click/types.py:1004:                return t.cast("t.IO[t.Any]", lf)
+src/click/types.py:1006:            f, should_close = open_stream(
+src/click/types.py:1007:                value, self.mode, self.encoding, self.errors, atomic=self.atomic
+src/click/types.py:1008:            )
+src/click/types.py:1010:            # If a context is provided, we automatically close the file
+src/click/types.py:1011:            # at the end of the context execution (or flush out).  If a
+src/click/types.py:1012:            # context does not exist, it's the caller's responsibility to
+src/click/types.py:1013:            # properly close the file.  This for instance happens when the
+src/click/types.py:1014:            # type is used with prompts.
+src/click/types.py:1015:            if ctx is not None:
+src/click/types.py:1016:                if should_close:
+src/click/types.py:1017:                    ctx.call_on_close(_safecall(f.close))
+src/click/types.py:1018:                else:
+src/click/types.py:1019:                    ctx.call_on_close(_safecall(f.flush))
+src/click/types.py:1021:            return f
+src/click/types.py:1022:        except OSError as e:
+src/click/types.py:1023:            self.fail(
+src/click/types.py:1024:                f"'{format_filename(value)}': {e.strerror}",
+src/click/types.py:1025:                param,
+src/click/types.py:1026:                ctx,
+src/click/types.py:1027:            )
+src/click/types.py:1029:    def shell_complete(
+src/click/types.py:1030:        self, ctx: Context, param: Parameter, incomplete: str
+src/click/types.py:1031:    ) -> list[CompletionItem]:
+src/click/types.py:1032:        """Return a special completion marker that tells the completion
+src/click/types.py:1033:        system to use the shell to provide file path completions.
+src/click/types.py:1035:        :param ctx: Invocation context for this command.
+src/click/types.py:1036:        :param param: The parameter that is requesting completion.
+src/click/types.py:1037:        :param incomplete: Value being completed. May be empty.
+src/click/types.py:1039:        .. versionadded:: 8.0
+src/click/types.py:1040:        """
+src/click/types.py:1041:        from click.shell_completion import CompletionItem
+src/click/types.py:1043:        return [CompletionItem(incomplete, type="file")]
+src/click/types.py:1046:def _is_file_like(value: t.Any) -> te.TypeIs[t.IO[t.Any]]:
+src/click/types.py:1047:    return hasattr(value, "read") or hasattr(value, "write")
+src/click/types.py:1050:class PathInfoDict(ParamTypeInfoDict):
+src/click/types.py:1051:    exists: bool
+src/click/types.py:1052:    file_okay: bool
+src/click/types.py:1053:    dir_okay: bool
+src/click/types.py:1054:    writable: bool
+src/click/types.py:1055:    readable: bool
+src/click/types.py:1056:    allow_dash: bool
+src/click/types.py:1059:class Path(ParamType[_PathT_co, str | os.PathLike[str]], t.Generic[_PathT_co]):
+src/click/types.py:1060:    """The ``Path`` type is similar to the :class:`File` type, but
+src/click/types.py:1061:    returns the filename instead of an open file. Various checks can be
+src/click/types.py:1062:    enabled to validate the type of file and permissions.
+src/click/types.py:1064:    :param exists: The file or directory needs to exist for the value to
+src/click/types.py:1065:        be valid. If this is not set to ``True``, and the file does not
+src/click/types.py:1066:        exist, then all further checks are silently skipped.
+src/click/types.py:1067:    :param file_okay: Allow a file as a value.
+src/click/types.py:1068:    :param dir_okay: Allow a directory as a value.
+src/click/types.py:1069:    :param readable: if true, a readable check is performed.
+src/click/types.py:1070:    :param writable: if true, a writable check is performed.
+src/click/types.py:1071:    :param executable: if true, an executable check is performed.
+src/click/types.py:1072:    :param resolve_path: Make the value absolute and resolve any
+src/click/types.py:1073:        symlinks. A ``~`` is not expanded, as this is supposed to be
+src/click/types.py:1074:        done by the shell only.
+src/click/types.py:1075:    :param allow_dash: Allow a single dash as a value, which indicates
+src/click/types.py:1076:        a standard stream (but does not open it). Use
+src/click/types.py:1077:        :func:`~click.open_file` to handle opening this value.
+src/click/types.py:1078:    :param path_type: Convert the incoming path value to this type. If
+src/click/types.py:1079:        ``None``, keep Python's default, which is ``str``. Useful to
+src/click/types.py:1080:        convert to :class:`pathlib.Path`.
+src/click/types.py:1082:    .. versionchanged:: 8.5.1
+src/click/types.py:1083:        Reveal the actual type of the value as converted from raw input.
+src/click/types.py:1085:    .. versionchanged:: 8.1
+src/click/types.py:1086:        Added the ``executable`` parameter.
+src/click/types.py:1088:    .. versionchanged:: 8.0
+src/click/types.py:1089:        Allow passing ``path_type=pathlib.Path``.
+src/click/types.py:1091:    .. versionchanged:: 6.0
+src/click/types.py:1092:        Added the ``allow_dash`` parameter.
+src/click/types.py:1093:    """
+src/click/types.py:1095:    envvar_list_splitter: t.ClassVar[str] = os.path.pathsep
+src/click/types.py:1097:    exists: bool
+src/click/types.py:1098:    file_okay: bool
+src/click/types.py:1099:    dir_okay: bool
+src/click/types.py:1100:    readable: bool
+src/click/types.py:1101:    writable: bool
+src/click/types.py:1102:    executable: bool
+src/click/types.py:1103:    resolve_path: bool
+src/click/types.py:1104:    allow_dash: bool
+src/click/types.py:1105:    name: str
+src/click/types.py:1107:    def __init__(
+src/click/types.py:1108:        self,
+src/click/types.py:1109:        exists: bool = False,
+src/click/types.py:1110:        file_okay: bool = True,
+src/click/types.py:1111:        dir_okay: bool = True,
+src/click/types.py:1112:        writable: bool = False,
+src/click/types.py:1113:        readable: bool = True,
+src/click/types.py:1114:        resolve_path: bool = False,
+src/click/types.py:1115:        allow_dash: bool = False,
+src/click/types.py:1116:        path_type: type[_PathT_co] | None = None,
+src/click/types.py:1117:        executable: bool = False,
+src/click/types.py:1118:    ) -> None:
+src/click/types.py:1119:        self.exists = exists
+src/click/types.py:1120:        self.file_okay = file_okay
+src/click/types.py:1121:        self.dir_okay = dir_okay
+src/click/types.py:1122:        self.readable = readable
+src/click/types.py:1123:        self.writable = writable
+src/click/types.py:1124:        self.executable = executable
+src/click/types.py:1125:        self.resolve_path = resolve_path
+src/click/types.py:1126:        self.allow_dash = allow_dash
+src/click/types.py:1127:        self.type: type[_PathT_co] | None = path_type
+src/click/types.py:1129:        if self.file_okay and not self.dir_okay:
+src/click/types.py:1130:            self.name = _("file")
+src/click/types.py:1131:        elif self.dir_okay and not self.file_okay:
+src/click/types.py:1132:            self.name = _("directory")
+src/click/types.py:1133:        else:
+src/click/types.py:1134:            self.name = _("path")
+src/click/types.py:1136:    def to_info_dict(self) -> PathInfoDict:
+src/click/types.py:1137:        return {
+src/click/types.py:1138:            "exists": self.exists,
+src/click/types.py:1139:            "file_okay": self.file_okay,
+src/click/types.py:1140:            "dir_okay": self.dir_okay,
+src/click/types.py:1141:            "writable": self.writable,
+src/click/types.py:1142:            "readable": self.readable,
+src/click/types.py:1143:            "allow_dash": self.allow_dash,
+src/click/types.py:1144:            **super().to_info_dict(),
+src/click/types.py:1145:        }
+src/click/types.py:1147:    def coerce_path_result(self, value: str | os.PathLike[str]) -> _PathT_co:
+src/click/types.py:1148:        path_type: type[t.Any] | None = self.type
+src/click/types.py:1149:        rv: t.Any = value
+src/click/types.py:1151:        if path_type is not None and not isinstance(value, path_type):
+src/click/types.py:1152:            if path_type is str:
+src/click/types.py:1153:                rv = os.fsdecode(value)
+src/click/types.py:1154:            elif path_type is bytes:
+src/click/types.py:1155:                rv = os.fsencode(value)
+src/click/types.py:1156:            else:
+src/click/types.py:1157:                rv = path_type(value)
+src/click/types.py:1159:        return t.cast("_PathT_co", rv)
+src/click/types.py:1161:    def convert(
+src/click/types.py:1162:        self,
+src/click/types.py:1163:        value: str | os.PathLike[str],
+src/click/types.py:1164:        param: Parameter | None,
+src/click/types.py:1165:        ctx: Context | None,
+src/click/types.py:1166:    ) -> _PathT_co:
+src/click/types.py:1167:        rv = value
+src/click/types.py:1169:        dash = b"-" if isinstance(rv, bytes) else "-"
+src/click/types.py:1170:        is_dash = self.file_okay and self.allow_dash and rv == dash
+src/click/types.py:1172:        if not is_dash:
+src/click/types.py:1173:            if self.resolve_path:
+src/click/types.py:1174:                rv = os.path.realpath(rv)
+src/click/types.py:1176:            try:
+src/click/types.py:1177:                st = os.stat(rv)
+src/click/types.py:1178:            except OSError:
+src/click/types.py:1179:                if not self.exists:
+src/click/types.py:1180:                    return self.coerce_path_result(rv)
+src/click/types.py:1181:                self.fail(
+src/click/types.py:1182:                    _("{name} {filename!r} does not exist.").format(
+src/click/types.py:1183:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1184:                    ),
+src/click/types.py:1185:                    param,
+src/click/types.py:1186:                    ctx,
+src/click/types.py:1187:                )
+src/click/types.py:1189:            if not self.file_okay and stat.S_ISREG(st.st_mode):
+src/click/types.py:1190:                self.fail(
+src/click/types.py:1191:                    _("{name} {filename!r} is a file.").format(
+src/click/types.py:1192:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1193:                    ),
+src/click/types.py:1194:                    param,
+src/click/types.py:1195:                    ctx,
+src/click/types.py:1196:                )
+src/click/types.py:1197:            if not self.dir_okay and stat.S_ISDIR(st.st_mode):
+src/click/types.py:1198:                self.fail(
+src/click/types.py:1199:                    _("{name} {filename!r} is a directory.").format(
+src/click/types.py:1200:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1201:                    ),
+src/click/types.py:1202:                    param,
+src/click/types.py:1203:                    ctx,
+src/click/types.py:1204:                )
+src/click/types.py:1206:            if self.readable and not os.access(rv, os.R_OK):
+src/click/types.py:1207:                self.fail(
+src/click/types.py:1208:                    _("{name} {filename!r} is not readable.").format(
+src/click/types.py:1209:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1210:                    ),
+src/click/types.py:1211:                    param,
+src/click/types.py:1212:                    ctx,
+src/click/types.py:1213:                )
+src/click/types.py:1215:            if self.writable and not os.access(rv, os.W_OK):
+src/click/types.py:1216:                self.fail(
+src/click/types.py:1217:                    _("{name} {filename!r} is not writable.").format(
+src/click/types.py:1218:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1219:                    ),
+src/click/types.py:1220:                    param,
+src/click/types.py:1221:                    ctx,
+src/click/types.py:1222:                )
+src/click/types.py:1224:            if self.executable and not os.access(value, os.X_OK):
+src/click/types.py:1225:                self.fail(
+src/click/types.py:1226:                    _("{name} {filename!r} is not executable.").format(
+src/click/types.py:1227:                        name=self.name.title(), filename=format_filename(value)
+src/click/types.py:1228:                    ),
+src/click/types.py:1229:                    param,
+src/click/types.py:1230:                    ctx,
+src/click/types.py:1231:                )
+src/click/types.py:1233:        return self.coerce_path_result(rv)
+src/click/types.py:1235:    def shell_complete(
+src/click/types.py:1236:        self, ctx: Context, param: Parameter, incomplete: str
+src/click/types.py:1237:    ) -> list[CompletionItem]:
+src/click/types.py:1238:        """Return a special completion marker that tells the completion
+src/click/types.py:1239:        system to use the shell to provide path completions for only
+src/click/types.py:1240:        directories or any paths.
+src/click/types.py:1242:        :param ctx: Invocation context for this command.
+src/click/types.py:1243:        :param param: The parameter that is requesting completion.
+src/click/types.py:1244:        :param incomplete: Value being completed. May be empty.
+src/click/types.py:1246:        .. versionadded:: 8.0
+src/click/types.py:1247:        """
+src/click/types.py:1248:        from click.shell_completion import CompletionItem
+src/click/types.py:1250:        type = "dir" if self.dir_okay and not self.file_okay else "file"
+src/click/types.py:1251:        return [CompletionItem(incomplete, type=type)]
+src/click/types.py:1254:class TupleInfoDict(ParamTypeInfoDict):
+src/click/types.py:1255:    types: cabc.Sequence[ParamTypeInfoDict]
+src/click/types.py:1258:class Tuple(CompositeParamType[tuple[t.Any, ...]]):
+src/click/types.py:1259:    """The default behavior of Click is to apply a type on a value directly.
+src/click/types.py:1260:    This works well in most cases, except for when `nargs` is set to a fixed
+src/click/types.py:1261:    count and different types should be used for different items.  In this
+src/click/types.py:1262:    case the :class:`Tuple` type can be used.  This type can only be used
+src/click/types.py:1263:    if `nargs` is set to a fixed number.
+src/click/types.py:1265:    For more information see :ref:`tuple-type`.
+src/click/types.py:1267:    This can be selected by using a Python tuple literal as a type.
+src/click/types.py:1269:    :param types: a list of types that should be used for the tuple items.
+src/click/types.py:1270:    """
+src/click/types.py:1272:    def __init__(self, types: cabc.Sequence[type[t.Any] | ParamType[t.Any]]) -> None:
+src/click/types.py:1273:        self.types: cabc.Sequence[ParamType[t.Any]] = [convert_type(ty) for ty in types]
+src/click/types.py:1275:    def to_info_dict(self) -> TupleInfoDict:
+src/click/types.py:1276:        return {
+src/click/types.py:1277:            "types": [ty.to_info_dict() for ty in self.types],
+src/click/types.py:1278:            **super().to_info_dict(),
+src/click/types.py:1279:        }
+src/click/types.py:1281:    @property
+src/click/types.py:1282:    def name(self) -> str:  # type: ignore[override]
+src/click/types.py:1283:        return f"<{' '.join(ty.name for ty in self.types)}>"
+src/click/types.py:1285:    @property
+src/click/types.py:1286:    def arity(self) -> int:  # type: ignore[override]
+src/click/types.py:1287:        return len(self.types)
+src/click/types.py:1289:    def convert(
+src/click/types.py:1290:        self, value: t.Any, param: Parameter | None, ctx: Context | None
+src/click/types.py:1291:    ) -> tuple[t.Any, ...]:
+src/click/types.py:1292:        len_type = len(self.types)
+src/click/types.py:1293:        len_value = len(value)
+src/click/types.py:1295:        if len_value != len_type:
+src/click/types.py:1296:            self.fail(
+src/click/types.py:1297:                ngettext(
+src/click/types.py:1298:                    "{len_type} values are required, but {len_value} was given.",
+src/click/types.py:1299:                    "{len_type} values are required, but {len_value} were given.",
+src/click/types.py:1300:                    len_value,
+src/click/types.py:1301:                ).format(len_type=len_type, len_value=len_value),
+src/click/types.py:1302:                param=param,
+src/click/types.py:1303:                ctx=ctx,
+src/click/types.py:1304:            )
+src/click/types.py:1306:        return tuple(
+src/click/types.py:1307:            ty(x, param, ctx) for ty, x in zip(self.types, value, strict=False)
+src/click/types.py:1308:        )
+src/click/types.py:1311:def _guess_type(
+src/click/types.py:1312:    ty: type[t.Any] | ParamType[t.Any] | None,
+src/click/types.py:1313:    default: t.Any | None,
+src/click/types.py:1314:) -> type[t.Any] | tuple[type[t.Any], ...] | ParamType[t.Any] | None:
+src/click/types.py:1315:    """Infer a type from *ty* or *default*.
+src/click/types.py:1317:    Returns *ty* unchanged when it is not ``None``.  Otherwise inspects
+src/click/types.py:1318:    *default* to produce a ``type``, a ``tuple`` of types (for tuple
+src/click/types.py:1319:    defaults), or ``None``.
+src/click/types.py:1320:    """
+src/click/types.py:1321:    if ty is not None:
+src/click/types.py:1322:        return ty
+src/click/types.py:1324:    if default is None:
+src/click/types.py:1325:        return None
+src/click/types.py:1327:    if not isinstance(default, (tuple, list)):
+src/click/types.py:1328:        return type(default)
+src/click/types.py:1330:    # If the default is empty, return None so convert_type falls
+src/click/types.py:1331:    # through to STRING.
+src/click/types.py:1332:    if not default:
+src/click/types.py:1333:        return None
+src/click/types.py:1335:    item = default[0]
+src/click/types.py:1337:    # A sequence of iterables needs to detect the inner types.
+src/click/types.py:1338:    # Can't call convert_type recursively because that would
+src/click/types.py:1339:    # incorrectly unwind the tuple to a single type.
+src/click/types.py:1340:    if isinstance(item, (tuple, list)):
+src/click/types.py:1341:        return tuple(map(type, item))
+src/click/types.py:1343:    return type(item)
+src/click/types.py:1346:@t.overload
+src/click/types.py:1347:def convert_type(ty: None, default: None = None) -> StringParamType: ...
+src/click/types.py:1348:@t.overload
+src/click/types.py:1349:def convert_type(
+src/click/types.py:1350:    ty: type | ParamType[t.Any], default: t.Any | None = None
+src/click/types.py:1351:) -> ParamType[t.Any]: ...
+src/click/types.py:1352:@t.overload
+src/click/types.py:1353:def convert_type(
+src/click/types.py:1354:    ty: t.Any | None, default: t.Any | None = None
+src/click/types.py:1355:) -> ParamType[t.Any]: ...
+src/click/types.py:1356:def convert_type(
+src/click/types.py:1357:    ty: t.Any | None = None, default: t.Any | None = None
+src/click/types.py:1358:) -> ParamType[t.Any]:
+src/click/types.py:1359:    """Find the most appropriate :class:`ParamType` for the given Python
+src/click/types.py:1360:    type. If the type isn't provided, it can be inferred from a default
+src/click/types.py:1361:    value.
+src/click/types.py:1362:    """
+src/click/types.py:1363:    guessed = _guess_type(ty, default)
+src/click/types.py:1364:    is_guessed = guessed is not ty
+src/click/types.py:1366:    if isinstance(guessed, tuple):
+src/click/types.py:1367:        return Tuple(guessed)
+src/click/types.py:1369:    if isinstance(guessed, ParamType):
+src/click/types.py:1370:        return guessed
+src/click/types.py:1372:    if guessed is str or guessed is None:
+src/click/types.py:1373:        return STRING
+src/click/types.py:1375:    if guessed is int:
+src/click/types.py:1376:        return INT
+src/click/types.py:1378:    if guessed is float:
+src/click/types.py:1379:        return FLOAT
+src/click/types.py:1381:    if guessed is bool:
+src/click/types.py:1382:        return BOOL
+src/click/types.py:1384:    if is_guessed:
+src/click/types.py:1385:        return STRING
+src/click/types.py:1387:    if __debug__:
+src/click/types.py:1388:        try:
+src/click/types.py:1389:            if issubclass(guessed, ParamType):
+src/click/types.py:1390:                raise AssertionError(
+src/click/types.py:1391:                    f"Attempted to use an uninstantiated parameter type ({guessed})."
+src/click/types.py:1392:                )
+src/click/types.py:1393:        except TypeError:
+src/click/types.py:1394:            # guessed is an instance (correct), so issubclass fails.
+src/click/types.py:1395:            pass
+src/click/types.py:1397:    return FuncParamType(guessed)
+src/click/types.py:1400:#: A dummy parameter type that just does nothing.  From a user's
+src/click/types.py:1401:#: perspective this appears to just be the same as `STRING` but
+src/click/types.py:1402:#: internally no string conversion takes place if the input was bytes.
+src/click/types.py:1403:#: This is usually useful when working with file paths as they can
+src/click/types.py:1404:#: appear in bytes and unicode.
+src/click/types.py:1405:#:
+src/click/types.py:1406:#: For path related uses the :class:`Path` type is a better choice but
+src/click/types.py:1407:#: there are situations where an unprocessed type is useful which is why
+src/click/types.py:1408:#: it is provided.
+src/click/types.py:1409:#:
+src/click/types.py:1410:#: .. versionadded:: 4.0
+src/click/types.py:1411:UNPROCESSED: t.Final[UnprocessedParamType] = UnprocessedParamType()
+src/click/types.py:1413:#: A unicode string parameter type which is the implicit default.  This
+src/click/types.py:1414:#: can also be selected by using ``str`` as type.
+src/click/types.py:1415:STRING: t.Final[StringParamType] = StringParamType()
+src/click/types.py:1417:#: An integer parameter.  This can also be selected by using ``int`` as
+src/click/types.py:1418:#: type.
+src/click/types.py:1419:INT: t.Final[IntParamType] = IntParamType()
+src/click/types.py:1421:#: A floating point value parameter.  This can also be selected by using
+src/click/types.py:1422:#: ``float`` as type.
+src/click/types.py:1423:FLOAT: t.Final[FloatParamType] = FloatParamType()
+src/click/types.py:1425:#: A boolean parameter.  This is the default for boolean flags.  This can
+src/click/types.py:1426:#: also be selected by using ``bool`` as a type.
+src/click/types.py:1427:BOOL: t.Final[BoolParamType] = BoolParamType()
+src/click/types.py:1429:#: A UUID parameter.
+src/click/types.py:1430:UUID: t.Final[UUIDParameterType] = UUIDParameterType()
+src/click/types.py:1433:class OptionHelpExtra(t.TypedDict, total=False):
+src/click/types.py:1434:    envvars: tuple[str, ...]
+src/click/types.py:1435:    default: str
+src/click/types.py:1436:    range: str
+src/click/types.py:1437:    required: str

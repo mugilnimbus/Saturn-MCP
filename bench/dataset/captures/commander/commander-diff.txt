@@ -1,0 +1,13 @@
+diff --git a<checkout>/bench/dataset/sources/commander/lib/option.js b<checkout>/var/bench/acquisition/commander-negation.js
+index 4b4daaf..e1bf8e2 100644
+--- a<checkout>/bench/dataset/sources/commander/lib/option.js	
++++ b<checkout>/var/bench/acquisition/commander-negation.js	
+@@ -22,7 +22,7 @@ export class Option {
+     this.long = optionFlags.longFlag;
+     this.negate = false;
+     if (this.long) {
+-      this.negate = this.long.startsWith('--no-');
++      this.negate = this.long.startsWith('--disable-');
+     }
+     this.defaultValue = undefined;
+     this.defaultValueDescription = undefined;

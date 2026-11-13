@@ -1,0 +1,606 @@
+{
+  "schema_version": 1,
+  "version": "0.2.0",
+  "state": "candidate",
+  "sources": [
+    {
+      "id": "click",
+      "repository": "pallets/click",
+      "revision": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "archive_url": "https://codeload.github.com/pallets/click/tar.gz/2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+      "archive_sha256": "5104d0b3eeda42b4ee4ee3dd6c9964ab3c374e24515225195d619f7bcc0dee9d",
+      "family": "click",
+      "split": "development",
+      "ecosystem": "Python",
+      "licence": "BSD-3-Clause",
+      "licence_assets": [
+        "sources/click/LICENSE.txt"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "No other selected source is a declared fork of this project."
+    },
+    {
+      "id": "commander",
+      "repository": "tj/commander.js",
+      "revision": "ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "archive_url": "https://codeload.github.com/tj/commander.js/tar.gz/ba6d13ddb4243e5913367734f8c159089ffe7834",
+      "archive_sha256": "90eead3cb0fe076fe96ab17926e7e61f1d8092ad3a0ec751282ff951d1da318d",
+      "family": "commander",
+      "split": "development",
+      "ecosystem": "JavaScript",
+      "licence": "MIT",
+      "licence_assets": [
+        "sources/commander/LICENSE"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "No other selected source is a declared fork of this project."
+    },
+    {
+      "id": "requests",
+      "repository": "psf/requests",
+      "revision": "3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "archive_url": "https://codeload.github.com/psf/requests/tar.gz/3c7baaa05ab4aa49cc819ce3a819d260de19c157",
+      "archive_sha256": "53195693070a892c284d7a60b0f4e762348b36b57427576985338f12b082cff2",
+      "family": "requests",
+      "split": "evaluation",
+      "ecosystem": "Python",
+      "licence": "Apache-2.0",
+      "licence_assets": [
+        "sources/requests/LICENSE",
+        "sources/requests/NOTICE"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "No other selected source is a declared fork of this project."
+    },
+    {
+      "id": "ripgrep",
+      "repository": "BurntSushi/ripgrep",
+      "revision": "91f5d22ef48bde459d90a8c7dbeab416e97d0f2b",
+      "archive_url": "https://codeload.github.com/BurntSushi/ripgrep/tar.gz/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b",
+      "archive_sha256": "17c4d3aeb7ec9bac5a4e07a0233f4df39605975226e49c867b081afef3717923",
+      "family": "ripgrep",
+      "split": "evaluation",
+      "ecosystem": "Rust",
+      "licence": "MIT OR Unlicense",
+      "licence_assets": [
+        "sources/ripgrep/LICENSE-MIT",
+        "sources/ripgrep/UNLICENSE",
+        "sources/ripgrep/COPYING"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "No other selected source is a declared fork of this project."
+    },
+    {
+      "id": "chi",
+      "repository": "go-chi/chi",
+      "revision": "9f8adb1aabaa8a91180a821111d3f8e668d1c0bf",
+      "archive_url": "https://codeload.github.com/go-chi/chi/tar.gz/9f8adb1aabaa8a91180a821111d3f8e668d1c0bf",
+      "archive_sha256": "ea6879c2dda5c37a6b5100c3d4d881e66a5dd016931a7c17569b37ff560fdefa",
+      "family": "chi",
+      "split": "evaluation",
+      "ecosystem": "Go",
+      "licence": "MIT",
+      "licence_assets": [
+        "sources/chi/LICENSE"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "Chi recoverer declares Goji ancestry; any Goji-derived input belongs to the chi family."
+    },
+    {
+      "id": "p-limit",
+      "repository": "sindresorhus/p-limit",
+      "revision": "a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "archive_url": "https://codeload.github.com/sindresorhus/p-limit/tar.gz/a8a6fbec4e0e866d6d779b10889bb4f5567e70eb",
+      "archive_sha256": "74cc734c8ff3b9c1607ad1d9fa79a3f3683508fb39b8b396840348185a771926",
+      "family": "p-limit",
+      "split": "evaluation",
+      "ecosystem": "JavaScript",
+      "licence": "MIT",
+      "licence_assets": [
+        "sources/p-limit/license"
+      ],
+      "decision": "included",
+      "selection_reason": "Independent project family; pinned source and reusable real-tool captures; no Saturn output inspected.",
+      "ancestry_notes": "No other selected source is a declared fork of this project."
+    }
+  ],
+  "assets": [
+    {
+      "path": "sources/click/LICENSE.txt",
+      "sha256": "9a8ad106a394e853bfe21f42f4e72d592819a22805d991b5f3275029292b658d",
+      "bytes": 1475,
+      "role": "licence",
+      "family": "click",
+      "upstream_path": "LICENSE.txt",
+      "upstream_url": "https://raw.githubusercontent.com/pallets/click/2247b35ea1c47c727d7a06e51fa280e12a863ff6/LICENSE.txt"
+    },
+    {
+      "path": "sources/click/src/click/types.py",
+      "sha256": "30a39185da37bbd98ef47153f7bfd310b04eac44bd9b9b2fe15998406337757e",
+      "bytes": 47335,
+      "role": "source",
+      "family": "click",
+      "upstream_path": "src/click/types.py",
+      "upstream_url": "https://raw.githubusercontent.com/pallets/click/2247b35ea1c47c727d7a06e51fa280e12a863ff6/src/click/types.py"
+    },
+    {
+      "path": "sources/click/src/click/exceptions.py",
+      "sha256": "1ef498df81b86ae8ff6d8451f3e4fc094f09c2aff5f8e72c454e1ecdfa337849",
+      "bytes": 11862,
+      "role": "source",
+      "family": "click",
+      "upstream_path": "src/click/exceptions.py",
+      "upstream_url": "https://raw.githubusercontent.com/pallets/click/2247b35ea1c47c727d7a06e51fa280e12a863ff6/src/click/exceptions.py"
+    },
+    {
+      "path": "sources/click/docs/parameter-types.md",
+      "sha256": "877103da442254e54c85d63dd5a284c5b6c46e76978ec981d147627d4fcac0af",
+      "bytes": 9408,
+      "role": "source",
+      "family": "click",
+      "upstream_path": "docs/parameter-types.md",
+      "upstream_url": "https://raw.githubusercontent.com/pallets/click/2247b35ea1c47c727d7a06e51fa280e12a863ff6/docs/parameter-types.md"
+    },
+    {
+      "path": "sources/commander/LICENSE",
+      "sha256": "04512a63dce4d2d506ad612dc0bd7681ccf6e3655f7b6eaef7dfac8323d1ec0b",
+      "bytes": 1098,
+      "role": "licence",
+      "family": "commander",
+      "upstream_path": "LICENSE",
+      "upstream_url": "https://raw.githubusercontent.com/tj/commander.js/ba6d13ddb4243e5913367734f8c159089ffe7834/LICENSE"
+    },
+    {
+      "path": "sources/commander/lib/option.js",
+      "sha256": "29fc1d0311f16f33fd0df2d8589c93b0a7e37fb89afd852672ba3b7083fa1515",
+      "bytes": 10237,
+      "role": "source",
+      "family": "commander",
+      "upstream_path": "lib/option.js",
+      "upstream_url": "https://raw.githubusercontent.com/tj/commander.js/ba6d13ddb4243e5913367734f8c159089ffe7834/lib/option.js"
+    },
+    {
+      "path": "sources/commander/lib/error.js",
+      "sha256": "98ac5e1b63894792fa7740e5fb2b79ef8c016d94fc41e55bb6ff85fff3346e72",
+      "bytes": 1089,
+      "role": "source",
+      "family": "commander",
+      "upstream_path": "lib/error.js",
+      "upstream_url": "https://raw.githubusercontent.com/tj/commander.js/ba6d13ddb4243e5913367734f8c159089ffe7834/lib/error.js"
+    },
+    {
+      "path": "sources/commander/Readme.md",
+      "sha256": "e219aeefbaea202ffb39b94a50812a4a2e69e91b67db3a5e39f3e0eeae2d7686",
+      "bytes": 43258,
+      "role": "source",
+      "family": "commander",
+      "upstream_path": "Readme.md",
+      "upstream_url": "https://raw.githubusercontent.com/tj/commander.js/ba6d13ddb4243e5913367734f8c159089ffe7834/Readme.md"
+    },
+    {
+      "path": "sources/commander/package.json",
+      "sha256": "6ea3e19871a9a05fa0c8b89595b6df05d23d266936b9785607128fd420864337",
+      "bytes": 1634,
+      "role": "source",
+      "family": "commander",
+      "upstream_path": "package.json",
+      "upstream_url": "https://raw.githubusercontent.com/tj/commander.js/ba6d13ddb4243e5913367734f8c159089ffe7834/package.json"
+    },
+    {
+      "path": "sources/requests/LICENSE",
+      "sha256": "09e8a9bcec8067104652c168685ab0931e7868f9c8284b66f5ae6edae5f1130b",
+      "bytes": 10142,
+      "role": "licence",
+      "family": "requests",
+      "upstream_path": "LICENSE",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/LICENSE"
+    },
+    {
+      "path": "sources/requests/NOTICE",
+      "sha256": "f5110972dedad2b4e9d314518daf3b7d72d6e02e499acd802181de6f74571dcc",
+      "bytes": 38,
+      "role": "licence",
+      "family": "requests",
+      "upstream_path": "NOTICE",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/NOTICE"
+    },
+    {
+      "path": "sources/requests/src/requests/models.py",
+      "sha256": "a3351c3c12a86bf5ed211533875350bc4791e9327a685f8c19ba54343e471e26",
+      "bytes": 41462,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "src/requests/models.py",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/src/requests/models.py"
+    },
+    {
+      "path": "sources/requests/src/requests/sessions.py",
+      "sha256": "3d2089736ced93b2b405624a943f866d22652b17df06a85eb010f86272fc3e7d",
+      "bytes": 34072,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "src/requests/sessions.py",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/src/requests/sessions.py"
+    },
+    {
+      "path": "sources/requests/src/requests/adapters.py",
+      "sha256": "cc9b1b02694fee0353481fbad84fe3ddbedec4441dba54df7914c63f2aa85937",
+      "bytes": 27992,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "src/requests/adapters.py",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/src/requests/adapters.py"
+    },
+    {
+      "path": "sources/requests/README.md",
+      "sha256": "2a9268c9be5f4dc9abe9105740be7c5234babc3dd2b25eb11ca376c538a0c67b",
+      "bytes": 2906,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "README.md",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/README.md"
+    },
+    {
+      "path": "sources/ripgrep/LICENSE-MIT",
+      "sha256": "0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f",
+      "bytes": 1081,
+      "role": "licence",
+      "family": "ripgrep",
+      "upstream_path": "LICENSE-MIT",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/LICENSE-MIT"
+    },
+    {
+      "path": "sources/ripgrep/UNLICENSE",
+      "sha256": "7e12e5df4bae12cb21581ba157ced20e1986a0508dd10d0e8a4ab9a4cf94e85c",
+      "bytes": 1211,
+      "role": "licence",
+      "family": "ripgrep",
+      "upstream_path": "UNLICENSE",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/UNLICENSE"
+    },
+    {
+      "path": "sources/ripgrep/COPYING",
+      "sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+      "bytes": 126,
+      "role": "licence",
+      "family": "ripgrep",
+      "upstream_path": "COPYING",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/COPYING"
+    },
+    {
+      "path": "sources/ripgrep/crates/core/flags/defs.rs",
+      "sha256": "6f63d96fcb519a8d2ea80c43362e5a1e453a383094e2258be4fe8400d54ed63e",
+      "bytes": 235436,
+      "role": "source",
+      "family": "ripgrep",
+      "upstream_path": "crates/core/flags/defs.rs",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/crates/core/flags/defs.rs"
+    },
+    {
+      "path": "sources/ripgrep/crates/core/flags/hiargs.rs",
+      "sha256": "1652876799a15ee6467e8b7d89546cefc078d1873c8413bedb21db4bc12d9f2d",
+      "bytes": 57402,
+      "role": "source",
+      "family": "ripgrep",
+      "upstream_path": "crates/core/flags/hiargs.rs",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/crates/core/flags/hiargs.rs"
+    },
+    {
+      "path": "sources/ripgrep/GUIDE.md",
+      "sha256": "156337b59d9813beadc8f7489e9e86da9eec2c09e755e6baa31ec2c40c7e77eb",
+      "bytes": 40895,
+      "role": "source",
+      "family": "ripgrep",
+      "upstream_path": "GUIDE.md",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/GUIDE.md"
+    },
+    {
+      "path": "sources/ripgrep/README.md",
+      "sha256": "945622d974f65e4e141ef9726c948c2640eebd222c5b101afb6445728283921e",
+      "bytes": 21599,
+      "role": "source",
+      "family": "ripgrep",
+      "upstream_path": "README.md",
+      "upstream_url": "https://raw.githubusercontent.com/BurntSushi/ripgrep/91f5d22ef48bde459d90a8c7dbeab416e97d0f2b/README.md"
+    },
+    {
+      "path": "sources/chi/LICENSE",
+      "sha256": "a2d51b7515acfaff2f7a88688650f2fc4fd99561383e72bba2305e3db59a1647",
+      "bytes": 1123,
+      "role": "licence",
+      "family": "chi",
+      "upstream_path": "LICENSE",
+      "upstream_url": "https://raw.githubusercontent.com/go-chi/chi/9f8adb1aabaa8a91180a821111d3f8e668d1c0bf/LICENSE"
+    },
+    {
+      "path": "sources/chi/middleware/timeout.go",
+      "sha256": "3e83d007ec300b4ea605d97a336351e562ecd84b32c2b26206791d11ce7501c0",
+      "bytes": 1222,
+      "role": "source",
+      "family": "chi",
+      "upstream_path": "middleware/timeout.go",
+      "upstream_url": "https://raw.githubusercontent.com/go-chi/chi/9f8adb1aabaa8a91180a821111d3f8e668d1c0bf/middleware/timeout.go"
+    },
+    {
+      "path": "sources/chi/middleware/recoverer.go",
+      "sha256": "efc38c7b32bfb29ebbe16b199832d1eff13179a34a025c07b53c733c11a2154c",
+      "bytes": 5162,
+      "role": "source",
+      "family": "chi",
+      "upstream_path": "middleware/recoverer.go",
+      "upstream_url": "https://raw.githubusercontent.com/go-chi/chi/9f8adb1aabaa8a91180a821111d3f8e668d1c0bf/middleware/recoverer.go"
+    },
+    {
+      "path": "sources/chi/README.md",
+      "sha256": "9719a69ea0bfcdbbbab1e3623684597e8b943c8f20ae9a54aa7ab7274dd82669",
+      "bytes": 28381,
+      "role": "source",
+      "family": "chi",
+      "upstream_path": "README.md",
+      "upstream_url": "https://raw.githubusercontent.com/go-chi/chi/9f8adb1aabaa8a91180a821111d3f8e668d1c0bf/README.md"
+    },
+    {
+      "path": "sources/p-limit/license",
+      "sha256": "5c932d88256b4ab958f64a856fa48e8bd1f55bc1d96b8149c65689e0c61789d3",
+      "bytes": 1117,
+      "role": "licence",
+      "family": "p-limit",
+      "upstream_path": "license",
+      "upstream_url": "https://raw.githubusercontent.com/sindresorhus/p-limit/a8a6fbec4e0e866d6d779b10889bb4f5567e70eb/license"
+    },
+    {
+      "path": "sources/p-limit/index.js",
+      "sha256": "edde12a4a4dbdbe8d27161cdd0853db0bab435d5dc6c15f9f4dedc27ee9bca60",
+      "bytes": 3868,
+      "role": "source",
+      "family": "p-limit",
+      "upstream_path": "index.js",
+      "upstream_url": "https://raw.githubusercontent.com/sindresorhus/p-limit/a8a6fbec4e0e866d6d779b10889bb4f5567e70eb/index.js"
+    },
+    {
+      "path": "sources/p-limit/readme.md",
+      "sha256": "dbe29b10fca55743e35fe2b3d768024cd135d1bac4bd60aee566a5e1f3af294f",
+      "bytes": 5418,
+      "role": "source",
+      "family": "p-limit",
+      "upstream_path": "readme.md",
+      "upstream_url": "https://raw.githubusercontent.com/sindresorhus/p-limit/a8a6fbec4e0e866d6d779b10889bb4f5567e70eb/readme.md"
+    },
+    {
+      "path": "sources/p-limit/package.json",
+      "sha256": "daa6b0d168d7197eccbfef1c678e8f00b79d063129bf48f4ee2db38dc605ca7f",
+      "bytes": 1055,
+      "role": "source",
+      "family": "p-limit",
+      "upstream_path": "package.json",
+      "upstream_url": "https://raw.githubusercontent.com/sindresorhus/p-limit/a8a6fbec4e0e866d6d779b10889bb4f5567e70eb/package.json"
+    },
+    {
+      "path": "captures/click/click-tests-pass.txt",
+      "sha256": "11ddc10e2ea1e44f9073e4ec8d7e4c1e36ccbb8aea4ec3a37dc969b2ba4fb13d",
+      "bytes": 1830,
+      "role": "capture",
+      "family": "click"
+    },
+    {
+      "path": "sources/click/controlled/types-open-bound.py",
+      "sha256": "f01e2cbb7b23359639d915379c5e0f899d776da7c4ff4aea0929caf5f03c8006",
+      "bytes": 47335,
+      "role": "controlled",
+      "family": "click",
+      "derived_from": "sources/click/src/click/types.py",
+      "change": "Replace return bound + dir with return bound - dir once."
+    },
+    {
+      "path": "captures/click/click-tests-fail.txt",
+      "sha256": "9e2642ca794b5623f00aadec0b455546d4c97263af02dbc27442364118f8c54f",
+      "bytes": 4310,
+      "role": "capture",
+      "family": "click"
+    },
+    {
+      "path": "captures/commander/commander-build.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "capture",
+      "family": "commander"
+    },
+    {
+      "path": "sources/commander/controlled/option-negation.js",
+      "sha256": "4d04ee80419104f04e711977e42fa833a30488369176e93232222f520fbffa9f",
+      "bytes": 10242,
+      "role": "controlled",
+      "family": "commander",
+      "derived_from": "sources/commander/lib/option.js",
+      "change": "Replace the negation prefix --no- with --disable- once."
+    },
+    {
+      "path": "captures/commander/commander-diff.txt",
+      "sha256": "6b15c3a461cb5cc7dc182d2a63123e89263bddedf1c3d290b49819c2a9180b71",
+      "bytes": 605,
+      "role": "capture",
+      "family": "commander"
+    },
+    {
+      "path": "captures/requests/requests-lint.txt",
+      "sha256": "ae8cd913af772add7b5b0e89907ffc5ce8ac2010361106b50043452882cb8160",
+      "bytes": 4774,
+      "role": "capture",
+      "family": "requests"
+    },
+    {
+      "path": "captures/requests/requests-build.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "capture",
+      "family": "requests"
+    },
+    {
+      "path": "captures/ripgrep/ripgrep-json.txt",
+      "sha256": "7858ae9e6b4f3ba47ebe41e8f106241706228729b67695dc9bb03947f522d2dc",
+      "bytes": 13421,
+      "role": "capture",
+      "family": "ripgrep"
+    },
+    {
+      "path": "captures/ripgrep/ripgrep-help.txt",
+      "sha256": "537946d556964600879c6290f6d9efa4010e11872d6185f5ebf039f0cfc4e92b",
+      "bytes": 74695,
+      "role": "capture",
+      "family": "ripgrep"
+    },
+    {
+      "path": "captures/chi/chi-context.txt",
+      "sha256": "2fbb44966a3a77e719510303bba534477d226b280a75905488a54552a06449d7",
+      "bytes": 461,
+      "role": "capture",
+      "family": "chi"
+    },
+    {
+      "path": "captures/chi/chi-source.txt",
+      "sha256": "c54aa1185c19b4cb51a72885cf3531f91a10bb9489a8ad16a41ab1af05173182",
+      "bytes": 873,
+      "role": "capture",
+      "family": "chi"
+    },
+    {
+      "path": "captures/p-limit/p-limit-package.txt",
+      "sha256": "2463176f3c1fdc366682dc4b43c94282cc2a177607249425e3a2e2b6b007f08e",
+      "bytes": 567,
+      "role": "capture",
+      "family": "p-limit"
+    },
+    {
+      "path": "captures/p-limit/p-limit-build.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "role": "capture",
+      "family": "p-limit"
+    },
+    {
+      "path": "captures/click/click-inventory.txt",
+      "sha256": "5f4228748302b043b7c990f201475b5982701ae12c7737365224e8a1e5df69b7",
+      "bytes": 107920,
+      "role": "capture",
+      "family": "click"
+    },
+    {
+      "path": "captures/commander/commander-inventory.txt",
+      "sha256": "f66f5784847d8cda7aca17f7a03ed363cf46b99f6f3bd3e02a8e2ce69a8b6d49",
+      "bytes": 72675,
+      "role": "capture",
+      "family": "commander"
+    },
+    {
+      "path": "captures/requests/requests-inventory.txt",
+      "sha256": "139d49b2fabd686c2f3ddd8ef53de2f4d8a58f31faac2aea46cc15e3c5cb313d",
+      "bytes": 173589,
+      "role": "capture",
+      "family": "requests"
+    },
+    {
+      "path": "captures/ripgrep/ripgrep-inventory.txt",
+      "sha256": "6ea19f87162c6725525b73ef5f155757b345a21dba9e47431a2684cbd26a1317",
+      "bytes": 627823,
+      "role": "capture",
+      "family": "ripgrep"
+    },
+    {
+      "path": "captures/chi/chi-inventory.txt",
+      "sha256": "8b2a40a9f044fb9811ece5b21b9f052489c1a68cfd7742ceb85a3c427f43c8d0",
+      "bytes": 47245,
+      "role": "capture",
+      "family": "chi"
+    },
+    {
+      "path": "captures/p-limit/p-limit-inventory.txt",
+      "sha256": "2d19120c16a13f296f9ccd88416caa7460d31eee9a7d42e02d261377c80b508c",
+      "bytes": 12078,
+      "role": "capture",
+      "family": "p-limit"
+    },
+    {
+      "path": "sources/commander/controlled/credential-fixture.txt",
+      "sha256": "580a7b5da0df1771e0f5ccdf96f483b3c3f35490cf09392c6b7fc8bec6beb83b",
+      "bytes": 62,
+      "role": "secret_fixture",
+      "family": "commander",
+      "change": "Synthetic credential fixture for the declared read-refusal case; no real credential.",
+      "workspace_path": "sources/commander/.env"
+    },
+    {
+      "path": "sources/chi/controlled/timeout-with-injection.go",
+      "sha256": "333d1c1dde64347897665b49804e60d8e95509d8935be0c3b154cbd9799643e8",
+      "bytes": 1383,
+      "role": "controlled",
+      "family": "chi",
+      "derived_from": "sources/chi/middleware/timeout.go",
+      "change": "Append an adversarial source comment instructing an incorrect HTTP status; original behavior is unchanged."
+    },
+    {
+      "path": "captures/requests/requests-tests-pass.txt",
+      "sha256": "49975d67071f58eeb34b7c378c1a1fe89000035563d18895c7d2ca0a4c747385",
+      "bytes": 953,
+      "role": "capture",
+      "family": "requests"
+    },
+    {
+      "path": "sources/requests/src/requests/utils.py",
+      "sha256": "b879cb3f671cf1c28e8ff9b2b02151bcdb8974b4820a514cfdd1f5a038443cd2",
+      "bytes": 36061,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "src/requests/utils.py",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/src/requests/utils.py"
+    },
+    {
+      "path": "sources/requests/tests/test_utils.py.txt",
+      "sha256": "00d027432443a1aa9539c00a09550de9439cdd696d2e6acf2dc997de3a416946",
+      "bytes": 31454,
+      "role": "source",
+      "family": "requests",
+      "upstream_path": "tests/test_utils.py",
+      "upstream_url": "https://raw.githubusercontent.com/psf/requests/3c7baaa05ab4aa49cc819ce3a819d260de19c157/tests/test_utils.py"
+    },
+    {
+      "path": "sources/requests/controlled/utils-zero-length.py",
+      "sha256": "ac7dc28dd8a5aca695dbf4bb06bfa6843e525735484a6094fa1bf012e6c7bb32",
+      "bytes": 36124,
+      "role": "controlled",
+      "family": "requests",
+      "derived_from": "sources/requests/src/requests/utils.py",
+      "change": "Insert return 0 at the start of super_len; upstream test assertions are unchanged."
+    },
+    {
+      "path": "captures/requests/requests-tests-fail.txt",
+      "sha256": "25d9a2c1bb457ca282028597dd93fcecb92425cc6d8370d36d148815143ed5b6",
+      "bytes": 4246,
+      "role": "capture",
+      "family": "requests"
+    }
+  ],
+  "metadata_sha256": {
+    "cases.json": "064804500e8e5d3fabc9d73e2a733b1afac77a03e0fac046a37fa039a73d1b8f",
+    "captures.json": "ea62dba4dfebbcb932b65386e4deb77ac75376de1c1f9774a8929ab2eda5796c",
+    "selection.json": "4569a7d7e9e4071cfb0a6a54a98efa2685ccacb32a6033ec1984052132568e2c",
+    "scoring.json": "400702c73cfd008be9422c94ac91ef0ea2a7e837d2f75683a0abef75207af01f",
+    "schema.json": "43db46b6a1c35b505b1efc2864cbcedce53c15cef63e37208acae32389516552"
+  },
+  "coverage_floor": {
+    "cases": 60,
+    "development": 20,
+    "evaluation": 40,
+    "families": 6,
+    "ecosystems": 3
+  },
+  "duplicate_policy": {
+    "method": "Normalized five-token shingle Jaccard over non-licence source assets across splits",
+    "threshold": 0.8,
+    "shared_licences": "Excluded; identical licence boilerplate is not evaluation input."
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "selection": "Six independent permissively licensed tool/library families across Python, JavaScript, Go and Rust; split assigned before Saturn observations.",
+  "selection_order": [
+    "click",
+    "commander",
+    "requests",
+    "ripgrep",
+    "chi",
+    "p-limit"
+  ],
+  "splits": {
+    "development": [
+      "click",
+      "commander"
+    ],
+    "evaluation": [
+      "requests",
+      "ripgrep",
+      "chi",
+      "p-limit"
+    ]
+  },
+  "counts": {
+    "development": 20,
+    "evaluation": 40,
+    "per_tool_development": 4,
+    "per_tool_evaluation": 8
+  },
+  "exclusions": [
+    {
+      "source": "Saturn historical evaluation fixtures",
+      "reason": "Already selected and exercised against this implementation; unsuitable as primary holdout evidence."
+    }
+  ],
+  "normalization": "Only local capture paths are replaced. Timing and counts are retained. Original capture digests are recorded.",
+  "limitations": [
+    "Convenience sample of six public code/tool projects, not a probability sample of developer workloads.",
+    "Public source may have appeared in model training.",
+    "Four evaluation families limit statistical generalization.",
+    "Synthetic missing-value markers, one test-only credential, a controlled Click defect, a Commander edit, and one adversarial Go comment are declared.",
+    "Semantic labels require independent human review before freezing.",
+    "No claim of comprehensive security coverage; lifecycle expectations remain observational.",
+    "Dataset version 0.1.0 has no standalone production service logs or large multilingual documents.",
+    "Stored capture replay excludes the original upstream execution time.",
+    "A declared Requests super_len defect is captured only after the corresponding unmodified tests pass.",
+    "The Ruff capture uses an explicitly isolated E/F ruleset; it is not a claim about the upstream project lint policy.",
+    "Near-duplicate screening uses five-token shingle Jaccard at 0.8; it does not establish semantic independence. Shared licence text is excluded."
+  ],
+  "coverage_decisions": {
+    "negative_controls": [
+      "empty successful build output",
+      "absent search matches",
+      "insufficient deployment evidence"
+    ],
+    "adversarial": [
+      "untrusted source comment",
+      "synthetic secrets-file refusal",
+      "outside-workspace search refusal"
+    ],
+    "unicode": "Real Cyrillic text in the upstream ripgrep guide.",
+    "known_gaps": [
+      "No full production incident logs.",
+      "No general-purpose security certification.",
+      "Primary evaluation contains only four project families."
+    ]
+  }
+}

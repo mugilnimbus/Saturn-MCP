@@ -1,0 +1,592 @@
+{
+  "$defs": {
+    "Asset": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "bytes": {
+          "minimum": 0,
+          "title": "Bytes",
+          "type": "integer"
+        },
+        "role": {
+          "enum": [
+            "source",
+            "controlled",
+            "licence",
+            "capture",
+            "secret_fixture"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "upstream_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upstream Path"
+        },
+        "upstream_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Upstream Url"
+        },
+        "derived_from": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Derived From"
+        },
+        "change": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Change"
+        },
+        "workspace_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Workspace Path"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "role",
+        "family"
+      ],
+      "title": "Asset",
+      "type": "object"
+    },
+    "Case": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "development",
+            "evaluation"
+          ],
+          "title": "Split",
+          "type": "string"
+        },
+        "primary_tool": {
+          "enum": [
+            "saturn_run",
+            "saturn_read",
+            "saturn_search",
+            "saturn_ask",
+            "saturn_query"
+          ],
+          "title": "Primary Tool",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "coverage": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Coverage",
+          "type": "object"
+        },
+        "request": {
+          "additionalProperties": true,
+          "title": "Request",
+          "type": "object"
+        },
+        "workflow": {
+          "$ref": "#/$defs/Workflow"
+        },
+        "oracle": {
+          "$ref": "#/$defs/Oracle"
+        },
+        "budgets": {
+          "additionalProperties": true,
+          "title": "Budgets",
+          "type": "object"
+        },
+        "lifecycle": {
+          "additionalProperties": true,
+          "title": "Lifecycle",
+          "type": "object"
+        },
+        "review": {
+          "$ref": "#/$defs/Review"
+        }
+      },
+      "required": [
+        "id",
+        "family",
+        "split",
+        "primary_tool",
+        "title",
+        "coverage",
+        "request",
+        "workflow",
+        "oracle",
+        "budgets",
+        "lifecycle",
+        "review"
+      ],
+      "title": "Case",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "start": {
+          "minimum": 1,
+          "title": "Start",
+          "type": "integer"
+        },
+        "end": {
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset",
+        "start",
+        "end",
+        "quote"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "acceptable_alternatives": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptable Alternatives",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "evidence"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "Manifest": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "state": {
+          "const": "candidate",
+          "title": "State",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/Source"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "assets": {
+          "items": {
+            "$ref": "#/$defs/Asset"
+          },
+          "title": "Assets",
+          "type": "array"
+        },
+        "metadata_sha256": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Metadata Sha256",
+          "type": "object"
+        },
+        "coverage_floor": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Coverage Floor",
+          "type": "object"
+        },
+        "duplicate_policy": {
+          "additionalProperties": true,
+          "title": "Duplicate Policy",
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "version",
+        "state",
+        "sources",
+        "assets",
+        "metadata_sha256",
+        "coverage_floor",
+        "duplicate_policy"
+      ],
+      "title": "Manifest",
+      "type": "object"
+    },
+    "Oracle": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_outcome": {
+          "enum": [
+            "success",
+            "command_nonzero",
+            "no_matches",
+            "abstain",
+            "policy_refusal"
+          ],
+          "title": "Expected Outcome",
+          "type": "string"
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/Fact"
+          },
+          "title": "Facts",
+          "type": "array"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "reference_answer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reference Answer"
+        },
+        "forbidden_claims": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Forbidden Claims",
+          "type": "array"
+        },
+        "scoring": {
+          "enum": [
+            "semantic-rubric-v1",
+            "exact-evidence-v1"
+          ],
+          "title": "Scoring",
+          "type": "string"
+        },
+        "abstention_required": {
+          "title": "Abstention Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "expected_outcome",
+        "facts",
+        "evidence",
+        "reference_answer",
+        "forbidden_claims",
+        "scoring",
+        "abstention_required"
+      ],
+      "title": "Oracle",
+      "type": "object"
+    },
+    "Review": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "title": "Author",
+          "type": "string"
+        },
+        "method": {
+          "title": "Method",
+          "type": "string"
+        },
+        "independent_human": {
+          "enum": [
+            "pending",
+            "not_required_exact_oracle"
+          ],
+          "title": "Independent Human",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reviewer"
+        },
+        "resolution": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resolution"
+        }
+      },
+      "required": [
+        "author",
+        "method",
+        "independent_human",
+        "reviewer",
+        "resolution"
+      ],
+      "title": "Review",
+      "type": "object"
+    },
+    "Source": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "repository": {
+          "title": "Repository",
+          "type": "string"
+        },
+        "revision": {
+          "pattern": "^[0-9a-f]{40}$",
+          "title": "Revision",
+          "type": "string"
+        },
+        "archive_url": {
+          "title": "Archive Url",
+          "type": "string"
+        },
+        "archive_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Archive Sha256",
+          "type": "string"
+        },
+        "family": {
+          "title": "Family",
+          "type": "string"
+        },
+        "split": {
+          "enum": [
+            "development",
+            "evaluation"
+          ],
+          "title": "Split",
+          "type": "string"
+        },
+        "ecosystem": {
+          "title": "Ecosystem",
+          "type": "string"
+        },
+        "licence": {
+          "minLength": 1,
+          "title": "Licence",
+          "type": "string"
+        },
+        "licence_assets": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Licence Assets",
+          "type": "array"
+        },
+        "decision": {
+          "const": "included",
+          "title": "Decision",
+          "type": "string"
+        },
+        "selection_reason": {
+          "minLength": 1,
+          "title": "Selection Reason",
+          "type": "string"
+        },
+        "ancestry_notes": {
+          "minLength": 1,
+          "title": "Ancestry Notes",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "repository",
+        "revision",
+        "archive_url",
+        "archive_sha256",
+        "family",
+        "split",
+        "ecosystem",
+        "licence",
+        "licence_assets",
+        "decision",
+        "selection_reason",
+        "ancestry_notes"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Workflow": {
+      "additionalProperties": false,
+      "properties": {
+        "producer": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Producer"
+        },
+        "follow_ups": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Follow Ups",
+          "type": "array"
+        },
+        "termination": {
+          "title": "Termination",
+          "type": "string"
+        },
+        "max_calls": {
+          "minimum": 1,
+          "title": "Max Calls",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "producer",
+        "follow_ups",
+        "termination",
+        "max_calls"
+      ],
+      "title": "Workflow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Published JSON schema for the manifest and case catalogue together.",
+  "properties": {
+    "manifest": {
+      "$ref": "#/$defs/Manifest"
+    },
+    "cases": {
+      "items": {
+        "$ref": "#/$defs/Case"
+      },
+      "title": "Cases",
+      "type": "array"
+    }
+  },
+  "required": [
+    "manifest",
+    "cases"
+  ],
+  "title": "CorpusFormat",
+  "type": "object"
+}

@@ -1,0 +1,700 @@
+middleware/timeout.go:1:package middleware
+middleware/timeout.go:3:import (
+middleware/timeout.go:4:	"context"
+middleware/timeout.go:5:	"net/http"
+middleware/timeout.go:6:	"time"
+middleware/timeout.go:7:)
+middleware/timeout.go:9:// Timeout is a middleware that cancels ctx after a given timeout and return
+middleware/timeout.go:10:// a 504 Gateway Timeout error to the client.
+middleware/timeout.go:11://
+middleware/timeout.go:12:// It's required that you select the ctx.Done() channel to check for the signal
+middleware/timeout.go:13:// if the context has reached its deadline and return, otherwise the timeout
+middleware/timeout.go:14:// signal will be just ignored.
+middleware/timeout.go:15://
+middleware/timeout.go:16:// ie. a route/handler may look like:
+middleware/timeout.go:17://
+middleware/timeout.go:18://	r.Get("/long", func(w http.ResponseWriter, r *http.Request) {
+middleware/timeout.go:19://		ctx := r.Context()
+middleware/timeout.go:20://		processTime := time.Duration(rand.Intn(4)+1) * time.Second
+middleware/timeout.go:21://
+middleware/timeout.go:22://		select {
+middleware/timeout.go:23://		case <-ctx.Done():
+middleware/timeout.go:24://			return
+middleware/timeout.go:25://
+middleware/timeout.go:26://		case <-time.After(processTime):
+middleware/timeout.go:27://			// The above channel simulates some hard work.
+middleware/timeout.go:28://		}
+middleware/timeout.go:29://
+middleware/timeout.go:30://		w.Write([]byte("done"))
+middleware/timeout.go:31://	})
+middleware/timeout.go:32:func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {
+middleware/timeout.go:33:	return func(next http.Handler) http.Handler {
+middleware/timeout.go:34:		fn := func(w http.ResponseWriter, r *http.Request) {
+middleware/timeout.go:35:			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+middleware/timeout.go:36:			defer func() {
+middleware/timeout.go:37:				cancel()
+middleware/timeout.go:38:				if ctx.Err() == context.DeadlineExceeded {
+middleware/timeout.go:39:					w.WriteHeader(http.StatusGatewayTimeout)
+middleware/timeout.go:40:				}
+middleware/timeout.go:41:			}()
+middleware/timeout.go:43:			r = r.WithContext(ctx)
+middleware/timeout.go:44:			next.ServeHTTP(w, r)
+middleware/timeout.go:45:		}
+middleware/timeout.go:46:		return http.HandlerFunc(fn)
+middleware/timeout.go:47:	}
+middleware/timeout.go:48:}
+README.md:1:# <img alt="chi" src="https://cdn.rawgit.com/go-chi/chi/master/_examples/chi.svg" width="220" />
+README.md:4:[![GoDoc Widget]][GoDoc]
+README.md:6:`chi` is a lightweight, idiomatic and composable router for building Go HTTP services. It's
+README.md:7:especially good at helping you write large REST API services that are kept maintainable as your
+README.md:8:project grows and changes. `chi` is built on the new `context` package introduced in Go 1.7 to
+README.md:9:handle signaling, cancelation and request-scoped values across a handler chain.
+README.md:11:The focus of the project has been to seek out an elegant and comfortable design for writing
+README.md:12:REST API servers, written during the development of the Pressly API service that powers our
+README.md:13:public API service, which in turn powers all of our client-side applications.
+README.md:15:The key considerations of chi's design are: project structure, maintainability, standard http
+README.md:16:handlers (stdlib-only), developer productivity, and deconstructing a large system into many small
+README.md:17:parts. The core router `github.com/go-chi/chi` is quite small (less than 1000 LOC), but we've also
+README.md:18:included some useful/optional subpackages: [middleware](/middleware), [render](https://github.com/go-chi/render)
+README.md:19:and [docgen](https://github.com/go-chi/docgen). We hope you enjoy it too!
+README.md:21:## Install
+README.md:23:```sh
+README.md:24:go get -u github.com/go-chi/chi/v5
+README.md:25:```
+README.md:28:## Features
+README.md:30:* **Lightweight** - cloc'd in ~1000 LOC for the chi router
+README.md:31:* **Fast** - yes, see [benchmarks](#benchmarks)
+README.md:32:* **100% compatible with net/http** - use any http or middleware pkg in the ecosystem that is also compatible with `net/http`
+README.md:33:* **Designed for modular/composable APIs** - middlewares, inline middlewares, route groups and sub-router mounting
+README.md:34:* **Context control** - built on new `context` package, providing value chaining, cancellations and timeouts
+README.md:35:* **Robust** - in production at Pressly, Cloudflare, Heroku, 99Designs, and many others (see [discussion](https://github.com/go-chi/chi/issues/91))
+README.md:36:* **Doc generation** - `docgen` auto-generates routing documentation from your source to JSON or Markdown
+README.md:37:* **Go.mod support** - as of v5, go.mod support (see [CHANGELOG](https://github.com/go-chi/chi/blob/master/CHANGELOG.md))
+README.md:38:* **No external dependencies** - plain ol' Go stdlib + net/http
+README.md:41:## Examples
+README.md:43:See [_examples/](https://github.com/go-chi/chi/blob/master/_examples/) for a variety of examples.
+README.md:46:**As easy as:**
+README.md:48:```go
+README.md:49:package main
+README.md:51:import (
+README.md:52:	"net/http"
+README.md:54:	"github.com/go-chi/chi/v5"
+README.md:55:	"github.com/go-chi/chi/v5/middleware"
+README.md:56:)
+README.md:58:func main() {
+README.md:59:	r := chi.NewRouter()
+README.md:60:	r.Use(middleware.Logger)
+README.md:61:	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+README.md:62:		w.Write([]byte("welcome"))
+README.md:63:	})
+README.md:64:	http.ListenAndServe(":3000", r)
+README.md:65:}
+README.md:66:```
+README.md:68:**REST Preview:**
+README.md:70:Here is a little preview of what routing looks like with chi. Also take a look at the generated routing docs
+README.md:71:in JSON ([routes.json](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.json)) and in
+README.md:72:Markdown ([routes.md](https://github.com/go-chi/chi/blob/master/_examples/rest/routes.md)).
+README.md:74:I highly recommend reading the source of the [examples](https://github.com/go-chi/chi/blob/master/_examples/) listed
+README.md:75:above, they will show you all the features of chi and serve as a good form of documentation.
+README.md:77:```go
+README.md:78:import (
+README.md:79:  //...
+README.md:80:  "context"
+README.md:81:  "github.com/go-chi/chi/v5"
+README.md:82:  "github.com/go-chi/chi/v5/middleware"
+README.md:83:)
+README.md:85:func main() {
+README.md:86:  r := chi.NewRouter()
+README.md:88:  // A good base middleware stack
+README.md:89:  r.Use(middleware.RequestID)
+README.md:90:  r.Use(middleware.ClientIPFromRemoteAddr) // pick one ClientIPFrom* based on your infra, see below
+README.md:91:  r.Use(middleware.Logger)
+README.md:92:  r.Use(middleware.Recoverer)
+README.md:94:  // Set a timeout value on the request context (ctx), that will signal
+README.md:95:  // through ctx.Done() that the request has timed out and further
+README.md:96:  // processing should be stopped.
+README.md:97:  r.Use(middleware.Timeout(60 * time.Second))
+README.md:99:  r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+README.md:100:    w.Write([]byte("hi"))
+README.md:101:  })
+README.md:103:  // RESTy routes for "articles" resource
+README.md:104:  r.Route("/articles", func(r chi.Router) {
+README.md:105:    r.With(paginate).Get("/", listArticles)                           // GET /articles
+README.md:106:    r.With(paginate).Get("/{month}-{day}-{year}", listArticlesByDate) // GET /articles/01-16-2017
+README.md:108:    r.Post("/", createArticle)                                        // POST /articles
+README.md:109:    r.Get("/search", searchArticles)                                  // GET /articles/search
+README.md:111:    // Regexp url parameters:
+README.md:112:    r.Get("/{articleSlug:[a-z-]+}", getArticleBySlug)                // GET /articles/home-is-toronto
+README.md:114:    // Subrouters:
+README.md:115:    r.Route("/{articleID}", func(r chi.Router) {
+README.md:116:      r.Use(ArticleCtx)
+README.md:117:      r.Get("/", getArticle)                                          // GET /articles/123
+README.md:118:      r.Put("/", updateArticle)                                       // PUT /articles/123
+README.md:119:      r.Delete("/", deleteArticle)                                    // DELETE /articles/123
+README.md:120:    })
+README.md:121:  })
+README.md:123:  // Mount the admin sub-router
+README.md:124:  r.Mount("/admin", adminRouter())
+README.md:126:  http.ListenAndServe(":3333", r)
+README.md:127:}
+README.md:129:func ArticleCtx(next http.Handler) http.Handler {
+README.md:130:  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+README.md:131:    articleID := chi.URLParam(r, "articleID")
+README.md:132:    article, err := dbGetArticle(articleID)
+README.md:133:    if err != nil {
+README.md:134:      http.Error(w, http.StatusText(404), 404)
+README.md:135:      return
+README.md:136:    }
+README.md:137:    ctx := context.WithValue(r.Context(), "article", article)
+README.md:138:    next.ServeHTTP(w, r.WithContext(ctx))
+README.md:139:  })
+README.md:140:}
+README.md:142:func getArticle(w http.ResponseWriter, r *http.Request) {
+README.md:143:  ctx := r.Context()
+README.md:144:  article, ok := ctx.Value("article").(*Article)
+README.md:145:  if !ok {
+README.md:146:    http.Error(w, http.StatusText(422), 422)
+README.md:147:    return
+README.md:148:  }
+README.md:149:  w.Write([]byte(fmt.Sprintf("title:%s", article.Title)))
+README.md:150:}
+README.md:152:// A completely separate router for administrator routes
+README.md:153:func adminRouter() http.Handler {
+README.md:154:  r := chi.NewRouter()
+README.md:155:  r.Use(AdminOnly)
+README.md:156:  r.Get("/", adminIndex)
+README.md:157:  r.Get("/accounts", adminListAccounts)
+README.md:158:  return r
+README.md:159:}
+README.md:161:func AdminOnly(next http.Handler) http.Handler {
+README.md:162:  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+README.md:163:    ctx := r.Context()
+README.md:164:    perm, ok := ctx.Value("acl.permission").(YourPermissionType)
+README.md:165:    if !ok || !perm.IsAdmin() {
+README.md:166:      http.Error(w, http.StatusText(403), 403)
+README.md:167:      return
+README.md:168:    }
+README.md:169:    next.ServeHTTP(w, r)
+README.md:170:  })
+README.md:171:}
+README.md:172:```
+README.md:175:## Router interface
+README.md:177:chi's router is based on a kind of [Patricia Radix trie](https://en.wikipedia.org/wiki/Radix_tree).
+README.md:178:The router is fully compatible with `net/http`.
+README.md:180:Built on top of the tree is the `Router` interface:
+README.md:182:```go
+README.md:183:// Router consisting of the core routing methods used by chi's Mux,
+README.md:184:// using only the standard net/http.
+README.md:185:type Router interface {
+README.md:186:	http.Handler
+README.md:187:	Routes
+README.md:189:	// Use appends one or more middlewares onto the Router stack.
+README.md:190:	Use(middlewares ...func(http.Handler) http.Handler)
+README.md:192:	// With adds inline middlewares for an endpoint handler.
+README.md:193:	With(middlewares ...func(http.Handler) http.Handler) Router
+README.md:195:	// Group adds a new inline-Router along the current routing
+README.md:196:	// path, with a fresh middleware stack for the inline-Router.
+README.md:197:	Group(fn func(r Router)) Router
+README.md:199:	// Route mounts a sub-Router along a `pattern` string.
+README.md:200:	Route(pattern string, fn func(r Router)) Router
+README.md:202:	// Mount attaches another http.Handler along ./pattern/*
+README.md:203:	Mount(pattern string, h http.Handler)
+README.md:205:	// Handle and HandleFunc adds routes for `pattern` that matches
+README.md:206:	// all HTTP methods.
+README.md:207:	Handle(pattern string, h http.Handler)
+README.md:208:	HandleFunc(pattern string, h http.HandlerFunc)
+README.md:210:	// Method and MethodFunc adds routes for `pattern` that matches
+README.md:211:	// the `method` HTTP method.
+README.md:212:	Method(method, pattern string, h http.Handler)
+README.md:213:	MethodFunc(method, pattern string, h http.HandlerFunc)
+README.md:215:	// HTTP-method routing along `pattern`
+README.md:216:	Connect(pattern string, h http.HandlerFunc)
+README.md:217:	Delete(pattern string, h http.HandlerFunc)
+README.md:218:	Get(pattern string, h http.HandlerFunc)
+README.md:219:	Head(pattern string, h http.HandlerFunc)
+README.md:220:	Options(pattern string, h http.HandlerFunc)
+README.md:221:	Patch(pattern string, h http.HandlerFunc)
+README.md:222:	Post(pattern string, h http.HandlerFunc)
+README.md:223:	Put(pattern string, h http.HandlerFunc)
+README.md:224:	Query(pattern string, h http.HandlerFunc)
+README.md:225:	Trace(pattern string, h http.HandlerFunc)
+README.md:227:	// NotFound defines a handler to respond whenever a route could
+README.md:228:	// not be found.
+README.md:229:	NotFound(h http.HandlerFunc)
+README.md:231:	// MethodNotAllowed defines a handler to respond whenever a method is
+README.md:232:	// not allowed.
+README.md:233:	MethodNotAllowed(h http.HandlerFunc)
+README.md:234:}
+README.md:236:// Routes interface adds two methods for router traversal, which is also
+README.md:237:// used by the github.com/go-chi/docgen package to generate documentation for Routers.
+README.md:238:type Routes interface {
+README.md:239:	// Routes returns the routing tree in an easily traversable structure.
+README.md:240:	Routes() []Route
+README.md:242:	// Middlewares returns the list of middlewares in use by the router.
+README.md:243:	Middlewares() Middlewares
+README.md:245:	// Match searches the routing tree for a handler that matches
+README.md:246:	// the method/path - similar to routing a http request, but without
+README.md:247:	// executing the handler thereafter.
+README.md:248:	Match(rctx *Context, method, path string) bool
+README.md:249:}
+README.md:250:```
+README.md:252:Each routing method accepts a URL `pattern` and chain of `handlers`. The URL pattern
+README.md:253:supports named params (ie. `/users/{userID}`) and wildcards (ie. `/admin/*`). URL parameters
+README.md:254:can be fetched at runtime by calling `chi.URLParam(r, "userID")` for named parameters
+README.md:255:and `chi.URLParam(r, "*")` for a wildcard parameter.
+README.md:258:### Middleware handlers
+README.md:260:chi's middlewares are just stdlib net/http middleware handlers. There is nothing special
+README.md:261:about them, which means the router and all the tooling is designed to be compatible and
+README.md:262:friendly with any middleware in the community. This offers much better extensibility and reuse
+README.md:263:of packages and is at the heart of chi's purpose.
+README.md:265:Here is an example of a standard net/http middleware where we assign a context key `"user"`
+README.md:266:the value of `"123"`. This middleware sets a hypothetical user identifier on the request
+README.md:267:context and calls the next handler in the chain.
+README.md:269:```go
+README.md:270:// HTTP middleware setting a value on the request context
+README.md:271:func MyMiddleware(next http.Handler) http.Handler {
+README.md:272:  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+README.md:273:    // create new context from `r` request context, and assign key `"user"`
+README.md:274:    // to value of `"123"`
+README.md:275:    ctx := context.WithValue(r.Context(), "user", "123")
+README.md:277:    // call the next handler in the chain, passing the response writer and
+README.md:278:    // the updated request object with the new context value.
+README.md:279:    //
+README.md:280:    // note: context.Context values are nested, so any previously set
+README.md:281:    // values will be accessible as well, and the new `"user"` key
+README.md:282:    // will be accessible from this point forward.
+README.md:283:    next.ServeHTTP(w, r.WithContext(ctx))
+README.md:284:  })
+README.md:285:}
+README.md:286:```
+README.md:289:### Request handlers
+README.md:291:chi uses standard net/http request handlers. This little snippet is an example of a http.Handler
+README.md:292:func that reads a user identifier from the request context - hypothetically, identifying
+README.md:293:the user sending an authenticated request, validated+set by a previous middleware handler.
+README.md:295:```go
+README.md:296:// HTTP handler accessing data from the request context.
+README.md:297:func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
+README.md:298:  // here we read from the request context and fetch out `"user"` key set in
+README.md:299:  // the MyMiddleware example above.
+README.md:300:  user := r.Context().Value("user").(string)
+README.md:302:  // respond to the client
+README.md:303:  w.Write([]byte(fmt.Sprintf("hi %s", user)))
+README.md:304:}
+README.md:305:```
+README.md:308:### URL parameters
+README.md:310:chi's router parses and stores URL parameters right onto the request context. Here is
+README.md:311:an example of how to access URL params in your net/http handlers. And of course, middlewares
+README.md:312:are able to access the same information.
+README.md:314:```go
+README.md:315:// HTTP handler accessing the url routing parameters.
+README.md:316:func MyRequestHandler(w http.ResponseWriter, r *http.Request) {
+README.md:317:  // fetch the url parameter `"userID"` from the request of a matching
+README.md:318:  // routing pattern. An example routing pattern could be: /users/{userID}
+README.md:319:  userID := chi.URLParam(r, "userID")
+README.md:321:  // fetch `"key"` from the request context
+README.md:322:  ctx := r.Context()
+README.md:323:  key := ctx.Value("key").(string)
+README.md:325:  // respond to the client
+README.md:326:  w.Write([]byte(fmt.Sprintf("hi %v, %v", userID, key)))
+README.md:327:}
+README.md:328:```
+README.md:331:## Middlewares
+README.md:333:chi comes equipped with an optional `middleware` package, providing a suite of standard
+README.md:334:`net/http` middlewares. Please note, any middleware in the ecosystem that is also compatible
+README.md:335:with `net/http` can be used with chi's mux.
+README.md:337:### Core middlewares
+README.md:339:----------------------------------------------------------------------------------------------------
+README.md:340:| chi/middleware Handler | description                                                             |
+README.md:341:| :--------------------- | :---------------------------------------------------------------------- |
+README.md:342:| [AllowContentEncoding] | Enforces a whitelist of request Content-Encoding headers                |
+README.md:343:| [AllowContentType]     | Explicit whitelist of accepted request Content-Types                    |
+README.md:344:| [BasicAuth]            | Basic HTTP authentication                                               |
+README.md:345:| [Compress]             | Gzip compression for clients that accept compressed responses           |
+README.md:346:| [ContentCharset]       | Ensure charset for Content-Type request headers                         |
+README.md:347:| [CleanPath]            | Clean double slashes from request path                                  |
+README.md:348:| [Deprecation]          | Set the Deprecation response header (RFC 9745); see also [Sunset]       |
+README.md:349:| [GetHead]              | Automatically route undefined HEAD requests to GET handlers             |
+README.md:350:| [Heartbeat]            | Monitoring endpoint to check the servers pulse                          |
+README.md:351:| [Logger]               | Logs the start and end of each request with the elapsed processing time |
+README.md:352:| [NoCache]              | Sets response headers to prevent clients from caching                   |
+README.md:353:| [Profiler]             | Easily attach net/http/pprof to your routers                            |
+README.md:354:| [ClientIPFromHeader]   | Capture client IP from a trusted single-IP header (X-Real-IP, CF-Connecting-IP, ...) |
+README.md:355:| [ClientIPFromXFF]      | Capture client IP from X-Forwarded-For, skipping listed trusted CIDR prefixes |
+README.md:356:| [ClientIPFromXFFTrustedProxies] | Capture client IP from X-Forwarded-For given a fixed number of trusted proxies |
+README.md:357:| [ClientIPFromRemoteAddr] | Capture client IP from the TCP RemoteAddr (server directly on the public internet) |
+README.md:358:| [RealIP]               | Deprecated — vulnerable to IP spoofing; use [ClientIPFromXFF] or another ClientIPFrom\* middleware |
+README.md:359:| [Recoverer]            | Gracefully absorb panics and prints the stack trace                     |
+README.md:360:| [RequestID]            | Injects a request ID into the context of each request                   |
+README.md:361:| [RedirectSlashes]      | Redirect slashes on routing paths                                       |
+README.md:362:| [RouteHeaders]         | Route handling for request headers                                      |
+README.md:363:| [SetHeader]            | Short-hand middleware to set a response header key/value                |
+README.md:364:| [StripSlashes]         | Strip slashes on routing paths                                          |
+README.md:365:| [Sunset]               | Set the Sunset response header (RFC 8594); see also [Deprecation]       |
+README.md:366:| [Throttle]             | Puts a ceiling on the number of concurrent requests                     |
+README.md:367:| [Timeout]              | Signals to the request context when the timeout deadline is reached     |
+README.md:368:| [URLFormat]            | Parse extension from url and put it on request context                  |
+README.md:369:| [WithValue]            | Short-hand middleware to set a key/value on the request context         |
+README.md:370:----------------------------------------------------------------------------------------------------
+README.md:372:[AllowContentEncoding]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#AllowContentEncoding
+README.md:373:[AllowContentType]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#AllowContentType
+README.md:374:[BasicAuth]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#BasicAuth
+README.md:375:[Compress]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Compress
+README.md:376:[ContentCharset]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ContentCharset
+README.md:377:[CleanPath]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#CleanPath
+README.md:378:[Deprecation]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Deprecation
+README.md:379:[GetHead]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetHead
+README.md:380:[GetReqID]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetReqID
+README.md:381:[Heartbeat]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Heartbeat
+README.md:382:[Logger]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Logger
+README.md:383:[NoCache]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#NoCache
+README.md:384:[Profiler]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Profiler
+README.md:385:[ClientIPFromHeader]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ClientIPFromHeader
+README.md:386:[ClientIPFromXFF]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ClientIPFromXFF
+README.md:387:[ClientIPFromXFFTrustedProxies]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ClientIPFromXFFTrustedProxies
+README.md:388:[ClientIPFromRemoteAddr]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ClientIPFromRemoteAddr
+README.md:389:[GetClientIP]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetClientIP
+README.md:390:[GetClientIPAddr]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#GetClientIPAddr
+README.md:391:[RealIP]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#RealIP
+README.md:392:[Recoverer]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Recoverer
+README.md:393:[RedirectSlashes]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#RedirectSlashes
+README.md:394:[RequestLogger]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#RequestLogger
+README.md:395:[RequestID]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#RequestID
+README.md:396:[RouteHeaders]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#RouteHeaders
+README.md:397:[SetHeader]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#SetHeader
+README.md:398:[StripSlashes]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#StripSlashes
+README.md:399:[Sunset]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Sunset
+README.md:400:[Throttle]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Throttle
+README.md:401:[ThrottleBacklog]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ThrottleBacklog
+README.md:402:[ThrottleWithOpts]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ThrottleWithOpts
+README.md:403:[Timeout]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Timeout
+README.md:404:[URLFormat]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#URLFormat
+README.md:405:[WithLogEntry]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#WithLogEntry
+README.md:406:[WithValue]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#WithValue
+README.md:407:[Compressor]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#Compressor
+README.md:408:[DefaultLogFormatter]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#DefaultLogFormatter
+README.md:409:[EncoderFunc]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#EncoderFunc
+README.md:410:[HeaderRoute]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#HeaderRoute
+README.md:411:[HeaderRouter]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#HeaderRouter
+README.md:412:[LogEntry]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#LogEntry
+README.md:413:[LogFormatter]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#LogFormatter
+README.md:414:[LoggerInterface]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#LoggerInterface
+README.md:415:[ThrottleOpts]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#ThrottleOpts
+README.md:416:[WrapResponseWriter]: https://pkg.go.dev/github.com/go-chi/chi/v5/middleware#WrapResponseWriter
+README.md:418:### Choosing a ClientIP middleware
+README.md:420:The legacy [RealIP] middleware is deprecated — it is vulnerable to IP spoofing
+README.md:421:(GHSA-3fxj-6jh8-hvhx, GHSA-rjr7-jggh-pgcp, GHSA-9g5q-2w5x-hmxf) and mutates
+README.md:422:`r.RemoteAddr`. Use one of the four `ClientIPFrom*` middlewares instead — pick
+README.md:423:exactly one based on your network setup — and read the resulting IP with
+README.md:424:[GetClientIP] (string) or [GetClientIPAddr] (`netip.Addr`):
+README.md:426:| Your setup | Use |
+README.md:427:|---|---|
+README.md:428:| Directly on the public internet, no proxy | `middleware.ClientIPFromRemoteAddr` |
+README.md:429:| Behind nginx (`X-Real-IP`), Cloudflare (`CF-Connecting-IP`), Apache (`X-Client-IP`) | `middleware.ClientIPFromHeader("<your-trusted-header>")` |
+README.md:430:| Behind one or more proxies whose IP ranges you can list | `middleware.ClientIPFromXFF("10.0.0.0/8", ...)` |
+README.md:431:| Behind a known, fixed number of proxies with dynamic IPs | `middleware.ClientIPFromXFFTrustedProxies(2)` |
+README.md:433:```go
+README.md:434:r := chi.NewRouter()
+README.md:435:r.Use(middleware.RequestID)
+README.md:437:// Pick exactly one. Examples for common deployments:
+README.md:439:// Direct internet exposure (no proxy):
+README.md:440:// r.Use(middleware.ClientIPFromRemoteAddr)
+README.md:442:// Behind Cloudflare:
+README.md:443:// r.Use(middleware.ClientIPFromHeader("CF-Connecting-IP"))
+README.md:445:// Behind AWS CloudFront (or any proxy fleet with known CIDRs):
+README.md:446:r.Use(middleware.ClientIPFromXFF(
+README.md:447:    "13.32.0.0/15",   // CloudFront IPv4
+README.md:448:    "52.46.0.0/18",   // CloudFront IPv4
+README.md:449:    "2600:9000::/28", // CloudFront IPv6
+README.md:450:))
+README.md:452:// Behind a known number of proxies with dynamic IPs:
+README.md:453:// r.Use(middleware.ClientIPFromXFFTrustedProxies(2))
+README.md:455:r.Use(middleware.Logger)
+README.md:456:r.Use(middleware.Recoverer)
+README.md:458:r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+README.md:459:    clientIP := middleware.GetClientIP(r.Context()) // for logs, rate-limit keys, etc.
+README.md:460:    _ = clientIP
+README.md:461:})
+README.md:462:```
+README.md:464:These middlewares never mutate `r.RemoteAddr`. They store a normalized
+README.md:465:`netip.Addr` in the request context — IPv4-mapped IPv6 (`::ffff:a.b.c.d`)
+README.md:466:is folded to plain IPv4, and IPv6 zone identifiers carried in headers are
+README.md:467:stripped, so one logical client maps to a single canonical key for logs,
+README.md:468:rate limits, and ACLs.
+README.md:470:For `ClientIPFromXFFTrustedProxies`, `numTrustedProxies` is the total proxy
+README.md:471:hops between client and server. Prefer `ClientIPFromXFF` with explicit CIDRs
+README.md:472:when you can — CIDR-based trust cannot off-by-one. See the godoc for a
+README.md:473:deployment recipe and a verify checklist.
+README.md:475:See the per-function godoc for the full semantics of each middleware, and
+README.md:476:[adam-p's "The perils of the 'real' client IP"](https://adam-p.ca/blog/2022/03/x-forwarded-for/)
+README.md:477:for the underlying threat model.
+README.md:479:### Deprecating and removing a route
+README.md:481:Use `Deprecation` first. Add `Sunset` when you know the removal date.
+README.md:483:| Situation                                                | Use                         |
+README.md:484:| :------------------------------------------------------- | :-------------------------- |
+README.md:485:| Route works, clients should migrate, no removal date yet | `Deprecation`               |
+README.md:486:| You know the date the route will stop working            | `Deprecation` + `Sunset`    |
+README.md:487:| Route is already removed                                 | Neither. Return `410 Gone`. |
+README.md:489:```go
+README.md:490:// A bad date parses to the zero time, and the middleware panics at startup.
+README.md:491:deprecatedAt, _ := time.Parse(time.DateOnly, "2026-01-15")
+README.md:492:sunsetAt, _ := time.Parse(time.DateOnly, "2026-07-01")
+README.md:494:// Step 1: the route is deprecated.
+README.md:495:r.With(middleware.Deprecation(deprecatedAt)).Get("/v1/users", listUsers)
+README.md:497:// Step 2: the removal date is known.
+README.md:498:r.With(middleware.Deprecation(deprecatedAt), middleware.Sunset(sunsetAt)).Get("/v1/users", listUsers)
+README.md:500:// After sunsetAt: remove the route, or return 410 Gone.
+README.md:501:```
+README.md:503:### Extra middlewares & packages
+README.md:505:Please see https://github.com/go-chi for additional packages.
+README.md:507:--------------------------------------------------------------------------------------------------------------------
+README.md:508:| package                                            | description                                                 |
+README.md:509:|:---------------------------------------------------|:-------------------------------------------------------------
+README.md:510:| [cors](https://github.com/go-chi/cors)             | Cross-origin resource sharing (CORS)                        |
+README.md:511:| [docgen](https://github.com/go-chi/docgen)         | Print chi.Router routes at runtime                          |
+README.md:512:| [jwtauth](https://github.com/go-chi/jwtauth)       | JWT authentication                                          |
+README.md:513:| [hostrouter](https://github.com/go-chi/hostrouter) | Domain/host based request routing                           |
+README.md:514:| [httplog](https://github.com/go-chi/httplog)       | Small but powerful structured HTTP request logging          |
+README.md:515:| [httprate](https://github.com/go-chi/httprate)     | HTTP request rate limiter                                   |
+README.md:516:| [httptracer](https://github.com/go-chi/httptracer) | HTTP request performance tracing library                    |
+README.md:517:| [httpvcr](https://github.com/go-chi/httpvcr)       | Write deterministic tests for external sources              |
+README.md:518:| [stampede](https://github.com/go-chi/stampede)     | HTTP request coalescer                                      |
+README.md:519:--------------------------------------------------------------------------------------------------------------------
+README.md:522:## context?
+README.md:524:`context` is a tiny pkg that provides simple interface to signal context across call stacks
+README.md:525:and goroutines. It was originally written by [Sameer Ajmani](https://github.com/Sajmani)
+README.md:526:and is available in stdlib since go1.7.
+README.md:528:Learn more at https://blog.golang.org/context
+README.md:530:and..
+README.md:531:* Docs: https://golang.org/pkg/context
+README.md:532:* Source: https://github.com/golang/go/tree/master/src/context
+README.md:535:## Benchmarks
+README.md:537:The benchmark suite: https://github.com/pkieltyka/go-http-routing-benchmark
+README.md:539:Results as of Nov 29, 2020 with Go 1.15.5 on Linux AMD 3950x
+README.md:541:```shell
+README.md:542:BenchmarkChi_Param          	3075895	        384 ns/op	      400 B/op      2 allocs/op
+README.md:543:BenchmarkChi_Param5         	2116603	        566 ns/op	      400 B/op      2 allocs/op
+README.md:544:BenchmarkChi_Param20        	 964117	       1227 ns/op	      400 B/op      2 allocs/op
+README.md:545:BenchmarkChi_ParamWrite     	2863413	        420 ns/op	      400 B/op      2 allocs/op
+README.md:546:BenchmarkChi_GithubStatic   	3045488	        395 ns/op	      400 B/op      2 allocs/op
+README.md:547:BenchmarkChi_GithubParam    	2204115	        540 ns/op	      400 B/op      2 allocs/op
+README.md:548:BenchmarkChi_GithubAll      	  10000	     113811 ns/op	    81203 B/op    406 allocs/op
+README.md:549:BenchmarkChi_GPlusStatic    	3337485	        359 ns/op	      400 B/op      2 allocs/op
+README.md:550:BenchmarkChi_GPlusParam     	2825853	        423 ns/op	      400 B/op      2 allocs/op
+README.md:551:BenchmarkChi_GPlus2Params   	2471697	        483 ns/op	      400 B/op      2 allocs/op
+README.md:552:BenchmarkChi_GPlusAll       	 194220	       5950 ns/op	     5200 B/op     26 allocs/op
+README.md:553:BenchmarkChi_ParseStatic    	3365324	        356 ns/op	      400 B/op      2 allocs/op
+README.md:554:BenchmarkChi_ParseParam     	2976614	        404 ns/op	      400 B/op      2 allocs/op
+README.md:555:BenchmarkChi_Parse2Params   	2638084	        439 ns/op	      400 B/op      2 allocs/op
+README.md:556:BenchmarkChi_ParseAll       	 109567	      11295 ns/op	    10400 B/op     52 allocs/op
+README.md:557:BenchmarkChi_StaticAll      	  16846	      71308 ns/op	    62802 B/op    314 allocs/op
+README.md:558:```
+README.md:560:Comparison with other routers: https://gist.github.com/pkieltyka/123032f12052520aaccab752bd3e78cc
+README.md:562:NOTE: the allocs in the benchmark above are from the calls to http.Request's
+README.md:563:`WithContext(context.Context)` method that clones the http.Request, sets the `Context()`
+README.md:564:on the duplicated (alloc'd) request and returns it the new request object. This is just
+README.md:565:how setting context on a request in Go works.
+README.md:568:## Credits
+README.md:570:* Carl Jackson for https://github.com/zenazn/goji
+README.md:571:  * Parts of chi's thinking comes from goji, and chi's middleware package
+README.md:572:    sources from [goji](https://github.com/zenazn/goji/tree/master/web/middleware).
+README.md:573:  * Please see goji's [LICENSE](https://github.com/zenazn/goji/blob/master/LICENSE) (MIT)
+README.md:574:* Armon Dadgar for https://github.com/armon/go-radix
+README.md:575:* Contributions: [@VojtechVitek](https://github.com/VojtechVitek)
+README.md:577:We'll be more than happy to see [your contributions](./CONTRIBUTING.md)!
+README.md:580:## Beyond REST
+README.md:582:chi is just a http router that lets you decompose request handling into many smaller layers.
+README.md:583:Many companies use chi to write REST services for their public APIs. But, REST is just a convention
+README.md:584:for managing state via HTTP, and there's a lot of other pieces required to write a complete client-server
+README.md:585:system or network of microservices.
+README.md:587:Looking beyond REST, I also recommend some newer works in the field:
+README.md:588:* [webrpc](https://github.com/webrpc/webrpc) - Web-focused RPC client+server framework with code-gen
+README.md:589:* [gRPC](https://github.com/grpc/grpc-go) - Google's RPC framework via protobufs
+README.md:590:* [graphql](https://github.com/99designs/gqlgen) - Declarative query language
+README.md:591:* [NATS](https://nats.io) - lightweight pub-sub
+README.md:594:## License
+README.md:596:Copyright (c) 2015-present [Peter Kieltyka](https://github.com/pkieltyka)
+README.md:598:Licensed under [MIT License](./LICENSE)
+README.md:600:[GoDoc]: https://pkg.go.dev/github.com/go-chi/chi/v5
+README.md:601:[GoDoc Widget]: https://godoc.org/github.com/go-chi/chi?status.svg
+README.md:602:[Travis]: https://travis-ci.org/go-chi/chi
+README.md:603:[Travis Widget]: https://travis-ci.org/go-chi/chi.svg?branch=master
+middleware/recoverer.go:1:package middleware
+middleware/recoverer.go:3:// The original work was derived from Goji's middleware, source:
+middleware/recoverer.go:4:// https://github.com/zenazn/goji/tree/master/web/middleware
+middleware/recoverer.go:6:import (
+middleware/recoverer.go:7:	"bytes"
+middleware/recoverer.go:8:	"errors"
+middleware/recoverer.go:9:	"fmt"
+middleware/recoverer.go:10:	"io"
+middleware/recoverer.go:11:	"net/http"
+middleware/recoverer.go:12:	"os"
+middleware/recoverer.go:13:	"runtime/debug"
+middleware/recoverer.go:14:	"strings"
+middleware/recoverer.go:15:)
+middleware/recoverer.go:17:// Recoverer is a middleware that recovers from panics, logs the panic (and a
+middleware/recoverer.go:18:// backtrace), and returns a HTTP 500 (Internal Server Error) status if
+middleware/recoverer.go:19:// possible. Recoverer prints a request ID if one is provided.
+middleware/recoverer.go:20://
+middleware/recoverer.go:21:// Alternatively, look at https://github.com/go-chi/httplog middleware pkgs.
+middleware/recoverer.go:22:func Recoverer(next http.Handler) http.Handler {
+middleware/recoverer.go:23:	fn := func(w http.ResponseWriter, r *http.Request) {
+middleware/recoverer.go:24:		defer func() {
+middleware/recoverer.go:25:			if rvr := recover(); rvr != nil {
+middleware/recoverer.go:26:				if rvr == http.ErrAbortHandler {
+middleware/recoverer.go:27:					// we don't recover http.ErrAbortHandler so the response
+middleware/recoverer.go:28:					// to the client is aborted, this should not be logged
+middleware/recoverer.go:29:					panic(rvr)
+middleware/recoverer.go:30:				}
+middleware/recoverer.go:32:				logEntry := GetLogEntry(r)
+middleware/recoverer.go:33:				if logEntry != nil {
+middleware/recoverer.go:34:					logEntry.Panic(rvr, debug.Stack())
+middleware/recoverer.go:35:				} else {
+middleware/recoverer.go:36:					PrintPrettyStack(rvr)
+middleware/recoverer.go:37:				}
+middleware/recoverer.go:39:				if r.Header.Get("Connection") != "Upgrade" {
+middleware/recoverer.go:40:					w.WriteHeader(http.StatusInternalServerError)
+middleware/recoverer.go:41:				}
+middleware/recoverer.go:42:			}
+middleware/recoverer.go:43:		}()
+middleware/recoverer.go:45:		next.ServeHTTP(w, r)
+middleware/recoverer.go:46:	}
+middleware/recoverer.go:48:	return http.HandlerFunc(fn)
+middleware/recoverer.go:49:}
+middleware/recoverer.go:51:// for ability to test the PrintPrettyStack function
+middleware/recoverer.go:52:var recovererErrorWriter io.Writer = os.Stderr
+middleware/recoverer.go:54:func PrintPrettyStack(rvr any) {
+middleware/recoverer.go:55:	printPrettyStack(rvr, true)
+middleware/recoverer.go:56:}
+middleware/recoverer.go:58:// printPrettyStack prints a formatted stack trace to stderr. When useColor is
+middleware/recoverer.go:59:// false, ANSI colour codes are suppressed, which is useful for terminals that
+middleware/recoverer.go:60:// do not support them (e.g. on Windows) or when output is being captured.
+middleware/recoverer.go:61:func printPrettyStack(rvr any, useColor bool) {
+middleware/recoverer.go:62:	debugStack := debug.Stack()
+middleware/recoverer.go:63:	s := prettyStack{}
+middleware/recoverer.go:64:	out, err := s.parse(debugStack, rvr, useColor)
+middleware/recoverer.go:65:	if err == nil {
+middleware/recoverer.go:66:		recovererErrorWriter.Write(out)
+middleware/recoverer.go:67:	} else {
+middleware/recoverer.go:68:		// print stdlib output as a fallback
+middleware/recoverer.go:69:		os.Stderr.Write(debugStack)
+middleware/recoverer.go:70:	}
+middleware/recoverer.go:71:}
+middleware/recoverer.go:73:type prettyStack struct {
+middleware/recoverer.go:74:}
+middleware/recoverer.go:76:func (s prettyStack) parse(debugStack []byte, rvr any, useColor bool) ([]byte, error) {
+middleware/recoverer.go:77:	var err error
+middleware/recoverer.go:78:	buf := &bytes.Buffer{}
+middleware/recoverer.go:80:	cW(buf, false, bRed, "\n")
+middleware/recoverer.go:81:	cW(buf, useColor, bCyan, " panic: ")
+middleware/recoverer.go:82:	cW(buf, useColor, bBlue, "%v", rvr)
+middleware/recoverer.go:83:	cW(buf, false, bWhite, "\n \n")
+middleware/recoverer.go:85:	// process debug stack info
+middleware/recoverer.go:86:	stack := strings.Split(string(debugStack), "\n")
+middleware/recoverer.go:87:	lines := []string{}
+middleware/recoverer.go:89:	// locate panic line, as we may have nested panics
+middleware/recoverer.go:90:	for i := len(stack) - 1; i > 0; i-- {
+middleware/recoverer.go:91:		lines = append(lines, stack[i])
+middleware/recoverer.go:92:		if strings.HasPrefix(stack[i], "panic(") {
+middleware/recoverer.go:93:			lines = lines[0 : len(lines)-2] // remove boilerplate
+middleware/recoverer.go:94:			break
+middleware/recoverer.go:95:		}
+middleware/recoverer.go:96:	}
+middleware/recoverer.go:98:	// reverse
+middleware/recoverer.go:99:	for i := len(lines)/2 - 1; i >= 0; i-- {
+middleware/recoverer.go:100:		opp := len(lines) - 1 - i
+middleware/recoverer.go:101:		lines[i], lines[opp] = lines[opp], lines[i]
+middleware/recoverer.go:102:	}
+middleware/recoverer.go:104:	// decorate
+middleware/recoverer.go:105:	for i, line := range lines {
+middleware/recoverer.go:106:		lines[i], err = s.decorateLine(line, useColor, i)
+middleware/recoverer.go:107:		if err != nil {
+middleware/recoverer.go:108:			return nil, err
+middleware/recoverer.go:109:		}
+middleware/recoverer.go:110:	}
+middleware/recoverer.go:112:	for _, l := range lines {
+middleware/recoverer.go:113:		fmt.Fprintf(buf, "%s", l)
+middleware/recoverer.go:114:	}
+middleware/recoverer.go:115:	return buf.Bytes(), nil
+middleware/recoverer.go:116:}
+middleware/recoverer.go:118:func (s prettyStack) decorateLine(line string, useColor bool, num int) (string, error) {
+middleware/recoverer.go:119:	line = strings.TrimSpace(line)
+middleware/recoverer.go:120:	if strings.HasPrefix(line, "\t") || strings.Contains(line, ".go:") {
+middleware/recoverer.go:121:		return s.decorateSourceLine(line, useColor, num)
+middleware/recoverer.go:122:	}
+middleware/recoverer.go:123:	if strings.HasSuffix(line, ")") {
+middleware/recoverer.go:124:		return s.decorateFuncCallLine(line, useColor, num)
+middleware/recoverer.go:125:	}
+middleware/recoverer.go:126:	if strings.HasPrefix(line, "\t") {
+middleware/recoverer.go:127:		return strings.Replace(line, "\t", "      ", 1), nil
+middleware/recoverer.go:128:	}
+middleware/recoverer.go:129:	return fmt.Sprintf("    %s\n", line), nil
+middleware/recoverer.go:130:}
+middleware/recoverer.go:132:func (s prettyStack) decorateFuncCallLine(line string, useColor bool, num int) (string, error) {
+middleware/recoverer.go:133:	idx := strings.LastIndex(line, "(")
+middleware/recoverer.go:134:	if idx < 0 {
+middleware/recoverer.go:135:		return "", errors.New("not a func call line")
+middleware/recoverer.go:136:	}
+middleware/recoverer.go:138:	buf := &bytes.Buffer{}
+middleware/recoverer.go:139:	pkg := line[0:idx]
+middleware/recoverer.go:140:	// addr := line[idx:]
+middleware/recoverer.go:141:	method := ""
+middleware/recoverer.go:143:	if idx := strings.LastIndex(pkg, string(os.PathSeparator)); idx < 0 {
+middleware/recoverer.go:144:		if idx := strings.Index(pkg, "."); idx > 0 {
+middleware/recoverer.go:145:			method = pkg[idx:]
+middleware/recoverer.go:146:			pkg = pkg[0:idx]
+middleware/recoverer.go:147:		}
+middleware/recoverer.go:148:	} else {
+middleware/recoverer.go:149:		method = pkg[idx+1:]
+middleware/recoverer.go:150:		pkg = pkg[0 : idx+1]
+middleware/recoverer.go:151:		if idx := strings.Index(method, "."); idx > 0 {
+middleware/recoverer.go:152:			pkg += method[0:idx]
+middleware/recoverer.go:153:			method = method[idx:]
+middleware/recoverer.go:154:		}
+middleware/recoverer.go:155:	}
+middleware/recoverer.go:156:	pkgColor := nYellow
+middleware/recoverer.go:157:	methodColor := bGreen
+middleware/recoverer.go:159:	if num == 0 {
+middleware/recoverer.go:160:		cW(buf, useColor, bRed, " -> ")
+middleware/recoverer.go:161:		pkgColor = bMagenta
+middleware/recoverer.go:162:		methodColor = bRed
+middleware/recoverer.go:163:	} else {
+middleware/recoverer.go:164:		cW(buf, useColor, bWhite, "    ")
+middleware/recoverer.go:165:	}
+middleware/recoverer.go:166:	cW(buf, useColor, pkgColor, "%s", pkg)
+middleware/recoverer.go:167:	cW(buf, useColor, methodColor, "%s\n", method)
+middleware/recoverer.go:168:	// cW(buf, useColor, nBlack, "%s", addr)
+middleware/recoverer.go:169:	return buf.String(), nil
+middleware/recoverer.go:170:}
+middleware/recoverer.go:172:func (s prettyStack) decorateSourceLine(line string, useColor bool, num int) (string, error) {
+middleware/recoverer.go:173:	idx := strings.LastIndex(line, ".go:")
+middleware/recoverer.go:174:	if idx < 0 {
+middleware/recoverer.go:175:		return "", errors.New("not a source line")
+middleware/recoverer.go:176:	}
+middleware/recoverer.go:178:	buf := &bytes.Buffer{}
+middleware/recoverer.go:179:	path := line[0 : idx+3]
+middleware/recoverer.go:180:	lineno := line[idx+3:]
+middleware/recoverer.go:182:	idx = strings.LastIndex(path, string(os.PathSeparator))
+middleware/recoverer.go:183:	dir := path[0 : idx+1]
+middleware/recoverer.go:184:	file := path[idx+1:]
+middleware/recoverer.go:186:	idx = strings.Index(lineno, " ")
+middleware/recoverer.go:187:	if idx > 0 {
+middleware/recoverer.go:188:		lineno = lineno[0:idx]
+middleware/recoverer.go:189:	}
+middleware/recoverer.go:190:	fileColor := bCyan
+middleware/recoverer.go:191:	lineColor := bGreen
+middleware/recoverer.go:193:	if num == 1 {
+middleware/recoverer.go:194:		cW(buf, useColor, bRed, " ->   ")
+middleware/recoverer.go:195:		fileColor = bRed
+middleware/recoverer.go:196:		lineColor = bMagenta
+middleware/recoverer.go:197:	} else {
+middleware/recoverer.go:198:		cW(buf, false, bWhite, "      ")
+middleware/recoverer.go:199:	}
+middleware/recoverer.go:200:	cW(buf, useColor, bWhite, "%s", dir)
+middleware/recoverer.go:201:	cW(buf, useColor, fileColor, "%s", file)
+middleware/recoverer.go:202:	cW(buf, useColor, lineColor, "%s", lineno)
+middleware/recoverer.go:203:	if num == 1 {
+middleware/recoverer.go:204:		cW(buf, false, bWhite, "\n")
+middleware/recoverer.go:205:	}
+middleware/recoverer.go:206:	cW(buf, false, bWhite, "\n")
+middleware/recoverer.go:208:	return buf.String(), nil
+middleware/recoverer.go:209:}

@@ -1,0 +1,1223 @@
+lib/error.js:1:/**
+lib/error.js:2: * CommanderError class
+lib/error.js:3: */
+lib/error.js:4:export class CommanderError extends Error {
+lib/error.js:5:  /**
+lib/error.js:6:   * Constructs the CommanderError class
+lib/error.js:7:   * @param {number} exitCode suggested exit code which could be used with process.exit
+lib/error.js:8:   * @param {string} code an id string representing the error
+lib/error.js:9:   * @param {string} message human-readable description of the error
+lib/error.js:10:   */
+lib/error.js:11:  constructor(exitCode, code, message) {
+lib/error.js:12:    super(message);
+lib/error.js:13:    // properly capture stack trace in Node.js
+lib/error.js:14:    Error.captureStackTrace(this, this.constructor);
+lib/error.js:15:    this.name = this.constructor.name;
+lib/error.js:16:    this.code = code;
+lib/error.js:17:    this.exitCode = exitCode;
+lib/error.js:18:    this.nestedError = undefined;
+lib/error.js:19:  }
+lib/error.js:20:}
+lib/error.js:22:/**
+lib/error.js:23: * InvalidArgumentError class
+lib/error.js:24: */
+lib/error.js:25:export class InvalidArgumentError extends CommanderError {
+lib/error.js:26:  /**
+lib/error.js:27:   * Constructs the InvalidArgumentError class
+lib/error.js:28:   * @param {string} [message] explanation of why argument is invalid
+lib/error.js:29:   */
+lib/error.js:30:  constructor(message) {
+lib/error.js:31:    super(1, 'commander.invalidArgument', message);
+lib/error.js:32:    // properly capture stack trace in Node.js
+lib/error.js:33:    Error.captureStackTrace(this, this.constructor);
+lib/error.js:34:    this.name = this.constructor.name;
+lib/error.js:35:  }
+lib/error.js:36:}
+lib/option.js:1:import { InvalidArgumentError } from './error.js';
+lib/option.js:3:export class Option {
+lib/option.js:4:  /**
+lib/option.js:5:   * Initialize a new `Option` with the given `flags` and `description`.
+lib/option.js:6:   *
+lib/option.js:7:   * @param {string} flags
+lib/option.js:8:   * @param {string} [description]
+lib/option.js:9:   */
+lib/option.js:11:  constructor(flags, description) {
+lib/option.js:12:    this.flags = flags;
+lib/option.js:13:    this.description = description || '';
+lib/option.js:15:    this.required = flags.includes('<'); // A value must be supplied when the option is specified.
+lib/option.js:16:    this.optional = flags.includes('['); // A value is optional when the option is specified.
+lib/option.js:17:    // variadic test ignores <value,...> et al which might be used to describe custom splitting of single argument
+lib/option.js:18:    this.variadic = /\w\.\.\.[>\]]$/.test(flags); // The option can take multiple values.
+lib/option.js:19:    this.mandatory = false; // The option must have a value after parsing, which usually means it must be specified on command line.
+lib/option.js:20:    const optionFlags = splitOptionFlags(flags);
+lib/option.js:21:    this.short = optionFlags.shortFlag; // May be a short flag, undefined, or even a long flag (if option has two long flags).
+lib/option.js:22:    this.long = optionFlags.longFlag;
+lib/option.js:23:    this.negate = false;
+lib/option.js:24:    if (this.long) {
+lib/option.js:25:      this.negate = this.long.startsWith('--no-');
+lib/option.js:26:    }
+lib/option.js:27:    this.defaultValue = undefined;
+lib/option.js:28:    this.defaultValueDescription = undefined;
+lib/option.js:29:    this.presetArg = undefined;
+lib/option.js:30:    this.envVar = undefined;
+lib/option.js:31:    this.parseArg = undefined;
+lib/option.js:32:    this.hidden = false;
+lib/option.js:33:    this.argChoices = undefined;
+lib/option.js:34:    this.conflictsWith = [];
+lib/option.js:35:    this.implied = undefined;
+lib/option.js:36:    this.helpGroupHeading = undefined; // soft initialised when option added to command
+lib/option.js:37:  }
+lib/option.js:39:  /**
+lib/option.js:40:   * Set the default value, and optionally supply the description to be displayed in the help.
+lib/option.js:41:   *
+lib/option.js:42:   * @param {*} value
+lib/option.js:43:   * @param {string} [description]
+lib/option.js:44:   * @return {Option}
+lib/option.js:45:   */
+lib/option.js:47:  default(value, description) {
+lib/option.js:48:    this.defaultValue = value;
+lib/option.js:49:    this.defaultValueDescription = description;
+lib/option.js:50:    return this;
+lib/option.js:51:  }
+lib/option.js:53:  /**
+lib/option.js:54:   * Preset to use when option used without option-argument, especially optional but also boolean and negated.
+lib/option.js:55:   * The custom processing (parseArg) is called.
+lib/option.js:56:   *
+lib/option.js:57:   * @example
+lib/option.js:58:   * new Option('--color').default('GREYSCALE').preset('RGB');
+lib/option.js:59:   * new Option('--donate [amount]').preset('20').argParser(parseFloat);
+lib/option.js:60:   *
+lib/option.js:61:   * @param {*} arg
+lib/option.js:62:   * @return {Option}
+lib/option.js:63:   */
+lib/option.js:65:  preset(arg) {
+lib/option.js:66:    this.presetArg = arg;
+lib/option.js:67:    return this;
+lib/option.js:68:  }
+lib/option.js:70:  /**
+lib/option.js:71:   * Add option name(s) that conflict with this option.
+lib/option.js:72:   * An error will be displayed if conflicting options are found during parsing.
+lib/option.js:73:   *
+lib/option.js:74:   * @example
+lib/option.js:75:   * new Option('--rgb').conflicts('cmyk');
+lib/option.js:76:   * new Option('--js').conflicts(['ts', 'jsx']);
+lib/option.js:77:   *
+lib/option.js:78:   * @param {(string | string[])} names
+lib/option.js:79:   * @return {Option}
+lib/option.js:80:   */
+lib/option.js:82:  conflicts(names) {
+lib/option.js:83:    this.conflictsWith = this.conflictsWith.concat(names);
+lib/option.js:84:    return this;
+lib/option.js:85:  }
+lib/option.js:87:  /**
+lib/option.js:88:   * Specify implied option values for when this option is set and the implied options are not.
+lib/option.js:89:   *
+lib/option.js:90:   * The custom processing (parseArg) is not called on the implied values.
+lib/option.js:91:   *
+lib/option.js:92:   * @example
+lib/option.js:93:   * program
+lib/option.js:94:   *   .addOption(new Option('--log', 'write logging information to file'))
+lib/option.js:95:   *   .addOption(new Option('--trace', 'log extra details').implies({ log: 'trace.txt' }));
+lib/option.js:96:   *
+lib/option.js:97:   * @param {object} impliedOptionValues
+lib/option.js:98:   * @return {Option}
+lib/option.js:99:   */
+lib/option.js:100:  implies(impliedOptionValues) {
+lib/option.js:101:    let newImplied = impliedOptionValues;
+lib/option.js:102:    if (typeof impliedOptionValues === 'string') {
+lib/option.js:103:      // string is not documented, but easy mistake and we can do what user probably intended.
+lib/option.js:104:      newImplied = { [impliedOptionValues]: true };
+lib/option.js:105:    }
+lib/option.js:106:    this.implied = Object.assign(this.implied || {}, newImplied);
+lib/option.js:107:    return this;
+lib/option.js:108:  }
+lib/option.js:110:  /**
+lib/option.js:111:   * Set environment variable to check for option value.
+lib/option.js:112:   *
+lib/option.js:113:   * An environment variable is only used if when processed the current option value is
+lib/option.js:114:   * undefined, or the source of the current value is 'default' or 'config' or 'env'.
+lib/option.js:115:   *
+lib/option.js:116:   * @param {string} name
+lib/option.js:117:   * @return {Option}
+lib/option.js:118:   */
+lib/option.js:120:  env(name) {
+lib/option.js:121:    this.envVar = name;
+lib/option.js:122:    return this;
+lib/option.js:123:  }
+lib/option.js:125:  /**
+lib/option.js:126:   * Set the custom handler for processing CLI option arguments into option values.
+lib/option.js:127:   *
+lib/option.js:128:   * @param {Function} [fn]
+lib/option.js:129:   * @return {Option}
+lib/option.js:130:   */
+lib/option.js:132:  argParser(fn) {
+lib/option.js:133:    this.parseArg = fn;
+lib/option.js:134:    return this;
+lib/option.js:135:  }
+lib/option.js:137:  /**
+lib/option.js:138:   * Whether the option is mandatory and must have a value after parsing.
+lib/option.js:139:   *
+lib/option.js:140:   * @param {boolean} [mandatory=true]
+lib/option.js:141:   * @return {Option}
+lib/option.js:142:   */
+lib/option.js:144:  makeOptionMandatory(mandatory = true) {
+lib/option.js:145:    this.mandatory = !!mandatory;
+lib/option.js:146:    return this;
+lib/option.js:147:  }
+lib/option.js:149:  /**
+lib/option.js:150:   * Hide option in help.
+lib/option.js:151:   *
+lib/option.js:152:   * @param {boolean} [hide=true]
+lib/option.js:153:   * @return {Option}
+lib/option.js:154:   */
+lib/option.js:156:  hideHelp(hide = true) {
+lib/option.js:157:    this.hidden = !!hide;
+lib/option.js:158:    return this;
+lib/option.js:159:  }
+lib/option.js:161:  /**
+lib/option.js:162:   * @package
+lib/option.js:163:   */
+lib/option.js:165:  _collectValue(value, previous) {
+lib/option.js:166:    if (previous === this.defaultValue || !Array.isArray(previous)) {
+lib/option.js:167:      return [value];
+lib/option.js:168:    }
+lib/option.js:170:    previous.push(value);
+lib/option.js:171:    return previous;
+lib/option.js:172:  }
+lib/option.js:174:  /**
+lib/option.js:175:   * Only allow option value to be one of choices.
+lib/option.js:176:   *
+lib/option.js:177:   * @param {string[]} values
+lib/option.js:178:   * @return {Option}
+lib/option.js:179:   */
+lib/option.js:181:  choices(values) {
+lib/option.js:182:    this.argChoices = values.slice();
+lib/option.js:183:    this.parseArg = (arg, previous) => {
+lib/option.js:184:      if (!this.argChoices.includes(arg)) {
+lib/option.js:185:        throw new InvalidArgumentError(
+lib/option.js:186:          `Allowed choices are ${this.argChoices.join(', ')}.`,
+lib/option.js:187:        );
+lib/option.js:188:      }
+lib/option.js:189:      if (this.variadic) {
+lib/option.js:190:        return this._collectValue(arg, previous);
+lib/option.js:191:      }
+lib/option.js:192:      return arg;
+lib/option.js:193:    };
+lib/option.js:194:    return this;
+lib/option.js:195:  }
+lib/option.js:197:  /**
+lib/option.js:198:   * Return option name.
+lib/option.js:199:   *
+lib/option.js:200:   * @return {string}
+lib/option.js:201:   */
+lib/option.js:203:  name() {
+lib/option.js:204:    if (this.long) {
+lib/option.js:205:      return this.long.replace(/^--/, '');
+lib/option.js:206:    }
+lib/option.js:207:    return this.short.replace(/^-/, '');
+lib/option.js:208:  }
+lib/option.js:210:  /**
+lib/option.js:211:   * Return option name, in a camelcase format that can be used
+lib/option.js:212:   * as an object attribute key.
+lib/option.js:213:   *
+lib/option.js:214:   * @return {string}
+lib/option.js:215:   */
+lib/option.js:217:  attributeName() {
+lib/option.js:218:    if (this.negate) {
+lib/option.js:219:      return camelcase(this.name().replace(/^no-/, ''));
+lib/option.js:220:    }
+lib/option.js:221:    return camelcase(this.name());
+lib/option.js:222:  }
+lib/option.js:224:  /**
+lib/option.js:225:   * Set the help group heading.
+lib/option.js:226:   *
+lib/option.js:227:   * @param {string} heading
+lib/option.js:228:   * @return {Option}
+lib/option.js:229:   */
+lib/option.js:230:  helpGroup(heading) {
+lib/option.js:231:    this.helpGroupHeading = heading;
+lib/option.js:232:    return this;
+lib/option.js:233:  }
+lib/option.js:235:  /**
+lib/option.js:236:   * Check if `arg` matches the short or long flag.
+lib/option.js:237:   *
+lib/option.js:238:   * @param {string} arg
+lib/option.js:239:   * @return {boolean}
+lib/option.js:240:   * @package
+lib/option.js:241:   */
+lib/option.js:243:  is(arg) {
+lib/option.js:244:    return this.short === arg || this.long === arg;
+lib/option.js:245:  }
+lib/option.js:247:  /**
+lib/option.js:248:   * Return whether a boolean option.
+lib/option.js:249:   *
+lib/option.js:250:   * Options are one of boolean, negated, required argument, or optional argument.
+lib/option.js:251:   *
+lib/option.js:252:   * @return {boolean}
+lib/option.js:253:   * @package
+lib/option.js:254:   */
+lib/option.js:256:  isBoolean() {
+lib/option.js:257:    return !this.required && !this.optional && !this.negate;
+lib/option.js:258:  }
+lib/option.js:259:}
+lib/option.js:261:/**
+lib/option.js:262: * This class is to make it easier to work with dual options, without changing the existing
+lib/option.js:263: * implementation. We support separate dual options for separate positive and negative options,
+lib/option.js:264: * like `--build` and `--no-build`, which share a single option value. This works nicely for some
+lib/option.js:265: * use cases, but is tricky for others where we want separate behaviours despite
+lib/option.js:266: * the single shared option value.
+lib/option.js:267: */
+lib/option.js:268:export class DualOptions {
+lib/option.js:269:  /**
+lib/option.js:270:   * @param {Option[]} options
+lib/option.js:271:   */
+lib/option.js:272:  constructor(options) {
+lib/option.js:273:    this.positiveOptions = new Map();
+lib/option.js:274:    this.negativeOptions = new Map();
+lib/option.js:275:    this.dualOptions = new Set();
+lib/option.js:276:    options.forEach((option) => {
+lib/option.js:277:      if (option.negate) {
+lib/option.js:278:        this.negativeOptions.set(option.attributeName(), option);
+lib/option.js:279:      } else {
+lib/option.js:280:        this.positiveOptions.set(option.attributeName(), option);
+lib/option.js:281:      }
+lib/option.js:282:    });
+lib/option.js:283:    this.negativeOptions.forEach((value, key) => {
+lib/option.js:284:      if (this.positiveOptions.has(key)) {
+lib/option.js:285:        this.dualOptions.add(key);
+lib/option.js:286:      }
+lib/option.js:287:    });
+lib/option.js:288:  }
+lib/option.js:290:  /**
+lib/option.js:291:   * Did the value come from the option, and not from possible matching dual option?
+lib/option.js:292:   *
+lib/option.js:293:   * @param {*} value
+lib/option.js:294:   * @param {Option} option
+lib/option.js:295:   * @returns {boolean}
+lib/option.js:296:   */
+lib/option.js:297:  valueFromOption(value, option) {
+lib/option.js:298:    const optionKey = option.attributeName();
+lib/option.js:299:    if (!this.dualOptions.has(optionKey)) return true;
+lib/option.js:301:    // Use the value to deduce if (probably) came from the option.
+lib/option.js:302:    const preset = this.negativeOptions.get(optionKey).presetArg;
+lib/option.js:303:    const negativeValue = preset !== undefined ? preset : false;
+lib/option.js:304:    return option.negate === (negativeValue === value);
+lib/option.js:305:  }
+lib/option.js:306:}
+lib/option.js:308:/**
+lib/option.js:309: * Convert string from kebab-case to camelCase.
+lib/option.js:310: *
+lib/option.js:311: * @param {string} str
+lib/option.js:312: * @return {string}
+lib/option.js:313: * @private
+lib/option.js:314: */
+lib/option.js:316:function camelcase(str) {
+lib/option.js:317:  return str.split('-').reduce((str, word) => {
+lib/option.js:318:    return str + word[0].toUpperCase() + word.slice(1);
+lib/option.js:319:  });
+lib/option.js:320:}
+lib/option.js:322:/**
+lib/option.js:323: * Split the short and long flag out of something like '-m,--mixed <value>'
+lib/option.js:324: *
+lib/option.js:325: * @private
+lib/option.js:326: */
+lib/option.js:328:function splitOptionFlags(flags) {
+lib/option.js:329:  let shortFlag;
+lib/option.js:330:  let longFlag;
+lib/option.js:331:  // short flag, single dash and single character
+lib/option.js:332:  const shortFlagExp = /^-[^-]$/;
+lib/option.js:333:  // long flag, double dash and at least one character
+lib/option.js:334:  const longFlagExp = /^--[^-]/;
+lib/option.js:336:  const flagParts = flags.split(/[ |,]+/).concat('guard');
+lib/option.js:337:  // Normal is short and/or long.
+lib/option.js:338:  if (shortFlagExp.test(flagParts[0])) shortFlag = flagParts.shift();
+lib/option.js:339:  if (longFlagExp.test(flagParts[0])) longFlag = flagParts.shift();
+lib/option.js:340:  // Long then short. Rarely used but fine.
+lib/option.js:341:  if (!shortFlag && shortFlagExp.test(flagParts[0]))
+lib/option.js:342:    shortFlag = flagParts.shift();
+lib/option.js:343:  // Allow two long flags, like '--ws, --workspace'
+lib/option.js:344:  // This is the supported way to have a shortish option flag.
+lib/option.js:345:  if (!shortFlag && longFlagExp.test(flagParts[0])) {
+lib/option.js:346:    shortFlag = longFlag;
+lib/option.js:347:    longFlag = flagParts.shift();
+lib/option.js:348:  }
+lib/option.js:350:  // Check for unprocessed flag. Fail noisily rather than silently ignore.
+lib/option.js:351:  if (flagParts[0].startsWith('-')) {
+lib/option.js:352:    const unsupportedFlag = flagParts[0];
+lib/option.js:353:    const baseError = `option creation failed due to '${unsupportedFlag}' in option flags '${flags}'`;
+lib/option.js:354:    if (/^-[^-][^-]/.test(unsupportedFlag))
+lib/option.js:355:      throw new Error(
+lib/option.js:356:        `${baseError}
+lib/option.js:357:- a short flag is a single dash and a single character
+lib/option.js:358:  - either use a single dash and a single character (for a short flag)
+lib/option.js:359:  - or use a double dash for a long option (and can have two, like '--ws, --workspace')`,
+lib/option.js:360:      );
+lib/option.js:361:    if (shortFlagExp.test(unsupportedFlag))
+lib/option.js:362:      throw new Error(`${baseError}
+lib/option.js:363:- too many short flags`);
+lib/option.js:364:    if (longFlagExp.test(unsupportedFlag))
+lib/option.js:365:      throw new Error(`${baseError}
+lib/option.js:366:- too many long flags`);
+lib/option.js:368:    throw new Error(`${baseError}
+lib/option.js:369:- unrecognised flag format`);
+lib/option.js:370:  }
+lib/option.js:371:  if (shortFlag === undefined && longFlag === undefined)
+lib/option.js:372:    throw new Error(
+lib/option.js:373:      `option creation failed due to no flags found in '${flags}'.`,
+lib/option.js:374:    );
+lib/option.js:376:  return { shortFlag, longFlag };
+lib/option.js:377:}
+Readme.md:1:# Commander.js
+Readme.md:3:[![Build Status](https://github.com/tj/commander.js/workflows/build/badge.svg)](https://github.com/tj/commander.js/actions?query=workflow%3A%22build%22)
+Readme.md:4:[![NPM Version](http://img.shields.io/npm/v/commander.svg?style=flat)](https://www.npmjs.org/package/commander)
+Readme.md:5:[![NPM Downloads](https://img.shields.io/npm/dm/commander.svg?style=flat)](https://npmcharts.com/compare/commander?minimal=true)
+Readme.md:6:[![Install Size](https://packagephobia.now.sh/badge?p=commander)](https://packagephobia.now.sh/result?p=commander)
+Readme.md:8:The complete solution for [node.js](http://nodejs.org) command-line interfaces.
+Readme.md:10:Read this in other languages: English | [简体中文](./Readme_zh-CN.md)
+Readme.md:12:- [Commander.js](#commanderjs)
+Readme.md:13:  - [Installation](#installation)
+Readme.md:14:  - [Quick Start](#quick-start)
+Readme.md:15:  - [Declaring _program_ variable](#declaring-program-variable)
+Readme.md:16:  - [Options](#options)
+Readme.md:17:    - [Common option types, boolean and value](#common-option-types-boolean-and-value)
+Readme.md:18:    - [Default option value](#default-option-value)
+Readme.md:19:    - [Other option types, negatable boolean and boolean|value](#other-option-types-negatable-boolean-and-booleanvalue)
+Readme.md:20:    - [Required option](#required-option)
+Readme.md:21:    - [Variadic option](#variadic-option)
+Readme.md:22:    - [Version option](#version-option)
+Readme.md:23:    - [More configuration](#more-configuration)
+Readme.md:24:    - [Custom option processing](#custom-option-processing)
+Readme.md:25:  - [Commands](#commands)
+Readme.md:26:    - [Command-arguments](#command-arguments)
+Readme.md:27:      - [More configuration](#more-configuration-1)
+Readme.md:28:      - [Custom argument processing](#custom-argument-processing)
+Readme.md:29:    - [Action handler](#action-handler)
+Readme.md:30:    - [Stand-alone executable (sub)commands](#stand-alone-executable-subcommands)
+Readme.md:31:    - [Life cycle hooks](#life-cycle-hooks)
+Readme.md:32:  - [Automated help](#automated-help)
+Readme.md:33:    - [Custom help](#custom-help)
+Readme.md:34:    - [Display help after errors](#display-help-after-errors)
+Readme.md:35:    - [Display help from code](#display-help-from-code)
+Readme.md:36:    - [.name](#name)
+Readme.md:37:    - [.usage](#usage)
+Readme.md:38:    - [.description and .summary](#description-and-summary)
+Readme.md:39:    - [.helpOption(flags, description)](#helpoptionflags-description)
+Readme.md:40:    - [.helpCommand()](#helpcommand)
+Readme.md:41:    - [Help Groups](#help-groups)
+Readme.md:42:    - [More configuration](#more-configuration-2)
+Readme.md:43:  - [Custom event listeners](#custom-event-listeners)
+Readme.md:44:  - [Bits and pieces](#bits-and-pieces)
+Readme.md:45:    - [.parse() and .parseAsync()](#parse-and-parseasync)
+Readme.md:46:    - [Parsing Configuration](#parsing-configuration)
+Readme.md:47:    - [Legacy options as properties](#legacy-options-as-properties)
+Readme.md:48:    - [TypeScript](#typescript)
+Readme.md:49:    - [createCommand()](#createcommand)
+Readme.md:50:    - [Node options such as `--harmony`](#node-options-such-as---harmony)
+Readme.md:51:    - [Debugging stand-alone executable subcommands](#debugging-stand-alone-executable-subcommands)
+Readme.md:52:    - [npm run-script](#npm-run-script)
+Readme.md:53:    - [Display error](#display-error)
+Readme.md:54:    - [Override exit and output handling](#override-exit-and-output-handling)
+Readme.md:55:    - [Additional documentation](#additional-documentation)
+Readme.md:56:  - [Support](#support)
+Readme.md:57:    - [Commander for enterprise](#commander-for-enterprise)
+Readme.md:59:For information about terms used in this document see: [terminology](./docs/terminology.md)
+Readme.md:61:## Installation
+Readme.md:63:```sh
+Readme.md:64:npm install commander
+Readme.md:65:```
+Readme.md:67:## Quick Start
+Readme.md:69:You write code to describe your command line interface.
+Readme.md:70:Commander looks after parsing the arguments into options and command-arguments,
+Readme.md:71:displays usage errors for problems, and implements a help system.
+Readme.md:73:Commander is strict and displays an error for unrecognised options.
+Readme.md:74:The two most used option types are a boolean option, and an option which takes its value from the following argument.
+Readme.md:76:Example file: [split.js](./examples/split.js)
+Readme.md:78:```js
+Readme.md:79:import { program } from 'commander';
+Readme.md:81:program
+Readme.md:82:  .option('--first')
+Readme.md:83:  .option('-s, --separator <char>')
+Readme.md:84:  .argument('<string>');
+Readme.md:86:program.parse();
+Readme.md:88:const options = program.opts();
+Readme.md:89:const limit = options.first ? 1 : undefined;
+Readme.md:90:console.log(program.args[0].split(options.separator, limit));
+Readme.md:91:```
+Readme.md:93:```console
+Readme.md:94:$ node split.js -s - --fits a-b-c
+Readme.md:95:error: unknown option '--fits'
+Readme.md:96:(Did you mean --first?)
+Readme.md:97:$ node split.js -s - --first a-b-c
+Readme.md:98:[ 'a' ]
+Readme.md:99:```
+Readme.md:101:Here is a more complete program using a subcommand and with descriptions for the help. In a multi-command program, you have an action handler for each command (or stand-alone executables for the commands).
+Readme.md:103:Example file: [string-util.js](./examples/string-util.js)
+Readme.md:105:```js
+Readme.md:106:import { Command } from 'commander';
+Readme.md:107:const program = new Command();
+Readme.md:109:program
+Readme.md:110:  .name('string-util')
+Readme.md:111:  .description('CLI to some JavaScript string utilities')
+Readme.md:112:  .version('0.8.0');
+Readme.md:114:program.command('split')
+Readme.md:115:  .description('Split a string into substrings and display as an array')
+Readme.md:116:  .argument('<string>', 'string to split')
+Readme.md:117:  .option('--first', 'display just the first substring')
+Readme.md:118:  .option('-s, --separator <char>', 'separator character', ',')
+Readme.md:119:  .action((str, options) => {
+Readme.md:120:    const limit = options.first ? 1 : undefined;
+Readme.md:121:    console.log(str.split(options.separator, limit));
+Readme.md:122:  });
+Readme.md:124:program.parse();
+Readme.md:125:```
+Readme.md:127:```console
+Readme.md:128:$ node string-util.js help split
+Readme.md:129:Usage: string-util split [options] <string>
+Readme.md:131:Split a string into substrings and display as an array.
+Readme.md:133:Arguments:
+Readme.md:134:  string                  string to split
+Readme.md:136:Options:
+Readme.md:137:  --first                 display just the first substring
+Readme.md:138:  -s, --separator <char>  separator character (default: ",")
+Readme.md:139:  -h, --help              display help for command
+Readme.md:141:$ node string-util.js split --separator=- a-b-c
+Readme.md:142:[ 'a', 'b', 'c' ]
+Readme.md:143:```
+Readme.md:145:More samples can be found in the [examples](https://github.com/tj/commander.js/tree/master/examples) directory.
+Readme.md:147:## Declaring _program_ variable
+Readme.md:149:Commander exports a global object which is convenient for quick programs.
+Readme.md:150:This is used in some examples in this README for brevity.
+Readme.md:152:```js
+Readme.md:153:import { program } from 'commander';
+Readme.md:154:```
+Readme.md:156:For larger programs which may use commander in multiple ways, including unit testing, it is better to create a local `Command` object to use.
+Readme.md:158:```js
+Readme.md:159:// CommonJS (.cjs)
+Readme.md:160:const { Command } = require('commander');
+Readme.md:161:const program = new Command();
+Readme.md:162:```
+Readme.md:164:```js
+Readme.md:165:// ECMAScript (.mjs)
+Readme.md:166:import { Command } from 'commander';
+Readme.md:167:const program = new Command();
+Readme.md:168:```
+Readme.md:170:```ts
+Readme.md:171:// TypeScript (.ts)
+Readme.md:172:import { Command } from 'commander';
+Readme.md:173:const program = new Command();
+Readme.md:174:```
+Readme.md:176:## Options
+Readme.md:178:Options are defined with the `.option()` method, also serving as documentation for the options. Each option can have a short flag (single character) and a long name, separated by a comma, a space, or a vertical bar (`|`). To allow a wider range of short-ish flags than just single characters, you may also have two long options.
+Readme.md:180:```js
+Readme.md:181:program
+Readme.md:182:  .option('-p, --port <number>', 'server port number')
+Readme.md:183:  .option('--trace', 'add extra debugging output')
+Readme.md:184:  .option('--ws, --workspace <name>', 'use a custom workspace')
+Readme.md:185:```
+Readme.md:187:The parsed options can be accessed by calling `.opts()` on a `Command` object, and are passed to the action handler.
+Readme.md:189:Multi-word options like `--template-engine` are normalized to camelCase option names, resulting in properties such as `program.opts().templateEngine`.
+Readme.md:191:An option and its option-argument can be separated by a space, or combined into the same argument. The option-argument can follow the short option directly, or follow an `=` for a long option.
+Readme.md:193:```sh
+Readme.md:194:serve -p 80
+Readme.md:195:serve -p80
+Readme.md:196:serve --port 80
+Readme.md:197:serve --port=80
+Readme.md:198:```
+Readme.md:200:You can use `--` to indicate the end of the options, and any remaining arguments will be used without being interpreted.
+Readme.md:202:By default, options on the command line are not positional, and can be specified before or after other arguments.
+Readme.md:204:There are additional related routines for when `.opts()` is not enough:
+Readme.md:206:- `.optsWithGlobals()` returns merged local and global option values
+Readme.md:207:- `.getOptionValue()` and `.setOptionValue()` work with a single option value
+Readme.md:208:- `.getOptionValueSource()` and `.setOptionValueWithSource()` include where the option value came from
+Readme.md:210:### Common option types, boolean and value
+Readme.md:212:The two most used option types are a boolean option, and an option which takes its value
+Readme.md:213:from the following argument (declared with angle brackets like `--expect <value>`). Both are `undefined` unless specified on command line.
+Readme.md:215:Example file: [options-common.js](./examples/options-common.js)
+Readme.md:217:```js
+Readme.md:218:program
+Readme.md:219:  .option('-d, --debug', 'output extra debugging')
+Readme.md:220:  .option('-s, --small', 'small pizza size')
+Readme.md:221:  .option('-p, --pizza-type <type>', 'flavour of pizza');
+Readme.md:223:program.parse(process.argv);
+Readme.md:225:const options = program.opts();
+Readme.md:226:if (options.debug) console.log(options);
+Readme.md:227:console.log('pizza details:');
+Readme.md:228:if (options.small) console.log('- small pizza size');
+Readme.md:229:if (options.pizzaType) console.log(`- ${options.pizzaType}`);
+Readme.md:230:```
+Readme.md:232:```console
+Readme.md:233:$ pizza-options -p
+Readme.md:234:error: option '-p, --pizza-type <type>' argument missing
+Readme.md:235:$ pizza-options -d -s -p vegetarian
+Readme.md:236:{ debug: true, small: true, pizzaType: 'vegetarian' }
+Readme.md:237:pizza details:
+Readme.md:238:- small pizza size
+Readme.md:239:- vegetarian
+Readme.md:240:$ pizza-options --pizza-type=cheese
+Readme.md:241:pizza details:
+Readme.md:242:- cheese
+Readme.md:243:```
+Readme.md:245:Multiple boolean short options may be combined following the dash, and may be followed by a single short option taking a value.
+Readme.md:246:For example, `-d -s -p cheese` may be written as `-ds -p cheese` or even `-dsp cheese`.
+Readme.md:248:Options with an expected option-argument are greedy and will consume the following argument whatever the value.
+Readme.md:249:So `--id -xyz` reads `-xyz` as the option-argument.
+Readme.md:251:`program.parse(arguments)` processes the arguments, leaving any args not consumed by the program options in the `program.args` array. The parameter is optional and defaults to `process.argv`.
+Readme.md:253:### Default option value
+Readme.md:255:You can specify a default value for an option.
+Readme.md:257:Example file: [options-defaults.js](./examples/options-defaults.js)
+Readme.md:259:```js
+Readme.md:260:program
+Readme.md:261:  .option('-c, --cheese <type>', 'add the specified type of cheese', 'blue');
+Readme.md:263:program.parse();
+Readme.md:265:console.log(`cheese: ${program.opts().cheese}`);
+Readme.md:266:```
+Readme.md:268:```console
+Readme.md:269:$ pizza-options
+Readme.md:270:cheese: blue
+Readme.md:271:$ pizza-options --cheese stilton
+Readme.md:272:cheese: stilton
+Readme.md:273:```
+Readme.md:275:### Other option types, negatable boolean and boolean|value
+Readme.md:277:You can define a boolean option long name with a leading `no-` to set the option value to `false` when used.
+Readme.md:278:Defined alone without a matching positive option, this also makes the option `true` by default.
+Readme.md:280:Example file: [options-negatable.js](./examples/options-negatable.js)
+Readme.md:282:```js
+Readme.md:283:program
+Readme.md:284:  .option('--no-sauce', 'Remove sauce')
+Readme.md:285:  .option('--cheese <flavour>', 'cheese flavour', 'mozzarella')
+Readme.md:286:  .option('--no-cheese', 'plain with no cheese')
+Readme.md:287:  .parse();
+Readme.md:289:const options = program.opts();
+Readme.md:290:const sauceStr = options.sauce ? 'sauce' : 'no sauce';
+Readme.md:291:const cheeseStr = (options.cheese === false) ? 'no cheese' : `${options.cheese} cheese`;
+Readme.md:292:console.log(`You ordered a pizza with ${sauceStr} and ${cheeseStr}`);
+Readme.md:293:```
+Readme.md:295:```console
+Readme.md:296:$ pizza-options
+Readme.md:297:You ordered a pizza with sauce and mozzarella cheese
+Readme.md:298:$ pizza-options --sauce
+Readme.md:299:error: unknown option '--sauce'
+Readme.md:300:$ pizza-options --cheese=blue
+Readme.md:301:You ordered a pizza with sauce and blue cheese
+Readme.md:302:$ pizza-options --no-sauce --no-cheese
+Readme.md:303:You ordered a pizza with no sauce and no cheese
+Readme.md:304:```
+Readme.md:306:You can specify an option which may be used as a boolean option but may optionally take an option-argument
+Readme.md:307:(declared with square brackets, like `--optional [value]`).
+Readme.md:309:Example file: [options-boolean-or-value.js](./examples/options-boolean-or-value.js)
+Readme.md:311:```js
+Readme.md:312:program
+Readme.md:313:  .option('-c, --cheese [type]', 'Add cheese with optional type');
+Readme.md:315:program.parse(process.argv);
+Readme.md:317:const options = program.opts();
+Readme.md:318:if (options.cheese === undefined) console.log('no cheese');
+Readme.md:319:else if (options.cheese === true) console.log('add cheese');
+Readme.md:320:else console.log(`add cheese type ${options.cheese}`);
+Readme.md:321:```
+Readme.md:323:```console
+Readme.md:324:$ pizza-options
+Readme.md:325:no cheese
+Readme.md:326:$ pizza-options --cheese
+Readme.md:327:add cheese
+Readme.md:328:$ pizza-options --cheese mozzarella
+Readme.md:329:add cheese type mozzarella
+Readme.md:330:```
+Readme.md:332:Options with an optional option-argument are not greedy and will ignore arguments starting with a dash.
+Readme.md:333:So `id` behaves as a boolean option for `--id -ABCD`, but you can use a combined form if needed like `--id=-ABCD`.
+Readme.md:334:Negative numbers are special and are accepted as an option-argument.
+Readme.md:336:For information about possible ambiguous cases, see [options taking varying arguments](./docs/options-in-depth.md).
+Readme.md:338:### Required option
+Readme.md:340:You may specify a required (mandatory) option using `.requiredOption()`. The option must have a value after parsing, usually specified on the command line, or perhaps from a default value (e.g., from environment). 
+Readme.md:342:The method is otherwise the same as `.option()` in format, taking flags and description, and optional default value or custom processing.
+Readme.md:344:Example file: [options-required.js](./examples/options-required.js)
+Readme.md:346:```js
+Readme.md:347:program
+Readme.md:348:  .requiredOption('-c, --cheese <type>', 'pizza must have cheese');
+Readme.md:350:program.parse();
+Readme.md:351:```
+Readme.md:353:```console
+Readme.md:354:$ pizza
+Readme.md:355:error: required option '-c, --cheese <type>' not specified
+Readme.md:356:```
+Readme.md:358:### Variadic option
+Readme.md:360:You may make an option variadic by appending `...` to the value placeholder when declaring the option. On the command line you
+Readme.md:361:can then specify multiple option-arguments, and the parsed option value will be an array. The extra arguments
+Readme.md:362:are read until the first argument starting with a dash. The special argument `--` stops option processing entirely. If a value
+Readme.md:363:is specified in the same argument as the option, then no further values are read.
+Readme.md:365:Example file: [options-variadic.js](./examples/options-variadic.js)
+Readme.md:367:```js
+Readme.md:368:program
+Readme.md:369:  .option('-n, --number <numbers...>', 'specify numbers')
+Readme.md:370:  .option('-l, --letter [letters...]', 'specify letters');
+Readme.md:372:program.parse();
+Readme.md:374:console.log('Options: ', program.opts());
+Readme.md:375:console.log('Remaining arguments: ', program.args);
+Readme.md:376:```
+Readme.md:378:```console
+Readme.md:379:$ collect -n 1 2 3 --letter a b c
+Readme.md:380:Options:  { number: [ '1', '2', '3' ], letter: [ 'a', 'b', 'c' ] }
+Readme.md:381:Remaining arguments:  []
+Readme.md:382:$ collect --letter=A -n80 operand
+Readme.md:383:Options:  { number: [ '80' ], letter: [ 'A' ] }
+Readme.md:384:Remaining arguments:  [ 'operand' ]
+Readme.md:385:$ collect --letter -n 1 -n 2 3 -- operand
+Readme.md:386:Options:  { number: [ '1', '2', '3' ], letter: true }
+Readme.md:387:Remaining arguments:  [ 'operand' ]
+Readme.md:388:```
+Readme.md:390:For information about possible ambiguous cases, see [options taking varying arguments](./docs/options-in-depth.md).
+Readme.md:392:### Version option
+Readme.md:394:The optional `.version()` method adds handling for displaying the command version. The default option flags are `-V` and `--version`. When used, the command prints the version number and exits.
+Readme.md:396:```js
+Readme.md:397:program.version('0.0.1');
+Readme.md:398:```
+Readme.md:400:```console
+Readme.md:401:$ ./examples/pizza -V
+Readme.md:402:0.0.1
+Readme.md:403:```
+Readme.md:405:You may change the flags and description by passing additional parameters to the `.version()` method, using
+Readme.md:406:the same syntax for flags as the `.option()` method.
+Readme.md:408:```js
+Readme.md:409:program.version('0.0.1', '-v, --vers', 'output the current version');
+Readme.md:410:```
+Readme.md:412:### More configuration
+Readme.md:414:You can add most options using the `.option()` method, but there are some additional features available
+Readme.md:415:by constructing an `Option` explicitly for less common cases.
+Readme.md:417:Example files: [options-extra.js](./examples/options-extra.js), [options-env.js](./examples/options-env.js), [options-conflicts.js](./examples/options-conflicts.js), [options-implies.js](./examples/options-implies.js)
+Readme.md:419:```js
+Readme.md:420:program
+Readme.md:421:  .addOption(new Option('-s, --secret').hideHelp())
+Readme.md:422:  .addOption(new Option('-t, --timeout <delay>', 'timeout in seconds').default(60, 'one minute'))
+Readme.md:423:  .addOption(new Option('-d, --drink <size>', 'drink size').choices(['small', 'medium', 'large']))
+Readme.md:424:  .addOption(new Option('-p, --port <number>', 'port number').env('PORT'))
+Readme.md:425:  .addOption(new Option('--donate [amount]', 'optional donation in dollars').preset('20').argParser(parseFloat))
+Readme.md:426:  .addOption(new Option('--disable-server', 'disables the server').conflicts('port'))
+Readme.md:427:  .addOption(new Option('--free-drink', 'small drink included free ').implies({ drink: 'small' }));
+Readme.md:428:```
+Readme.md:430:```console
+Readme.md:431:$ extra --help
+Readme.md:432:Usage: help [options]
+Readme.md:434:Options:
+Readme.md:435:  -t, --timeout <delay>  timeout in seconds (default: one minute)
+Readme.md:436:  -d, --drink <size>     drink cup size (choices: "small", "medium", "large")
+Readme.md:437:  -p, --port <number>    port number (env: PORT)
+Readme.md:438:  --donate [amount]      optional donation in dollars (preset: "20")
+Readme.md:439:  --disable-server       disables the server
+Readme.md:440:  --free-drink           small drink included free
+Readme.md:441:  -h, --help             display help for command
+Readme.md:443:$ extra --drink huge
+Readme.md:444:error: option '-d, --drink <size>' argument 'huge' is invalid. Allowed choices are small, medium, large.
+Readme.md:446:$ PORT=80 extra --donate --free-drink
+Readme.md:447:Options:  { timeout: 60, donate: 20, port: '80', freeDrink: true, drink: 'small' }
+Readme.md:449:$ extra --disable-server --port 8000
+Readme.md:450:error: option '--disable-server' cannot be used with option '-p, --port <number>'
+Readme.md:451:```
+Readme.md:453:Specify a required (mandatory) option using the `Option` method `.makeOptionMandatory()`. This matches the `Command` method [`.requiredOption()`](#required-option).
+Readme.md:455:### Custom option processing
+Readme.md:457:You may specify a function to do custom processing of option-arguments. The callback function receives two parameters,
+Readme.md:458:the user specified option-argument and the previous value for the option. It returns the new value for the option.
+Readme.md:460:This allows you to coerce the option-argument to the desired type, or accumulate values, or do entirely custom processing.
+Readme.md:462:You can optionally specify the default/starting value for the option after the function parameter.
+Readme.md:464:Example file: [options-custom-processing.js](./examples/options-custom-processing.js)
+Readme.md:466:```js
+Readme.md:467:function myParseInt(value, dummyPrevious) {
+Readme.md:468:  // parseInt takes a string and a radix
+Readme.md:469:  const parsedValue = parseInt(value, 10);
+Readme.md:470:  if (isNaN(parsedValue)) {
+Readme.md:471:    throw new commander.InvalidArgumentError('Not a number.');
+Readme.md:472:  }
+Readme.md:473:  return parsedValue;
+Readme.md:474:}
+Readme.md:476:function increaseVerbosity(dummyValue, previous) {
+Readme.md:477:  return previous + 1;
+Readme.md:478:}
+Readme.md:480:function collect(value, previous) {
+Readme.md:481:  return previous.concat([value]);
+Readme.md:482:}
+Readme.md:484:function commaSeparatedList(value, dummyPrevious) {
+Readme.md:485:  return value.split(',');
+Readme.md:486:}
+Readme.md:488:program
+Readme.md:489:  .option('-f, --float <number>', 'float argument', parseFloat)
+Readme.md:490:  .option('-i, --integer <number>', 'integer argument', myParseInt)
+Readme.md:491:  .option('-v, --verbose', 'verbosity that can be increased', increaseVerbosity, 0)
+Readme.md:492:  .option('-c, --collect <value>', 'repeatable value', collect, [])
+Readme.md:493:  .option('-l, --list <items>', 'comma separated list', commaSeparatedList)
+Readme.md:494:;
+Readme.md:496:program.parse();
+Readme.md:498:const options = program.opts();
+Readme.md:499:if (options.float !== undefined) console.log(`float: ${options.float}`);
+Readme.md:500:if (options.integer !== undefined) console.log(`integer: ${options.integer}`);
+Readme.md:501:if (options.verbose > 0) console.log(`verbosity: ${options.verbose}`);
+Readme.md:502:if (options.collect.length > 0) console.log(options.collect);
+Readme.md:503:if (options.list !== undefined) console.log(options.list);
+Readme.md:504:```
+Readme.md:506:```console
+Readme.md:507:$ custom -f 1e2
+Readme.md:508:float: 100
+Readme.md:509:$ custom --integer 2
+Readme.md:510:integer: 2
+Readme.md:511:$ custom -v -v -v
+Readme.md:512:verbose: 3
+Readme.md:513:$ custom -c a -c b -c c
+Readme.md:514:[ 'a', 'b', 'c' ]
+Readme.md:515:$ custom --list x,y,z
+Readme.md:516:[ 'x', 'y', 'z' ]
+Readme.md:517:```
+Readme.md:519:## Commands
+Readme.md:521:You can specify (sub)commands using `.command()` or `.addCommand()`. There are two ways these can be implemented: using an `.action()` handler attached to the command; or as a stand-alone executable file. (More detail about this later.)
+Readme.md:523:Subcommands may be nested. Example file: [nestedCommands.js](./examples/nestedCommands.js).
+Readme.md:525:In the first parameter to `.command()` you specify the command name. You may append the command-arguments after the command name, or specify them separately using `.argument()`. The arguments may be `<required>` or `[optional]`, and the last argument may also be `variadic...`.
+Readme.md:527:You can use `.addCommand()` to add an already configured subcommand to the program.
+Readme.md:529:For example:
+Readme.md:531:```js
+Readme.md:532:// Command implemented using action handler (description is supplied separately to `.command`)
+Readme.md:533:// Returns new command for configuring.
+Readme.md:534:program
+Readme.md:535:  .command('clone <source> [destination]')
+Readme.md:536:  .description('clone a repository into a newly created directory')
+Readme.md:537:  .action((source, destination) => {
+Readme.md:538:    console.log('clone command called');
+Readme.md:539:  });
+Readme.md:541:// Command implemented using stand-alone executable file, indicated by adding description as second parameter to `.command`.
+Readme.md:542:// Returns `this` for adding more commands.
+Readme.md:543:program
+Readme.md:544:  .command('start <service>', 'start named service')
+Readme.md:545:  .command('stop [service]', 'stop named service, or all if no name supplied');
+Readme.md:547:// Command prepared separately.
+Readme.md:548:// Returns `this` for adding more commands.
+Readme.md:549:program
+Readme.md:550:  .addCommand(build.makeBuildCommand());
+Readme.md:551:```
+Readme.md:553:Configuration options can be passed with the call to `.command()` and `.addCommand()`. Specifying `hidden: true` will
+Readme.md:554:remove the command from the generated help output. Specifying `isDefault: true` will run the subcommand if no other
+Readme.md:555:subcommand is specified. (Example file: [defaultCommand.js](./examples/defaultCommand.js).)
+Readme.md:557:You can add alternative names for a command with `.alias()`. (Example file: [alias.cjs](./examples/alias.cjs).)
+Readme.md:559:`.command()` automatically copies the inherited settings from the parent command to the newly created subcommand. This is only done during creation; any later setting changes to the parent are not inherited.
+Readme.md:561:For safety, `.addCommand()` does not automatically copy the inherited settings from the parent command. There is a helper routine `.copyInheritedSettings()` for copying the settings when they are wanted.
+Readme.md:563:### Command-arguments
+Readme.md:565:For subcommands, you can specify the argument syntax in the call to `.command()` (as shown above). This
+Readme.md:566:is the only method usable for subcommands implemented using a stand-alone executable.
+Readme.md:568:Alternatively, you can instead use the following method. To configure a command, you can use `.argument()` to specify each expected command-argument.
+Readme.md:569:You supply the argument name and an optional description. The argument may be `<required>` or `[optional]`.
+Readme.md:570:You can specify a default value for an optional command-argument.
+Readme.md:572:Example file: [argument.js](./examples/argument.js)
+Readme.md:574:```js
+Readme.md:575:program
+Readme.md:576:  .version('0.1.0')
+Readme.md:577:  .argument('<username>', 'user to login')
+Readme.md:578:  .argument('[password]', 'password for user, if required', 'no password given')
+Readme.md:579:  .action((username, password) => {
+Readme.md:580:    console.log('username:', username);
+Readme.md:581:    console.log('password:', password);
+Readme.md:582:  });
+Readme.md:583:```
+Readme.md:585:The last argument of a command can be variadic, and _only_ the last argument.  To make an argument variadic, simply
+Readme.md:586:append `...` to the argument name.
+Readme.md:588:A variadic argument is passed to the action handler as an array.
+Readme.md:590:```js
+Readme.md:591:program
+Readme.md:592:  .version('0.1.0')
+Readme.md:593:  .command('rmdir')
+Readme.md:594:  .argument('<dirs...>')
+Readme.md:595:  .action(function (dirs) {
+Readme.md:596:    dirs.forEach((dir) => {
+Readme.md:597:      console.log('rmdir %s', dir);
+Readme.md:598:    });
+Readme.md:599:  });
+Readme.md:600:```
+Readme.md:602:There is a convenience method to add multiple arguments at once, but without descriptions:
+Readme.md:604:```js
+Readme.md:605:program
+Readme.md:606:  .arguments('<username> <password>');
+Readme.md:607:```
+Readme.md:609:#### More configuration
+Readme.md:611:There are some additional features available by constructing an `Argument` explicitly for less common cases.
+Readme.md:613:Example file: [arguments-extra.js](./examples/arguments-extra.js)
+Readme.md:615:```js
+Readme.md:616:program
+Readme.md:617:  .addArgument(new commander.Argument('<drink-size>', 'drink cup size').choices(['small', 'medium', 'large']))
+Readme.md:618:  .addArgument(new commander.Argument('[timeout]', 'timeout in seconds').default(60, 'one minute'))
+Readme.md:619:```
+Readme.md:621:#### Custom argument processing
+Readme.md:623:You may specify a function to do custom processing of command-arguments (like for option-arguments).
+Readme.md:624:The callback function receives two parameters, the user specified command-argument and the previous value for the argument.
+Readme.md:625:It returns the new value for the argument.
+Readme.md:627:The processed argument values are passed to the action handler, and saved as `.processedArgs`.
+Readme.md:629:You can optionally specify the default/starting value for the argument after the function parameter.
+Readme.md:631:Example file: [arguments-custom-processing.js](./examples/arguments-custom-processing.js)
+Readme.md:633:```js
+Readme.md:634:program
+Readme.md:635:  .command('add')
+Readme.md:636:  .argument('<first>', 'integer argument', myParseInt)
+Readme.md:637:  .argument('[second]', 'integer argument', myParseInt, 1000)
+Readme.md:638:  .action((first, second) => {
+Readme.md:639:    console.log(`${first} + ${second} = ${first + second}`);
+Readme.md:640:  })
+Readme.md:641:;
+Readme.md:642:```
+Readme.md:644:### Action handler
+Readme.md:646:The action handler gets passed a parameter for each command-argument you declared, and two additional parameters
+Readme.md:647:which are the parsed options and the command object itself.
+Readme.md:649:Example file: [thank.js](./examples/thank.js)
+Readme.md:651:```js
+Readme.md:652:program
+Readme.md:653:  .argument('<name>')
+Readme.md:654:  .option('-t, --title <honorific>', 'title to use before name')
+Readme.md:655:  .option('-d, --debug', 'display some debugging')
+Readme.md:656:  .action((name, options, command) => {
+Readme.md:657:    if (options.debug) {
+Readme.md:658:      console.error('Called %s with options %o', command.name(), options);
+Readme.md:659:    }
+Readme.md:660:    const title = options.title ? `${options.title} ` : '';
+Readme.md:661:    console.log(`Thank-you ${title}${name}`);
+Readme.md:662:  });
+Readme.md:663:```
+Readme.md:665:If you prefer, you can work with the command directly and skip declaring the parameters for the action handler. If you use a function expression (but not an arrow function), the `this` keyword is set to the running command.
+Readme.md:667:Example file: [action-this.js](./examples/action-this.js)
+Readme.md:669:```js
+Readme.md:670:program
+Readme.md:671:  .command('serve')
+Readme.md:672:  .argument('<script>')
+Readme.md:673:  .option('-p, --port <number>', 'port number', 80)
+Readme.md:674:  .action(function() {
+Readme.md:675:    console.error('Run script %s on port %s', this.args[0], this.opts().port);
+Readme.md:676:  });
+Readme.md:677:```
+Readme.md:679:You may supply an `async` action handler, in which case you call `.parseAsync()` rather than `.parse()`.
+Readme.md:681:```js
+Readme.md:682:async function run() { /* code goes here */ }
+Readme.md:684:async function main() {
+Readme.md:685:  program
+Readme.md:686:    .command('run')
+Readme.md:687:    .action(run);
+Readme.md:688:  await program.parseAsync(process.argv);
+Readme.md:689:}
+Readme.md:690:```
+Readme.md:692:A command's options and arguments on the command line are validated when the command is used. Any unknown options, missing arguments, or excess arguments will be reported as an error. 
+Readme.md:694:You can suppress the unknown option check with `.allowUnknownOption()`. You can suppress the excess arguments check with `.allowExcessArguments()`.
+Readme.md:696:### Stand-alone executable (sub)commands
+Readme.md:698:When `.command()` is invoked with a description argument, this tells Commander that you're going to use stand-alone executables for subcommands.
+Readme.md:699:Commander will search the files in the directory of the entry script for a file with the name combination `command-subcommand` (like `pm-install` or `pm-search` in the example below). The search includes trying common file extensions, like `.js`.
+Readme.md:700:You may specify a custom name (and path) with the `executableFile` configuration option.
+Readme.md:701:You may specify a custom search directory for subcommands with `.executableDir()`.
+Readme.md:703:You handle the options for an executable (sub)command in the executable, and don't declare them at the top-level.
+Readme.md:705:Example file: [pm](./examples/pm)
+Readme.md:707:```js
+Readme.md:708:program
+Readme.md:709:  .name('pm')
+Readme.md:710:  .version('0.1.0')
+Readme.md:711:  .command('install [package-names...]', 'install one or more packages')
+Readme.md:712:  .command('search [query]', 'search with optional query')
+Readme.md:713:  .command('update', 'update installed packages', { executableFile: 'myUpdateSubCommand' })
+Readme.md:714:  .command('list', 'list packages installed', { isDefault: true });
+Readme.md:716:program.parse(process.argv);
+Readme.md:717:```
+Readme.md:719:If the program is designed to be installed globally, make sure the executables have proper modes, like `755`.
+Readme.md:721:### Life cycle hooks
+Readme.md:723:You can add callback hooks to a command for life cycle events.
+Readme.md:725:Example file: [hook.js](./examples/hook.js)
+Readme.md:727:```js
+Readme.md:728:program
+Readme.md:729:  .option('-t, --trace', 'display trace statements for commands')
+Readme.md:730:  .hook('preAction', (thisCommand, actionCommand) => {
+Readme.md:731:    if (thisCommand.opts().trace) {
+Readme.md:732:      console.log(`About to call action handler for subcommand: ${actionCommand.name()}`);
+Readme.md:733:      console.log('arguments: %O', actionCommand.args);
+Readme.md:734:      console.log('options: %o', actionCommand.opts());
+Readme.md:735:    }
+Readme.md:736:  });
+Readme.md:737:```
+Readme.md:739:The callback hook can be `async`, in which case you call `.parseAsync()` rather than `.parse()`. You can add multiple hooks per event.
+Readme.md:741:The supported events are:
+Readme.md:743:| event name | when hook called | callback parameters |
+Readme.md:744:| :-- | :-- | :-- |
+Readme.md:745:| `preAction`, `postAction` |  before/after action handler for this command and its nested subcommands |   `(thisCommand, actionCommand)` |
+Readme.md:746:| `preSubcommand` | before parsing direct subcommand  | `(thisCommand, subcommand)` |
+Readme.md:748:For an overview of the life cycle events, see [parsing life cycle and hooks](./docs/parsing-and-hooks.md).
+Readme.md:750:## Automated help
+Readme.md:752:The help information is auto-generated based on the information commander already knows about your program. The default
+Readme.md:753:help option is `-h,--help`.
+Readme.md:755:Example file: [pizza](./examples/pizza)
+Readme.md:757:```console
+Readme.md:758:$ node ./examples/pizza --help
+Readme.md:759:Usage: pizza [options]
+Readme.md:761:An application for pizza ordering
+Readme.md:763:Options:
+Readme.md:764:  -p, --peppers        Add peppers
+Readme.md:765:  -c, --cheese <type>  Add the specified type of cheese (default: "marble")
+Readme.md:766:  -C, --no-cheese      You do not want any cheese
+Readme.md:767:  -h, --help           display help for command
+Readme.md:768:```
+Readme.md:770:A `help` command is added by default if your command has subcommands. It can be used alone, or with a subcommand name to show
+Readme.md:771:further help for the subcommand. These are effectively the same if the `shell` program has implicit help:
+Readme.md:773:```sh
+Readme.md:774:shell help
+Readme.md:775:shell --help
+Readme.md:777:shell help spawn
+Readme.md:778:shell spawn --help
+Readme.md:779:```
+Readme.md:781:Long descriptions are wrapped to fit the available width. (However, a description that includes a line-break followed by whitespace is assumed to be pre-formatted and not wrapped.)
+Readme.md:783:### Custom help
+Readme.md:785:You can add extra text to be displayed along with the built-in help.
+Readme.md:787:Example file: [custom-help](./examples/custom-help)
+Readme.md:789:```js
+Readme.md:790:program
+Readme.md:791:  .option('-f, --foo', 'enable some foo');
+Readme.md:793:program.addHelpText('after', `
+Readme.md:795:Example call:
+Readme.md:796:  $ custom-help --help`);
+Readme.md:797:```
+Readme.md:799:Yields the following help output:
+Readme.md:801:```Text
+Readme.md:802:Usage: custom-help [options]
+Readme.md:804:Options:
+Readme.md:805:  -f, --foo   enable some foo
+Readme.md:806:  -h, --help  display help for command
+Readme.md:808:Example call:
+Readme.md:809:  $ custom-help --help
+Readme.md:810:```
+Readme.md:812:The positions in order displayed are:
+Readme.md:814:- `beforeAll`: add to the program for a global banner or header
+Readme.md:815:- `before`: display extra information before built-in help
+Readme.md:816:- `after`: display extra information after built-in help
+Readme.md:817:- `afterAll`: add to the program for a global footer (epilog)
+Readme.md:819:The positions "beforeAll" and "afterAll" apply to the command and all its subcommands.
+Readme.md:821:The second parameter can be a string, or a function returning a string. The function is passed a context object for your convenience. The properties are:
+Readme.md:823:- `error`: a boolean for whether the help is being displayed due to a usage error
+Readme.md:824:- `command`: the `Command` which is displaying the help
+Readme.md:826:### Display help after errors
+Readme.md:828:The default behaviour for usage errors is to just display a short error message.
+Readme.md:829:You can change the behaviour to show the full help or a custom help message after an error.
+Readme.md:831:```js
+Readme.md:832:program.showHelpAfterError();
+Readme.md:833:// or
+Readme.md:834:program.showHelpAfterError('(add --help for additional information)');
+Readme.md:835:```
+Readme.md:837:```console
+Readme.md:838:$ pizza --unknown
+Readme.md:839:error: unknown option '--unknown'
+Readme.md:840:(add --help for additional information)
+Readme.md:841:```
+Readme.md:843:The default behaviour is to suggest correct spelling after an error for an unknown command or option. You
+Readme.md:844:can disable this.
+Readme.md:846:```js
+Readme.md:847:program.showSuggestionAfterError(false);
+Readme.md:848:```
+Readme.md:850:```console
+Readme.md:851:$ pizza --hepl
+Readme.md:852:error: unknown option '--hepl'
+Readme.md:853:(Did you mean --help?)
+Readme.md:854:```
+Readme.md:856:### Display help from code
+Readme.md:858:`.help()`: display help information and exit immediately. You can optionally pass `{ error: true }` to display on stderr and exit with an error status.
+Readme.md:860:`.outputHelp()`: output help information without exiting. You can optionally pass `{ error: true }` to display on stderr.
+Readme.md:862:`.helpInformation()`: get the built-in command help information as a string for processing or displaying yourself.
+Readme.md:864:### .name
+Readme.md:866:The command name appears in the help, and is also used for locating stand-alone executable subcommands.
+Readme.md:868:You may specify the program name using `.name()` or in the `Command` constructor. For the program, Commander will
+Readme.md:869:fall back to using the script name from the full arguments passed into `.parse()`. However, the script name varies
+Readme.md:870:depending on how your program is launched, so you may wish to specify it explicitly.
+Readme.md:872:```js
+Readme.md:873:program.name('pizza');
+Readme.md:874:const pm = new Command('pm');
+Readme.md:875:```
+Readme.md:877:Subcommands get a name when specified using `.command()`. If you create the subcommand yourself to use with `.addCommand()`,
+Readme.md:878:then set the name using `.name()` or in the `Command` constructor.
+Readme.md:880:### .usage
+Readme.md:882:This allows you to customise the usage description in the first line of the help. Given:
+Readme.md:884:```js
+Readme.md:885:program
+Readme.md:886:  .name("my-command")
+Readme.md:887:  .usage("[global options] command")
+Readme.md:888:```
+Readme.md:890:The help will start with:
+Readme.md:892:```Text
+Readme.md:893:Usage: my-command [global options] command
+Readme.md:894:```
+Readme.md:896:### .description and .summary
+Readme.md:898:The description appears in the help for the command. You can optionally supply a shorter
+Readme.md:899:summary to use when listed as a subcommand of the program.
+Readme.md:901:```js
+Readme.md:902:program
+Readme.md:903:  .command("duplicate")
+Readme.md:904:  .summary("make a copy")
+Readme.md:905:  .description(`Make a copy of the current project.
+Readme.md:906:This may require additional disk space.
+Readme.md:907:  `);
+Readme.md:908:```
+Readme.md:910:### .helpOption(flags, description)
+Readme.md:912:By default, every command has a help option. You may change the default help flags and description. Pass `false` to disable the built-in help option.
+Readme.md:914:```js
+Readme.md:915:program
+Readme.md:916:  .helpOption('-e, --HELP', 'read more information');
+Readme.md:917:```
+Readme.md:919:Alternatively, use `.addHelpOption()` to add an option you construct yourself.
+Readme.md:921:### .helpCommand()
+Readme.md:923:A help command is added by default if your command has subcommands. You can explicitly turn the implicit help command on or off with `.helpCommand(true)` and `.helpCommand(false)`.
+Readme.md:925:You can both turn on and customise the help command by supplying the name and description:
+Readme.md:927:```js
+Readme.md:928:program.helpCommand('assist [command]', 'show assistance');
+Readme.md:929:```
+Readme.md:931:Alternatively, use `.addHelpCommand()` to add a command you construct yourself.
+Readme.md:933:### Help Groups
+Readme.md:935:The help by default lists options under the the heading `Options:` and commands under `Commands:`. You can create your own groups
+Readme.md:936:with different headings. 
+Readme.md:938:- The high-level way is to set the desired group heading while adding the options and commands, using `.optionsGroup()` and `.commandsGroup()`. 
+Readme.md:939:- The low-level way is using `.helpGroup()` on an individual `Option` or `Command`.
+Readme.md:941:Example file: [help-groups.js](./examples/help-groups.js)
+Readme.md:943:### More configuration
+Readme.md:945:The built-in help is formatted using the `Help` class.
+Readme.md:946:You can configure the help by modifying data properties and methods using `.configureHelp()`, or by subclassing `Help` using `.createHelp()` .
+Readme.md:948:Simple properties include `sortSubcommands`, `sortOptions`, and `showGlobalOptions`. You can add color using the style methods like `.styleTitle()`.
+Readme.md:950:For more detail and examples of changing the displayed text, color, and layout, see: [Help in Depth](./docs/help-in-depth.md).
+Readme.md:952:## Custom event listeners
+Readme.md:954:You can execute custom actions by listening to `command` and `option` events.
+Readme.md:956:```js
+Readme.md:957:program.on('option:verbose', function () {
+Readme.md:958:  process.env.VERBOSE = this.opts().verbose;
+Readme.md:959:});
+Readme.md:960:```
+Readme.md:962:## Bits and pieces
+Readme.md:964:### .parse() and .parseAsync()
+Readme.md:966:Call with no parameters to parse `process.argv`. Detects Electron and special node options like `node --eval`. Easy mode!
+Readme.md:968:Or, call with an array of strings to parse, and optionally where the user arguments start by specifying where the arguments are `from`:
+Readme.md:970:- `'node'`: default, `argv[0]` is the application and `argv[1]` is the script being run, with user arguments after that
+Readme.md:971:- `'electron'`: `argv[0]` is the application and `argv[1]` varies depending on whether the electron application is packaged
+Readme.md:972:- `'user'`: just user arguments
+Readme.md:974:For example:
+Readme.md:976:```js
+Readme.md:977:program.parse(); // parse process.argv and auto-detect electron and special node flags
+Readme.md:978:program.parse(process.argv); // assume argv[0] is app and argv[1] is script
+Readme.md:979:program.parse(['--port', '80'], { from: 'user' }); // just user supplied arguments, nothing special about argv[0]
+Readme.md:980:```
+Readme.md:982:Use `.parseAsync()` instead of `.parse()` if any of your action handlers are async.
+Readme.md:984:### Parsing Configuration
+Readme.md:986:If the default parsing does not suit your needs, there are some behaviours to support other usage patterns.
+Readme.md:988:By default, program options are recognised before and after subcommands. To only look for program options before subcommands, use `.enablePositionalOptions()`. This lets you use
+Readme.md:989:an option for a different purpose in subcommands.
+Readme.md:991:Example file: [positional-options.js](./examples/positional-options.js)
+Readme.md:993:With positional options, the `-b` is a program option in the first line and a subcommand option in the second line:
+Readme.md:995:```sh
+Readme.md:996:program -b subcommand
+Readme.md:997:program subcommand -b
+Readme.md:998:```
+Readme.md:1000:By default, options are recognised before and after command-arguments. To only process options that come
+Readme.md:1001:before the command-arguments, use `.passThroughOptions()`. This lets you pass the arguments and following options through to another program
+Readme.md:1002:without needing to use `--` to end the option processing.
+Readme.md:1003:To use pass through options in a subcommand, the program needs to enable positional options.
+Readme.md:1005:Example file: [pass-through-options.js](./examples/pass-through-options.js)
+Readme.md:1007:With pass through options, the `--port=80` is a program option in the first line and passed through as a command-argument in the second line:
+Readme.md:1009:```sh
+Readme.md:1010:program --port=80 arg
+Readme.md:1011:program arg --port=80
+Readme.md:1012:```
+Readme.md:1014:By default, the option processing shows an error for an unknown option. To have an unknown option treated as an ordinary command-argument and continue looking for options, use `.allowUnknownOption()`. This lets you mix known and unknown options.
+Readme.md:1016:By default, the argument processing displays an error for more command-arguments than expected.
+Readme.md:1017:To suppress the error for excess arguments, use `.allowExcessArguments()`.
+Readme.md:1019:### Legacy options as properties
+Readme.md:1021:Before Commander 7, the option values were stored as properties on the command.
+Readme.md:1022:This was convenient to code, but the downside was possible clashes with
+Readme.md:1023:existing properties of `Command`. 
+Readme.md:1025:You can revert to the old behaviour to run unmodified legacy code by using `.storeOptionsAsProperties()`.
+Readme.md:1027:```js
+Readme.md:1028:program
+Readme.md:1029:  .storeOptionsAsProperties()
+Readme.md:1030:  .option('-d, --debug')
+Readme.md:1031:  .action((commandAndOptions) => {
+Readme.md:1032:    if (commandAndOptions.debug) {
+Readme.md:1033:      console.error(`Called ${commandAndOptions.name()}`);
+Readme.md:1034:    }
+Readme.md:1035:  });
+Readme.md:1036:```
+Readme.md:1038:### TypeScript
+Readme.md:1040:**extra-typings:** There is an optional project to infer extra type information from the option and argument definitions.
+Readme.md:1041:This adds strong typing to the options returned by `.opts()` and the parameters to `.action()`.
+Readme.md:1042:For more, see the repo: [commander-js/extra-typings](https://github.com/commander-js/extra-typings).
+Readme.md:1044:```ts
+Readme.md:1045:import { Command } from '@commander-js/extra-typings';
+Readme.md:1046:```
+Readme.md:1048:**ts-node:** If you use `ts-node` and stand-alone executable subcommands written as `.ts` files, you need to call your program through node to get the subcommands called correctly, e.g.:
+Readme.md:1050:```sh
+Readme.md:1051:node -r ts-node/register pm.ts
+Readme.md:1052:```
+Readme.md:1054:### createCommand()
+Readme.md:1056:This factory function creates a new command. It is exported and may be used instead of using `new`, like:
+Readme.md:1058:```js
+Readme.md:1059:import { createCommand } from 'commander';
+Readme.md:1060:const program = createCommand();
+Readme.md:1061:```
+Readme.md:1063:`createCommand()` is also a method of the `Command` object, and creates a new command rather than a subcommand. This gets used internally
+Readme.md:1064:when creating subcommands using `.command()`, and you may override it to
+Readme.md:1065:customise the new subcommand. Example file: [custom-command-class.js](./examples/custom-command-class.js).
+Readme.md:1067:### Node options such as `--harmony`
+Readme.md:1069:You can enable `--harmony` option in two ways:
+Readme.md:1071:- Use `#! /usr/bin/env node --harmony` in the subcommands scripts. (Note: Windows does not support this pattern.)
+Readme.md:1072:- Use the `--harmony` option when calling the command, like `node --harmony examples/pm publish`. The `--harmony` option will be preserved when spawning subcommand processes.
+Readme.md:1074:### Debugging stand-alone executable subcommands
+Readme.md:1076:An executable subcommand is launched as a separate child process.
+Readme.md:1078:If you are using the node inspector for [debugging](https://nodejs.org/en/docs/guides/debugging-getting-started/) executable subcommands using `node --inspect` et al.,
+Readme.md:1079:the inspector port is incremented by 1 for the spawned subcommand.
+Readme.md:1081:If you are using VSCode to debug executable subcommands you need to set the `"autoAttachChildProcesses": true` flag in your `launch.json` configuration.
+Readme.md:1083:### npm run-script
+Readme.md:1085:By default, when you call your program using `run-script`, `npm` will parse any options on the command-line and they will not reach your program. Use
+Readme.md:1086: `--` to stop the npm option parsing and pass through all the arguments.
+Readme.md:1088: The synopsis for [`npm run-script`](https://docs.npmjs.com/cli/v9/commands/npm-run-script) explicitly shows the `--` for this reason:
+Readme.md:1090:```console
+Readme.md:1091:npm run-script <command> [-- <args>]
+Readme.md:1092:```
+Readme.md:1094:### Display error
+Readme.md:1096:This routine is available to invoke the Commander error handling for your own error conditions. (See also the next section about exit handling.)
+Readme.md:1098:As well as the error message, you can optionally specify the `exitCode` (used with `process.exit()`)
+Readme.md:1099:and `code` (used with `CommanderError`).
+Readme.md:1101:```js
+Readme.md:1102:program.error('Password must be longer than four characters');
+Readme.md:1103:program.error('Custom processing has failed', { exitCode: 2, code: 'my.custom.error' });
+Readme.md:1104:```
+Readme.md:1106:### Override exit and output handling
+Readme.md:1108:By default, Commander calls `process.exit()` when it detects errors, or after displaying the help or version. You can override
+Readme.md:1109:this behaviour and optionally supply a callback. The default override throws a `CommanderError`.
+Readme.md:1111:The override callback is passed a `CommanderError` with the properties:
+Readme.md:1112:- `exitCode`: number
+Readme.md:1113:- `code`: string 
+Readme.md:1114:- `message`: string
+Readme.md:1116:Commander expects the callback to terminate the normal program flow, and will call `process.exit()` if the callback returns.
+Readme.md:1117:The normal display of error messages or version or help is not affected by the override, which is called after the display.
+Readme.md:1119:```js
+Readme.md:1120:program.exitOverride();
+Readme.md:1122:try {
+Readme.md:1123:  program.parse(process.argv);
+Readme.md:1124:} catch (err) {
+Readme.md:1125:  // custom processing...
+Readme.md:1126:}
+Readme.md:1127:```
+Readme.md:1129:By default, Commander is configured for a command-line application and writes to stdout and stderr.
+Readme.md:1130:You can modify this behaviour for custom applications. In addition, you can modify the display of error messages.
+Readme.md:1132:Example file: [configure-output.js](./examples/configure-output.js)
+Readme.md:1134:```js
+Readme.md:1135:function errorColor(str) {
+Readme.md:1136:  // Add ANSI escape codes to display text in red.
+Readme.md:1137:  return `\x1b[31m${str}\x1b[0m`;
+Readme.md:1138:}
+Readme.md:1140:program
+Readme.md:1141:  .configureOutput({
+Readme.md:1142:    // Visibly override write routines as example!
+Readme.md:1143:    writeOut: (str) => process.stdout.write(`[OUT] ${str}`),
+Readme.md:1144:    writeErr: (str) => process.stdout.write(`[ERR] ${str}`),
+Readme.md:1145:    // Highlight errors in color.
+Readme.md:1146:    outputError: (str, write) => write(errorColor(str))
+Readme.md:1147:  });
+Readme.md:1148:```
+Readme.md:1150:### Additional documentation
+Readme.md:1152:There is more information available about:
+Readme.md:1154:- [deprecated](./docs/deprecated.md) features still supported for backwards compatibility
+Readme.md:1155:- [Help in Depth](./docs/help-in-depth.md) configuring help output
+Readme.md:1156:- [options taking varying arguments](./docs/options-in-depth.md)
+Readme.md:1157:- [parsing life cycle and hooks](./docs/parsing-and-hooks.md)
+Readme.md:1158:- [Release Policy](./docs/release-policy.md)
+Readme.md:1160:## Support
+Readme.md:1162:The current version of Commander is fully supported on Long Term Support versions of Node.js, and requires at least v22.12.0.
+Readme.md:1164:Older major versions of Commander receive security updates for 12 months. For more see: [Release Policy](./docs/release-policy.md).
+Readme.md:1166:The main forum for free and community support is the project [Issues](https://github.com/tj/commander.js/issues) on GitHub.
+Readme.md:1168:### Commander for enterprise
+Readme.md:1170:Available as part of the Tidelift Subscription
+Readme.md:1172:The maintainers of Commander and thousands of other packages are working with Tidelift to deliver commercial support and maintenance for the open source dependencies you use to build your applications. Save time, reduce risk, and improve code health, while paying the maintainers of the exact dependencies you use. [Learn more.](https://tidelift.com/subscription/pkg/npm-commander?utm_source=npm-commander&utm_medium=referral&utm_campaign=enterprise&utm_term=repo)

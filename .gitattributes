@@ -1,0 +1,14 @@
+# Same line endings on every machine
+* text=auto eol=lf
+
+# Binary files: never converted
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+graphify-out/graph.json merge=graphify
+
+# Golden inputs retain original bytes and whitespace for integrity checks
+bench/dataset/** -text -whitespace

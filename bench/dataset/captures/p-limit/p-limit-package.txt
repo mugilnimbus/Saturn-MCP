@@ -1,0 +1,19 @@
+npm notice
+npm notice 📦  p-limit@7.3.3
+npm notice Tarball Contents
+npm notice 4.6kB index.d.ts
+npm notice 3.9kB index.js
+npm notice 1.1kB license
+npm notice 1.1kB package.json
+npm notice 5.4kB readme.md
+npm notice Tarball Details
+npm notice name: p-limit
+npm notice version: 7.3.3
+npm notice filename: p-limit-7.3.3.tgz
+npm notice package size: 4.9 kB
+npm notice unpacked size: 16.1 kB
+npm notice shasum: 43464e7094180d03bb0f53f576d9f2cd457b2921
+npm notice integrity: sha512-SKgVvDU5TNIxQ[...]zho/4QUiEB7TQ==
+npm notice total files: 5
+npm notice
+p-limit-7.3.3.tgz

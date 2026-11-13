@@ -1,0 +1,108 @@
+E501 Line too long (89 > 88)
+  --> src/requests/models.py:13:89
+   |
+12 | # Import encoding now, to avoid implicit import later.
+13 | # Implicit import within threads may cause LookupError when standard library is in a ZIP,
+   |                                                                                         ^
+14 | # such as in Embedded Python. See https://github.com/psf/requests/issues/3578.
+15 | import encodings.idna  # noqa: F401
+   |
+
+E501 Line too long (96 > 88)
+   --> src/requests/models.py:191:89
+    |
+189 |         tuples. Order is retained if data is a list of tuples but arbitrary
+190 |         if parameters are supplied as a dict.
+191 |         The tuples may be 2-tuples (filename, fileobj), 3-tuples (filename, fileobj, contentype)
+    |                                                                                         ^^^^^^^^
+192 |         or 4-tuples (filename, fileobj, contentype, custom_headers).
+193 |         """
+    |
+
+E501 Line too long (94 > 88)
+   --> src/requests/models.py:287:89
+    |
+285 |     """A user-created :class:`Request <Request>` object.
+286 |
+287 |     Used to prepare a :class:`PreparedRequest <PreparedRequest>`, which is sent to the server.
+    |                                                                                         ^^^^^^
+288 |
+289 |     :param method: HTTP method to use.
+    |
+
+E501 Line too long (96 > 88)
+   --> src/requests/models.py:296:89
+    |
+294 |         list of tuples ``[(key, value)]`` is provided, form-encoding will
+295 |         take place.
+296 |     :param json: json for the body to attach to the request (if files or data is not specified).
+    |                                                                                         ^^^^^^^^
+297 |     :param params: URL parameters to append to the URL. If a dictionary or
+298 |         list of tuples ``[(key, value)]`` is provided, form-encoding will
+    |
+
+E501 Line too long (102 > 88)
+   --> src/requests/models.py:361:89
+    |
+360 |     def prepare(self) -> PreparedRequest:
+361 |         """Constructs a :class:`PreparedRequest <PreparedRequest>` for transmission and returns it."""
+    |                                                                                         ^^^^^^^^^^^^^^
+362 |         p = PreparedRequest()
+363 |         p.prepare(
+    |
+
+E501 Line too long (89 > 88)
+   --> src/requests/models.py:526:89
+    |
+524 |         # In general, we want to try IDNA encoding the hostname if the string contains
+525 |         # non-ASCII characters. This allows users to automatically get the correct IDNA
+526 |         # behaviour. For strings containing only ASCII characters, we need to also verify
+    |                                                                                         ^
+527 |         # it doesn't start with a wildcard (*), before allowing the unencoded hostname.
+528 |         if not unicode_is_ascii(host):
+    |
+
+E501 Line too long (98 > 88)
+   --> src/requests/models.py:893:89
+    |
+891 |     @property
+892 |     def next(self) -> PreparedRequest | None:
+893 |         """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
+    |                                                                                         ^^^^^^^^^^
+894 |         return self._next
+    |
+
+E501 Line too long (93 > 88)
+   --> src/requests/models.py:898:89
+    |
+896 |     @property
+897 |     def apparent_encoding(self) -> str | None:
+898 |         """The apparent encoding, provided by the charset_normalizer or chardet libraries."""
+    |                                                                                         ^^^^^
+899 |         if chardet is not None:
+900 |             return chardet.detect(self.content)["encoding"]
+    |
+
+E501 Line too long (95 > 88)
+   --> src/requests/sessions.py:607:89
+    |
+605 |         :param stream: (optional) whether to immediately download the response
+606 |             content. Defaults to ``False``.
+607 |         :param verify: (optional) Either a boolean, in which case it controls whether we verify
+    |                                                                                         ^^^^^^^
+608 |             the server's TLS certificate, or a string, in which case it must be a path
+609 |             to a CA bundle to use. Defaults to ``True``. When set to
+    |
+
+E501 Line too long (100 > 88)
+   --> src/requests/sessions.py:817:89
+    |
+815 |             r.history = history
+816 |
+817 |         # If redirects aren't being followed, store the response on the Request for Response.next().
+    |                                                                                         ^^^^^^^^^^^^
+818 |         if not allow_redirects:
+819 |             try:
+    |
+
+Found 10 errors.

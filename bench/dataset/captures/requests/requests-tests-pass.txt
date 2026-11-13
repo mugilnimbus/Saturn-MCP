@@ -1,0 +1,13 @@
+======================================= test session starts ========================================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0 -- <checkout>/services/saturn/.venv/bin/python
+rootdir: <checkout>/var/bench/acquisition/requests
+configfile: pyproject.toml
+collecting ... collected 17 items / 12 deselected / 5 selected
+
+tests/test_utils.py::TestSuperLen::test_io_streams[StringIO-Test] PASSED                     [ 20%]
+tests/test_utils.py::TestSuperLen::test_io_streams[BytesIO-Test] PASSED                      [ 40%]
+tests/test_utils.py::TestSuperLen::test_io_streams[None-Test] SKIPPED (condition: cStrin...) [ 60%]
+tests/test_utils.py::TestSuperLen::test_string PASSED                                        [ 80%]
+tests/test_utils.py::TestSuperLen::test_super_len_with_tell PASSED                           [100%]
+
+=========================== 4 passed, 1 skipped, 12 deselected in 0.05s ============================

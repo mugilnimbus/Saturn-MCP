@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Operating systems to verify
+        type: choice
+        options: [both, linux, windows]
+        default: both
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.platform == 'both' && '["ubuntu-latest", "windows-latest"]' || inputs.platform == 'windows' && '["windows-latest"]' || '["ubuntu-latest"]') }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      SATURN_HOME: ${{ github.workspace }}/var/ci-home
+      UV_NO_PROGRESS: '1'
+    steps:
+      - name: Check out committed files
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: '0.13.4'
+      - name: Install the pinned Node version
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - name: Install the service Python pin
+        working-directory: services/saturn
+        run: uv python install
+      - name: Set up the checkout
+        run: uv run --no-project --directory services/saturn python ../../scripts/setup.py --yes
+      - name: Repeat setup to verify safe reruns
+        run: uv run --no-project --directory services/saturn python ../../scripts/setup.py --yes
+      - name: Run automated checks
+        run: uv run --no-project --directory services/saturn python ../../scripts/check.py

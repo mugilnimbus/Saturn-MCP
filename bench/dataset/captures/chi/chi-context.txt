@@ -1,0 +1,8 @@
+4:	"context"
+9:// Timeout is a middleware that cancels ctx after a given timeout and return
+10:// a 504 Gateway Timeout error to the client.
+13:// if the context has reached its deadline and return, otherwise the timeout
+32:func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {
+35:			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+38:				if ctx.Err() == context.DeadlineExceeded {
+39:					w.WriteHeader(http.StatusGatewayTimeout)

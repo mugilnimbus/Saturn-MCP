@@ -1,0 +1,2437 @@
+README.md:1:# Requests
+README.md:3:[![Version](https://img.shields.io/pypi/v/requests.svg?maxAge=86400)](https://pypi.org/project/requests/)
+README.md:4:[![Supported Versions](https://img.shields.io/pypi/pyversions/requests.svg)](https://pypi.org/project/requests)
+README.md:5:[![Downloads](https://static.pepy.tech/badge/requests/month)](https://pepy.tech/project/requests)
+README.md:6:[![Contributors](https://img.shields.io/github/contributors/psf/requests.svg)](https://github.com/psf/requests/graphs/contributors)
+README.md:7:[![Documentation](https://readthedocs.org/projects/requests/badge/?version=latest)](https://requests.readthedocs.io)
+README.md:9:**Requests** is a simple, yet elegant, HTTP library.
+README.md:11:```python
+README.md:12:>>> import requests
+README.md:13:>>> r = requests.get('https://httpbin.org/basic-auth/user/pass', auth=('user', 'pass'))
+README.md:14:>>> r.status_code
+README.md:15:200
+README.md:16:>>> r.headers['content-type']
+README.md:17:'application/json; charset=utf8'
+README.md:18:>>> r.encoding
+README.md:19:'utf-8'
+README.md:20:>>> r.text
+README.md:21:'{"authenticated": true, ...'
+README.md:22:>>> r.json()
+README.md:23:{'authenticated': True, ...}
+README.md:24:```
+README.md:26:Requests allows you to send HTTP/1.1 requests extremely easily. There’s no need to manually add query strings to your URLs, or to form-encode your `PUT` & `POST` data — but nowadays, just use the `json` method!
+README.md:28:Requests is one of the most downloaded Python packages today, pulling in around `300M downloads / week` — according to GitHub, Requests is currently [depended upon](https://github.com/psf/requests/network/dependents?package_id=UGFja2FnZS01NzA4OTExNg%3D%3D) by `4,000,000+` repositories.
+README.md:30:## Installing Requests and Supported Versions
+README.md:32:Requests is available on PyPI:
+README.md:34:```console
+README.md:35:$ python -m pip install requests
+README.md:36:```
+README.md:38:Requests officially supports Python 3.10+.
+README.md:40:## Supported Features & Best–Practices
+README.md:42:Requests is ready for the demands of building robust and reliable HTTP–speaking applications, for the needs of today.
+README.md:44:- Keep-Alive & Connection Pooling
+README.md:45:- International Domains and URLs
+README.md:46:- Sessions with Cookie Persistence
+README.md:47:- Browser-style TLS/SSL Verification
+README.md:48:- Basic & Digest Authentication
+README.md:49:- Familiar `dict`–like Cookies
+README.md:50:- Automatic Content Decompression and Decoding
+README.md:51:- Multi-part File Uploads
+README.md:52:- SOCKS Proxy Support
+README.md:53:- Connection Timeouts
+README.md:54:- Streaming Downloads
+README.md:55:- Automatic honoring of `.netrc`
+README.md:56:- Chunked HTTP Requests
+README.md:58:## Cloning the repository
+README.md:60:When cloning the Requests repository, you may need to add the `-c
+README.md:61:fetch.fsck.badTimezone=ignore` flag to avoid an error about a bad commit timestamp (see
+README.md:62:[this issue](https://github.com/psf/requests/issues/2690) for more background):
+README.md:64:```shell
+README.md:65:git clone -c fetch.fsck.badTimezone=ignore https://github.com/psf/requests.git
+README.md:66:```
+README.md:68:You can also apply this setting to your global Git config:
+README.md:70:```shell
+README.md:71:git config --global fetch.fsck.badTimezone ignore
+README.md:72:```
+README.md:74:---
+README.md:76:[![Kenneth Reitz](https://raw.githubusercontent.com/psf/requests/main/ext/kr.png)](https://kennethreitz.org) [![Python Software Foundation](https://raw.githubusercontent.com/psf/requests/main/ext/psf.png)](https://www.python.org/psf)
+src/requests/adapters.py:1:"""
+src/requests/adapters.py:2:requests.adapters
+src/requests/adapters.py:3:~~~~~~~~~~~~~~~~~
+src/requests/adapters.py:5:This module contains the transport adapters that Requests uses to define
+src/requests/adapters.py:6:and maintain connections.
+src/requests/adapters.py:7:"""
+src/requests/adapters.py:9:from __future__ import annotations
+src/requests/adapters.py:11:import os.path
+src/requests/adapters.py:12:import socket  # noqa: F401
+src/requests/adapters.py:13:import typing
+src/requests/adapters.py:14:import warnings
+src/requests/adapters.py:15:from typing import Any
+src/requests/adapters.py:17:from urllib3.exceptions import (
+src/requests/adapters.py:18:    ClosedPoolError,
+src/requests/adapters.py:19:    ConnectTimeoutError,
+src/requests/adapters.py:20:    LocationValueError,
+src/requests/adapters.py:21:    MaxRetryError,
+src/requests/adapters.py:22:    NewConnectionError,
+src/requests/adapters.py:23:    ProtocolError,
+src/requests/adapters.py:24:    ReadTimeoutError,
+src/requests/adapters.py:25:    ResponseError,
+src/requests/adapters.py:26:)
+src/requests/adapters.py:27:from urllib3.exceptions import HTTPError as _HTTPError
+src/requests/adapters.py:28:from urllib3.exceptions import InvalidHeader as _InvalidHeader
+src/requests/adapters.py:29:from urllib3.exceptions import ProxyError as _ProxyError
+src/requests/adapters.py:30:from urllib3.exceptions import SSLError as _SSLError
+src/requests/adapters.py:31:from urllib3.poolmanager import PoolManager, proxy_from_url
+src/requests/adapters.py:32:from urllib3.util import Timeout as TimeoutSauce
+src/requests/adapters.py:33:from urllib3.util import parse_url
+src/requests/adapters.py:34:from urllib3.util.retry import Retry
+src/requests/adapters.py:36:from .auth import _basic_auth_str
+src/requests/adapters.py:37:from .compat import basestring, urlparse
+src/requests/adapters.py:38:from .cookies import extract_cookies_to_jar
+src/requests/adapters.py:39:from .exceptions import (
+src/requests/adapters.py:40:    ConnectionError,
+src/requests/adapters.py:41:    ConnectTimeout,
+src/requests/adapters.py:42:    InvalidHeader,
+src/requests/adapters.py:43:    InvalidProxyURL,
+src/requests/adapters.py:44:    InvalidSchema,
+src/requests/adapters.py:45:    InvalidURL,
+src/requests/adapters.py:46:    ProxyError,
+src/requests/adapters.py:47:    ReadTimeout,
+src/requests/adapters.py:48:    RetryError,
+src/requests/adapters.py:49:    SSLError,
+src/requests/adapters.py:50:)
+src/requests/adapters.py:51:from .models import Response
+src/requests/adapters.py:52:from .structures import CaseInsensitiveDict
+src/requests/adapters.py:53:from .utils import (
+src/requests/adapters.py:54:    DEFAULT_CA_BUNDLE_PATH,
+src/requests/adapters.py:55:    get_auth_from_url,
+src/requests/adapters.py:56:    get_encoding_from_headers,
+src/requests/adapters.py:57:    prepend_scheme_if_needed,
+src/requests/adapters.py:58:    select_proxy,
+src/requests/adapters.py:59:    urldefragauth,
+src/requests/adapters.py:60:)
+src/requests/adapters.py:62:try:
+src/requests/adapters.py:63:    from urllib3.contrib.socks import SOCKSProxyManager  # type: ignore[assignment]
+src/requests/adapters.py:64:except ImportError:
+src/requests/adapters.py:66:    def SOCKSProxyManager(*args: Any, **kwargs: Any) -> None:
+src/requests/adapters.py:67:        raise InvalidSchema("Missing dependencies for SOCKS support.")
+src/requests/adapters.py:70:if typing.TYPE_CHECKING:
+src/requests/adapters.py:71:    from urllib3.connectionpool import HTTPConnectionPool
+src/requests/adapters.py:72:    from urllib3.poolmanager import PoolManager as _PoolManager
+src/requests/adapters.py:74:    from . import _types as _t
+src/requests/adapters.py:75:    from .models import PreparedRequest
+src/requests/adapters.py:77:from ._types import is_prepared as _is_prepared
+src/requests/adapters.py:79:DEFAULT_POOLBLOCK = False
+src/requests/adapters.py:80:DEFAULT_POOLSIZE = 10
+src/requests/adapters.py:81:DEFAULT_RETRIES = 0
+src/requests/adapters.py:82:DEFAULT_POOL_TIMEOUT = None
+src/requests/adapters.py:85:def _urllib3_request_context(
+src/requests/adapters.py:86:    request: PreparedRequest,
+src/requests/adapters.py:87:    verify: bool | str | None,
+src/requests/adapters.py:88:    client_cert: tuple[str, str] | str | None,
+src/requests/adapters.py:89:    poolmanager: PoolManager,
+src/requests/adapters.py:90:) -> tuple[dict[str, Any], dict[str, Any]]:
+src/requests/adapters.py:91:    host_params: dict[str, Any] = {}
+src/requests/adapters.py:92:    pool_kwargs: dict[str, Any] = {}
+src/requests/adapters.py:93:    parsed_request_url = urlparse(request.url)
+src/requests/adapters.py:94:    scheme = parsed_request_url.scheme.lower()
+src/requests/adapters.py:95:    port = parsed_request_url.port
+src/requests/adapters.py:97:    cert_reqs = "CERT_REQUIRED"
+src/requests/adapters.py:98:    if verify is False:
+src/requests/adapters.py:99:        cert_reqs = "CERT_NONE"
+src/requests/adapters.py:100:    elif isinstance(verify, str):
+src/requests/adapters.py:101:        if not os.path.isdir(verify):
+src/requests/adapters.py:102:            pool_kwargs["ca_certs"] = verify
+src/requests/adapters.py:103:        else:
+src/requests/adapters.py:104:            pool_kwargs["ca_cert_dir"] = verify
+src/requests/adapters.py:105:    pool_kwargs["cert_reqs"] = cert_reqs
+src/requests/adapters.py:106:    if client_cert is not None:
+src/requests/adapters.py:107:        if isinstance(client_cert, tuple) and len(client_cert) == 2:
+src/requests/adapters.py:108:            pool_kwargs["cert_file"] = client_cert[0]
+src/requests/adapters.py:109:            pool_kwargs["key_file"] = client_cert[1]
+src/requests/adapters.py:110:        else:
+src/requests/adapters.py:111:            # According to our docs, we allow users to specify just the client
+src/requests/adapters.py:112:            # cert path
+src/requests/adapters.py:113:            pool_kwargs["cert_file"] = client_cert
+src/requests/adapters.py:114:    host_params = {
+src/requests/adapters.py:115:        "scheme": scheme,
+src/requests/adapters.py:116:        "host": parsed_request_url.hostname,
+src/requests/adapters.py:117:        "port": port,
+src/requests/adapters.py:118:    }
+src/requests/adapters.py:119:    return host_params, pool_kwargs
+src/requests/adapters.py:122:class BaseAdapter:
+src/requests/adapters.py:123:    """The Base Transport Adapter"""
+src/requests/adapters.py:125:    def __init__(self) -> None:
+src/requests/adapters.py:126:        super().__init__()
+src/requests/adapters.py:128:    def send(
+src/requests/adapters.py:129:        self,
+src/requests/adapters.py:130:        request: PreparedRequest,
+src/requests/adapters.py:131:        stream: bool = False,
+src/requests/adapters.py:132:        timeout: _t.TimeoutType = None,
+src/requests/adapters.py:133:        verify: _t.VerifyType = True,
+src/requests/adapters.py:134:        cert: _t.CertType = None,
+src/requests/adapters.py:135:        proxies: dict[str, str] | None = None,
+src/requests/adapters.py:136:    ) -> Response:
+src/requests/adapters.py:137:        """Sends PreparedRequest object. Returns Response object.
+src/requests/adapters.py:139:        :param request: The :class:`PreparedRequest <PreparedRequest>` being sent.
+src/requests/adapters.py:140:        :param stream: (optional) Whether to stream the request content.
+src/requests/adapters.py:141:        :param timeout: (optional) How long to wait for the server to send
+src/requests/adapters.py:142:            data before giving up, as a float, or a :ref:`(connect timeout,
+src/requests/adapters.py:143:            read timeout) <timeouts>` tuple.
+src/requests/adapters.py:144:        :type timeout: float or tuple
+src/requests/adapters.py:145:        :param verify: (optional) Either a boolean, in which case it controls whether we verify
+src/requests/adapters.py:146:            the server's TLS certificate, or a string, in which case it must be a path
+src/requests/adapters.py:147:            to a CA bundle to use
+src/requests/adapters.py:148:        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+src/requests/adapters.py:149:        :param proxies: (optional) The proxies dictionary to apply to the request.
+src/requests/adapters.py:150:        """
+src/requests/adapters.py:151:        raise NotImplementedError
+src/requests/adapters.py:153:    def close(self) -> None:
+src/requests/adapters.py:154:        """Cleans up adapter specific items."""
+src/requests/adapters.py:155:        raise NotImplementedError
+src/requests/adapters.py:158:class HTTPAdapter(BaseAdapter):
+src/requests/adapters.py:159:    """The built-in HTTP Adapter for urllib3.
+src/requests/adapters.py:161:    Provides a general-case interface for Requests sessions to contact HTTP and
+src/requests/adapters.py:162:    HTTPS urls by implementing the Transport Adapter interface. This class will
+src/requests/adapters.py:163:    usually be created by the :class:`Session <Session>` class under the
+src/requests/adapters.py:164:    covers.
+src/requests/adapters.py:166:    :param pool_connections: The number of urllib3 connection pools to cache.
+src/requests/adapters.py:167:    :param pool_maxsize: The maximum number of connections to save in the pool.
+src/requests/adapters.py:168:    :param max_retries: The maximum number of retries each connection
+src/requests/adapters.py:169:        should attempt. Note, this applies only to failed DNS lookups, socket
+src/requests/adapters.py:170:        connections and connection timeouts, never to requests where data has
+src/requests/adapters.py:171:        made it to the server. By default, Requests does not retry failed
+src/requests/adapters.py:172:        connections. If you need granular control over the conditions under
+src/requests/adapters.py:173:        which we retry a request, import urllib3's ``Retry`` class and pass
+src/requests/adapters.py:174:        that instead.
+src/requests/adapters.py:175:    :param pool_block: Whether the connection pool should block for connections.
+src/requests/adapters.py:177:    Usage::
+src/requests/adapters.py:179:      >>> import requests
+src/requests/adapters.py:180:      >>> s = requests.Session()
+src/requests/adapters.py:181:      >>> a = requests.adapters.HTTPAdapter(max_retries=3)
+src/requests/adapters.py:182:      >>> s.mount('http://', a)
+src/requests/adapters.py:183:    """
+src/requests/adapters.py:185:    __attrs__: list[str] = [
+src/requests/adapters.py:186:        "max_retries",
+src/requests/adapters.py:187:        "config",
+src/requests/adapters.py:188:        "_pool_connections",
+src/requests/adapters.py:189:        "_pool_maxsize",
+src/requests/adapters.py:190:        "_pool_block",
+src/requests/adapters.py:191:    ]
+src/requests/adapters.py:193:    max_retries: Retry
+src/requests/adapters.py:194:    config: dict[str, Any]
+src/requests/adapters.py:195:    proxy_manager: dict[str, Any]
+src/requests/adapters.py:196:    _pool_connections: int
+src/requests/adapters.py:197:    _pool_maxsize: int
+src/requests/adapters.py:198:    _pool_block: bool
+src/requests/adapters.py:199:    poolmanager: _PoolManager
+src/requests/adapters.py:201:    def __init__(
+src/requests/adapters.py:202:        self,
+src/requests/adapters.py:203:        pool_connections: int = DEFAULT_POOLSIZE,
+src/requests/adapters.py:204:        pool_maxsize: int = DEFAULT_POOLSIZE,
+src/requests/adapters.py:205:        max_retries: int | Retry = DEFAULT_RETRIES,
+src/requests/adapters.py:206:        pool_block: bool = DEFAULT_POOLBLOCK,
+src/requests/adapters.py:207:    ) -> None:
+src/requests/adapters.py:208:        if max_retries == DEFAULT_RETRIES:
+src/requests/adapters.py:209:            self.max_retries = Retry(0, read=False)
+src/requests/adapters.py:210:        else:
+src/requests/adapters.py:211:            self.max_retries = Retry.from_int(max_retries)
+src/requests/adapters.py:212:        self.config = {}
+src/requests/adapters.py:213:        self.proxy_manager = {}
+src/requests/adapters.py:215:        super().__init__()
+src/requests/adapters.py:217:        self._pool_connections = pool_connections
+src/requests/adapters.py:218:        self._pool_maxsize = pool_maxsize
+src/requests/adapters.py:219:        self._pool_block = pool_block
+src/requests/adapters.py:221:        self.init_poolmanager(pool_connections, pool_maxsize, block=pool_block)
+src/requests/adapters.py:223:    def __getstate__(self) -> dict[str, Any]:
+src/requests/adapters.py:224:        return {attr: getattr(self, attr, None) for attr in self.__attrs__}
+src/requests/adapters.py:226:    def __setstate__(self, state: dict[str, Any]) -> None:
+src/requests/adapters.py:227:        # Can't handle by adding 'proxy_manager' to self.__attrs__ because
+src/requests/adapters.py:228:        # self.poolmanager uses a lambda function, which isn't pickleable.
+src/requests/adapters.py:229:        self.proxy_manager = {}
+src/requests/adapters.py:230:        self.config = {}
+src/requests/adapters.py:232:        for attr, value in state.items():
+src/requests/adapters.py:233:            setattr(self, attr, value)
+src/requests/adapters.py:235:        self.init_poolmanager(
+src/requests/adapters.py:236:            self._pool_connections, self._pool_maxsize, block=self._pool_block
+src/requests/adapters.py:237:        )
+src/requests/adapters.py:239:    def init_poolmanager(
+src/requests/adapters.py:240:        self,
+src/requests/adapters.py:241:        connections: int,
+src/requests/adapters.py:242:        maxsize: int,
+src/requests/adapters.py:243:        block: bool = DEFAULT_POOLBLOCK,
+src/requests/adapters.py:244:        **pool_kwargs: Any,
+src/requests/adapters.py:245:    ) -> None:
+src/requests/adapters.py:246:        """Initializes a urllib3 PoolManager.
+src/requests/adapters.py:248:        This method should not be called from user code, and is only
+src/requests/adapters.py:249:        exposed for use when subclassing the
+src/requests/adapters.py:250:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:252:        :param connections: The number of urllib3 connection pools to cache.
+src/requests/adapters.py:253:        :param maxsize: The maximum number of connections to save in the pool.
+src/requests/adapters.py:254:        :param block: Block when no free connections are available.
+src/requests/adapters.py:255:        :param pool_kwargs: Extra keyword arguments used to initialize the Pool Manager.
+src/requests/adapters.py:256:        """
+src/requests/adapters.py:257:        # save these values for pickling
+src/requests/adapters.py:258:        self._pool_connections = connections
+src/requests/adapters.py:259:        self._pool_maxsize = maxsize
+src/requests/adapters.py:260:        self._pool_block = block
+src/requests/adapters.py:262:        self.poolmanager = PoolManager(
+src/requests/adapters.py:263:            num_pools=connections,
+src/requests/adapters.py:264:            maxsize=maxsize,
+src/requests/adapters.py:265:            block=block,
+src/requests/adapters.py:266:            **pool_kwargs,
+src/requests/adapters.py:267:        )
+src/requests/adapters.py:269:    def proxy_manager_for(self, proxy: str, **proxy_kwargs: Any) -> Any:
+src/requests/adapters.py:270:        """Return urllib3 ProxyManager for the given proxy.
+src/requests/adapters.py:272:        This method should not be called from user code, and is only
+src/requests/adapters.py:273:        exposed for use when subclassing the
+src/requests/adapters.py:274:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:276:        :param proxy: The proxy to return a urllib3 ProxyManager for.
+src/requests/adapters.py:277:        :param proxy_kwargs: Extra keyword arguments used to configure the Proxy Manager.
+src/requests/adapters.py:278:        :returns: ProxyManager
+src/requests/adapters.py:279:        :rtype: urllib3.ProxyManager
+src/requests/adapters.py:280:        """
+src/requests/adapters.py:281:        if proxy in self.proxy_manager:
+src/requests/adapters.py:282:            manager = self.proxy_manager[proxy]
+src/requests/adapters.py:283:        elif proxy.lower().startswith("socks"):
+src/requests/adapters.py:284:            username, password = get_auth_from_url(proxy)
+src/requests/adapters.py:285:            manager = self.proxy_manager[proxy] = SOCKSProxyManager(
+src/requests/adapters.py:286:                proxy,
+src/requests/adapters.py:287:                username=username,
+src/requests/adapters.py:288:                password=password,
+src/requests/adapters.py:289:                num_pools=self._pool_connections,
+src/requests/adapters.py:290:                maxsize=self._pool_maxsize,
+src/requests/adapters.py:291:                block=self._pool_block,
+src/requests/adapters.py:292:                **proxy_kwargs,
+src/requests/adapters.py:293:            )
+src/requests/adapters.py:294:        else:
+src/requests/adapters.py:295:            proxy_headers = self.proxy_headers(proxy)
+src/requests/adapters.py:296:            manager = self.proxy_manager[proxy] = proxy_from_url(
+src/requests/adapters.py:297:                proxy,
+src/requests/adapters.py:298:                proxy_headers=proxy_headers,
+src/requests/adapters.py:299:                num_pools=self._pool_connections,
+src/requests/adapters.py:300:                maxsize=self._pool_maxsize,
+src/requests/adapters.py:301:                block=self._pool_block,
+src/requests/adapters.py:302:                **proxy_kwargs,
+src/requests/adapters.py:303:            )
+src/requests/adapters.py:305:        return manager
+src/requests/adapters.py:307:    def cert_verify(
+src/requests/adapters.py:308:        self, conn: Any, url: str, verify: _t.VerifyType, cert: _t.CertType
+src/requests/adapters.py:309:    ) -> None:
+src/requests/adapters.py:310:        """Verify a SSL certificate. This method should not be called from user
+src/requests/adapters.py:311:        code, and is only exposed for use when subclassing the
+src/requests/adapters.py:312:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:314:        :param conn: The urllib3 connection object associated with the cert.
+src/requests/adapters.py:315:        :param url: The requested URL.
+src/requests/adapters.py:316:        :param verify: Either a boolean, in which case it controls whether we verify
+src/requests/adapters.py:317:            the server's TLS certificate, or a string, in which case it must be a path
+src/requests/adapters.py:318:            to a CA bundle to use
+src/requests/adapters.py:319:        :param cert: The SSL certificate to verify.
+src/requests/adapters.py:320:        """
+src/requests/adapters.py:321:        if url.lower().startswith("https") and verify:
+src/requests/adapters.py:322:            cert_loc = None
+src/requests/adapters.py:324:            # Allow self-specified cert location.
+src/requests/adapters.py:325:            if verify is not True:
+src/requests/adapters.py:326:                cert_loc = verify
+src/requests/adapters.py:328:            if not cert_loc:
+src/requests/adapters.py:329:                cert_loc = DEFAULT_CA_BUNDLE_PATH
+src/requests/adapters.py:331:            if not cert_loc or not os.path.exists(cert_loc):
+src/requests/adapters.py:332:                raise OSError(
+src/requests/adapters.py:333:                    f"Could not find a suitable TLS CA certificate bundle, "
+src/requests/adapters.py:334:                    f"invalid path: {cert_loc}"
+src/requests/adapters.py:335:                )
+src/requests/adapters.py:337:            conn.cert_reqs = "CERT_REQUIRED"
+src/requests/adapters.py:339:            if not os.path.isdir(cert_loc):
+src/requests/adapters.py:340:                conn.ca_certs = cert_loc
+src/requests/adapters.py:341:            else:
+src/requests/adapters.py:342:                conn.ca_cert_dir = cert_loc
+src/requests/adapters.py:343:        else:
+src/requests/adapters.py:344:            conn.cert_reqs = "CERT_NONE"
+src/requests/adapters.py:345:            conn.ca_certs = None
+src/requests/adapters.py:346:            conn.ca_cert_dir = None
+src/requests/adapters.py:348:        if cert:
+src/requests/adapters.py:349:            if not isinstance(cert, basestring):
+src/requests/adapters.py:350:                conn.cert_file = cert[0]
+src/requests/adapters.py:351:                conn.key_file = cert[1]
+src/requests/adapters.py:352:            else:
+src/requests/adapters.py:353:                conn.cert_file = cert
+src/requests/adapters.py:354:                conn.key_file = None
+src/requests/adapters.py:355:            if conn.cert_file and not os.path.exists(conn.cert_file):
+src/requests/adapters.py:356:                raise OSError(
+src/requests/adapters.py:357:                    f"Could not find the TLS certificate file, "
+src/requests/adapters.py:358:                    f"invalid path: {conn.cert_file}"
+src/requests/adapters.py:359:                )
+src/requests/adapters.py:360:            if conn.key_file and not os.path.exists(conn.key_file):
+src/requests/adapters.py:361:                raise OSError(
+src/requests/adapters.py:362:                    f"Could not find the TLS key file, invalid path: {conn.key_file}"
+src/requests/adapters.py:363:                )
+src/requests/adapters.py:365:    def build_response(self, req: PreparedRequest, resp: Any) -> Response:
+src/requests/adapters.py:366:        """Builds a :class:`Response <requests.Response>` object from a urllib3
+src/requests/adapters.py:367:        response. This should not be called from user code, and is only exposed
+src/requests/adapters.py:368:        for use when subclassing the
+src/requests/adapters.py:369:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`
+src/requests/adapters.py:371:        :param req: The :class:`PreparedRequest <PreparedRequest>` used to generate the response.
+src/requests/adapters.py:372:        :param resp: The urllib3 response object.
+src/requests/adapters.py:373:        :rtype: requests.Response
+src/requests/adapters.py:374:        """
+src/requests/adapters.py:375:        assert _is_prepared(req)
+src/requests/adapters.py:376:        response = Response()
+src/requests/adapters.py:378:        # Fallback to None if there's no status_code, for whatever reason.
+src/requests/adapters.py:379:        response.status_code = getattr(resp, "status", None)  # type: ignore[assignment]
+src/requests/adapters.py:381:        # Make headers case-insensitive.
+src/requests/adapters.py:382:        response.headers = CaseInsensitiveDict(getattr(resp, "headers", {}))
+src/requests/adapters.py:384:        # Set encoding.
+src/requests/adapters.py:385:        response.encoding = get_encoding_from_headers(response.headers)
+src/requests/adapters.py:386:        response.raw = resp
+src/requests/adapters.py:387:        response.reason = response.raw.reason
+src/requests/adapters.py:389:        if isinstance(req.url, bytes):
+src/requests/adapters.py:390:            response.url = req.url.decode("utf-8")
+src/requests/adapters.py:391:        else:
+src/requests/adapters.py:392:            response.url = req.url
+src/requests/adapters.py:394:        # Add new cookies from the server.
+src/requests/adapters.py:395:        extract_cookies_to_jar(response.cookies, req, resp)
+src/requests/adapters.py:397:        # Give the Response some context.
+src/requests/adapters.py:398:        response.request = req
+src/requests/adapters.py:399:        response.connection = self
+src/requests/adapters.py:401:        return response
+src/requests/adapters.py:403:    def build_connection_pool_key_attributes(
+src/requests/adapters.py:404:        self, request: PreparedRequest, verify: _t.VerifyType, cert: _t.CertType = None
+src/requests/adapters.py:405:    ) -> tuple[dict[str, Any], dict[str, Any]]:
+src/requests/adapters.py:406:        """Build the PoolKey attributes used by urllib3 to return a connection.
+src/requests/adapters.py:408:        This looks at the PreparedRequest, the user-specified verify value,
+src/requests/adapters.py:409:        and the value of the cert parameter to determine what PoolKey values
+src/requests/adapters.py:410:        to use to select a connection from a given urllib3 Connection Pool.
+src/requests/adapters.py:412:        The SSL related pool key arguments are not consistently set. As of
+src/requests/adapters.py:413:        this writing, use the following to determine what keys may be in that
+src/requests/adapters.py:414:        dictionary:
+src/requests/adapters.py:416:        * If ``verify`` is ``True``, ``"ssl_context"`` will be set and will be the
+src/requests/adapters.py:417:          default Requests SSL Context
+src/requests/adapters.py:418:        * If ``verify`` is ``False``, ``"ssl_context"`` will not be set but
+src/requests/adapters.py:419:          ``"cert_reqs"`` will be set
+src/requests/adapters.py:420:        * If ``verify`` is a string, (i.e., it is a user-specified trust bundle)
+src/requests/adapters.py:421:          ``"ca_certs"`` will be set if the string is not a directory recognized
+src/requests/adapters.py:422:          by :py:func:`os.path.isdir`, otherwise ``"ca_cert_dir"`` will be
+src/requests/adapters.py:423:          set.
+src/requests/adapters.py:424:        * If ``"cert"`` is specified, ``"cert_file"`` will always be set. If
+src/requests/adapters.py:425:          ``"cert"`` is a tuple with a second item, ``"key_file"`` will also
+src/requests/adapters.py:426:          be present
+src/requests/adapters.py:428:        To override these settings, one may subclass this class, call this
+src/requests/adapters.py:429:        method and use the above logic to change parameters as desired. For
+src/requests/adapters.py:430:        example, if one wishes to use a custom :py:class:`ssl.SSLContext` one
+src/requests/adapters.py:431:        must both set ``"ssl_context"`` and based on what else they require,
+src/requests/adapters.py:432:        alter the other keys to ensure the desired behaviour.
+src/requests/adapters.py:434:        :param request:
+src/requests/adapters.py:435:            The PreparedRequest being sent over the connection.
+src/requests/adapters.py:436:        :type request:
+src/requests/adapters.py:437:            :class:`~requests.models.PreparedRequest`
+src/requests/adapters.py:438:        :param verify:
+src/requests/adapters.py:439:            Either a boolean, in which case it controls whether
+src/requests/adapters.py:440:            we verify the server's TLS certificate, or a string, in which case it
+src/requests/adapters.py:441:            must be a path to a CA bundle to use.
+src/requests/adapters.py:442:        :param cert:
+src/requests/adapters.py:443:            (optional) Any user-provided SSL certificate for client
+src/requests/adapters.py:444:            authentication (a.k.a., mTLS). This may be a string (i.e., just
+src/requests/adapters.py:445:            the path to a file which holds both certificate and key) or a
+src/requests/adapters.py:446:            tuple of length 2 with the certificate file path and key file
+src/requests/adapters.py:447:            path.
+src/requests/adapters.py:448:        :returns:
+src/requests/adapters.py:449:            A tuple of two dictionaries. The first is the "host parameters"
+src/requests/adapters.py:450:            portion of the Pool Key including scheme, hostname, and port. The
+src/requests/adapters.py:451:            second is a dictionary of SSLContext related parameters.
+src/requests/adapters.py:452:        """
+src/requests/adapters.py:453:        return _urllib3_request_context(request, verify, cert, self.poolmanager)
+src/requests/adapters.py:455:    def get_connection_with_tls_context(
+src/requests/adapters.py:456:        self,
+src/requests/adapters.py:457:        request: PreparedRequest,
+src/requests/adapters.py:458:        verify: _t.VerifyType,
+src/requests/adapters.py:459:        proxies: dict[str, str] | None = None,
+src/requests/adapters.py:460:        cert: _t.CertType = None,
+src/requests/adapters.py:461:    ) -> HTTPConnectionPool:
+src/requests/adapters.py:462:        """Returns a urllib3 connection for the given request and TLS settings.
+src/requests/adapters.py:463:        This should not be called from user code, and is only exposed for use
+src/requests/adapters.py:464:        when subclassing the :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:466:        :param request:
+src/requests/adapters.py:467:            The :class:`PreparedRequest <PreparedRequest>` object to be sent
+src/requests/adapters.py:468:            over the connection.
+src/requests/adapters.py:469:        :param verify:
+src/requests/adapters.py:470:            Either a boolean, in which case it controls whether we verify the
+src/requests/adapters.py:471:            server's TLS certificate, or a string, in which case it must be a
+src/requests/adapters.py:472:            path to a CA bundle to use.
+src/requests/adapters.py:473:        :param proxies:
+src/requests/adapters.py:474:            (optional) The proxies dictionary to apply to the request.
+src/requests/adapters.py:475:        :param cert:
+src/requests/adapters.py:476:            (optional) Any user-provided SSL certificate to be used for client
+src/requests/adapters.py:477:            authentication (a.k.a., mTLS).
+src/requests/adapters.py:478:        :rtype:
+src/requests/adapters.py:479:            urllib3.HTTPConnectionPool
+src/requests/adapters.py:480:        """
+src/requests/adapters.py:481:        assert _is_prepared(request)
+src/requests/adapters.py:483:        proxy = select_proxy(request.url, proxies)
+src/requests/adapters.py:484:        try:
+src/requests/adapters.py:485:            host_params, pool_kwargs = self.build_connection_pool_key_attributes(
+src/requests/adapters.py:486:                request,
+src/requests/adapters.py:487:                verify,
+src/requests/adapters.py:488:                cert,
+src/requests/adapters.py:489:            )
+src/requests/adapters.py:490:        except ValueError as e:
+src/requests/adapters.py:491:            raise InvalidURL(e, request=request)
+src/requests/adapters.py:492:        if proxy:
+src/requests/adapters.py:493:            proxy = prepend_scheme_if_needed(proxy, "http")
+src/requests/adapters.py:494:            proxy_url = parse_url(proxy)
+src/requests/adapters.py:495:            if not proxy_url.host:
+src/requests/adapters.py:496:                raise InvalidProxyURL(
+src/requests/adapters.py:497:                    "Please check proxy URL. It is malformed "
+src/requests/adapters.py:498:                    "and could be missing the host."
+src/requests/adapters.py:499:                )
+src/requests/adapters.py:500:            proxy_manager = self.proxy_manager_for(proxy)
+src/requests/adapters.py:501:            conn = proxy_manager.connection_from_host(
+src/requests/adapters.py:502:                **host_params, pool_kwargs=pool_kwargs
+src/requests/adapters.py:503:            )
+src/requests/adapters.py:504:        else:
+src/requests/adapters.py:505:            # Only scheme should be lower case
+src/requests/adapters.py:506:            conn = self.poolmanager.connection_from_host(
+src/requests/adapters.py:507:                **host_params, pool_kwargs=pool_kwargs
+src/requests/adapters.py:508:            )
+src/requests/adapters.py:510:        return conn
+src/requests/adapters.py:512:    def get_connection(
+src/requests/adapters.py:513:        self, url: str, proxies: dict[str, str] | None = None
+src/requests/adapters.py:514:    ) -> HTTPConnectionPool:
+src/requests/adapters.py:515:        """DEPRECATED: Users should move to `get_connection_with_tls_context`
+src/requests/adapters.py:516:        for all subclasses of HTTPAdapter using Requests>=2.32.2.
+src/requests/adapters.py:518:        Returns a urllib3 connection for the given URL. This should not be
+src/requests/adapters.py:519:        called from user code, and is only exposed for use when subclassing the
+src/requests/adapters.py:520:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:522:        :param url: The URL to connect to.
+src/requests/adapters.py:523:        :param proxies: (optional) A Requests-style dictionary of proxies used on this request.
+src/requests/adapters.py:524:        :rtype: urllib3.HTTPConnectionPool
+src/requests/adapters.py:525:        """
+src/requests/adapters.py:526:        warnings.warn(
+src/requests/adapters.py:527:            (
+src/requests/adapters.py:528:                "`get_connection` has been deprecated in favor of "
+src/requests/adapters.py:529:                "`get_connection_with_tls_context`. Custom HTTPAdapter subclasses "
+src/requests/adapters.py:530:                "will need to migrate for Requests>=2.32.2. Please see "
+src/requests/adapters.py:531:                "https://github.com/psf/requests/pull/6710 for more details."
+src/requests/adapters.py:532:            ),
+src/requests/adapters.py:533:            DeprecationWarning,
+src/requests/adapters.py:534:        )
+src/requests/adapters.py:535:        proxy = select_proxy(url, proxies)
+src/requests/adapters.py:537:        if proxy:
+src/requests/adapters.py:538:            proxy = prepend_scheme_if_needed(proxy, "http")
+src/requests/adapters.py:539:            proxy_url = parse_url(proxy)
+src/requests/adapters.py:540:            if not proxy_url.host:
+src/requests/adapters.py:541:                raise InvalidProxyURL(
+src/requests/adapters.py:542:                    "Please check proxy URL. It is malformed "
+src/requests/adapters.py:543:                    "and could be missing the host."
+src/requests/adapters.py:544:                )
+src/requests/adapters.py:545:            proxy_manager = self.proxy_manager_for(proxy)
+src/requests/adapters.py:546:            conn = proxy_manager.connection_from_url(url)
+src/requests/adapters.py:547:        else:
+src/requests/adapters.py:548:            # Only scheme should be lower case
+src/requests/adapters.py:549:            parsed = urlparse(url)
+src/requests/adapters.py:550:            url = parsed.geturl()
+src/requests/adapters.py:551:            conn = self.poolmanager.connection_from_url(url)
+src/requests/adapters.py:553:        return conn
+src/requests/adapters.py:555:    def close(self) -> None:
+src/requests/adapters.py:556:        """Disposes of any internal state.
+src/requests/adapters.py:558:        Currently, this closes the PoolManager and any active ProxyManager,
+src/requests/adapters.py:559:        which closes any pooled connections.
+src/requests/adapters.py:560:        """
+src/requests/adapters.py:561:        self.poolmanager.clear()
+src/requests/adapters.py:562:        for proxy in self.proxy_manager.values():
+src/requests/adapters.py:563:            proxy.clear()
+src/requests/adapters.py:565:    def request_url(
+src/requests/adapters.py:566:        self, request: PreparedRequest, proxies: dict[str, str] | None
+src/requests/adapters.py:567:    ) -> str:
+src/requests/adapters.py:568:        """Obtain the url to use when making the final request.
+src/requests/adapters.py:570:        If the message is being sent through a HTTP proxy, the full URL has to
+src/requests/adapters.py:571:        be used. Otherwise, we should only use the path portion of the URL.
+src/requests/adapters.py:573:        This should not be called from user code, and is only exposed for use
+src/requests/adapters.py:574:        when subclassing the
+src/requests/adapters.py:575:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:577:        :param request: The :class:`PreparedRequest <PreparedRequest>` being sent.
+src/requests/adapters.py:578:        :param proxies: A dictionary of schemes or schemes and hosts to proxy URLs.
+src/requests/adapters.py:579:        :rtype: str
+src/requests/adapters.py:580:        """
+src/requests/adapters.py:581:        assert _is_prepared(request)
+src/requests/adapters.py:583:        proxy = select_proxy(request.url, proxies)
+src/requests/adapters.py:584:        scheme = urlparse(request.url).scheme
+src/requests/adapters.py:586:        is_proxied_http_request = proxy and scheme != "https"
+src/requests/adapters.py:587:        using_socks_proxy = False
+src/requests/adapters.py:588:        if proxy:
+src/requests/adapters.py:589:            proxy_scheme = urlparse(proxy).scheme.lower()
+src/requests/adapters.py:590:            using_socks_proxy = proxy_scheme.startswith("socks")
+src/requests/adapters.py:592:        url = request.path_url
+src/requests/adapters.py:594:        if is_proxied_http_request and not using_socks_proxy:
+src/requests/adapters.py:595:            url = urldefragauth(request.url)
+src/requests/adapters.py:597:        return url
+src/requests/adapters.py:599:    def add_headers(self, request: PreparedRequest, **kwargs: Any) -> None:
+src/requests/adapters.py:600:        """Add any headers needed by the connection. As of v2.0 this does
+src/requests/adapters.py:601:        nothing by default, but is left for overriding by users that subclass
+src/requests/adapters.py:602:        the :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:604:        This should not be called from user code, and is only exposed for use
+src/requests/adapters.py:605:        when subclassing the
+src/requests/adapters.py:606:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:608:        :param request: The :class:`PreparedRequest <PreparedRequest>` to add headers to.
+src/requests/adapters.py:609:        :param kwargs: The keyword arguments from the call to send().
+src/requests/adapters.py:610:        """
+src/requests/adapters.py:611:        pass
+src/requests/adapters.py:613:    def proxy_headers(self, proxy: str) -> dict[str, str]:
+src/requests/adapters.py:614:        """Returns a dictionary of the headers to add to any request sent
+src/requests/adapters.py:615:        through a proxy. This works with urllib3 magic to ensure that they are
+src/requests/adapters.py:616:        correctly sent to the proxy, rather than in a tunnelled request if
+src/requests/adapters.py:617:        CONNECT is being used.
+src/requests/adapters.py:619:        This should not be called from user code, and is only exposed for use
+src/requests/adapters.py:620:        when subclassing the
+src/requests/adapters.py:621:        :class:`HTTPAdapter <requests.adapters.HTTPAdapter>`.
+src/requests/adapters.py:623:        :param proxy: The url of the proxy being used for this request.
+src/requests/adapters.py:624:        :rtype: dict
+src/requests/adapters.py:625:        """
+src/requests/adapters.py:626:        headers: dict[str, str] = {}
+src/requests/adapters.py:627:        username, password = get_auth_from_url(proxy)
+src/requests/adapters.py:629:        if username:
+src/requests/adapters.py:630:            headers["Proxy-Authorization"] = _basic_auth_str(username, password)
+src/requests/adapters.py:632:        return headers
+src/requests/adapters.py:634:    def send(
+src/requests/adapters.py:635:        self,
+src/requests/adapters.py:636:        request: PreparedRequest,
+src/requests/adapters.py:637:        stream: bool = False,
+src/requests/adapters.py:638:        timeout: _t.TimeoutType = None,
+src/requests/adapters.py:639:        verify: _t.VerifyType = True,
+src/requests/adapters.py:640:        cert: _t.CertType = None,
+src/requests/adapters.py:641:        proxies: dict[str, str] | None = None,
+src/requests/adapters.py:642:    ) -> Response:
+src/requests/adapters.py:643:        """Sends PreparedRequest object. Returns Response object.
+src/requests/adapters.py:645:        :param request: The :class:`PreparedRequest <PreparedRequest>` being sent.
+src/requests/adapters.py:646:        :param stream: (optional) Whether to stream the request content.
+src/requests/adapters.py:647:        :param timeout: (optional) How long to wait for the server to send
+src/requests/adapters.py:648:            data before giving up, as a float, or a :ref:`(connect timeout,
+src/requests/adapters.py:649:            read timeout) <timeouts>` tuple.
+src/requests/adapters.py:650:        :type timeout: float or tuple or urllib3 Timeout object
+src/requests/adapters.py:651:        :param verify: (optional) Either a boolean, in which case it controls whether
+src/requests/adapters.py:652:            we verify the server's TLS certificate, or a string, in which case it
+src/requests/adapters.py:653:            must be a path to a CA bundle to use
+src/requests/adapters.py:654:        :param cert: (optional) Any user-provided SSL certificate to be trusted.
+src/requests/adapters.py:655:        :param proxies: (optional) The proxies dictionary to apply to the request.
+src/requests/adapters.py:656:        :rtype: requests.Response
+src/requests/adapters.py:657:        """
+src/requests/adapters.py:659:        assert _is_prepared(request)
+src/requests/adapters.py:661:        try:
+src/requests/adapters.py:662:            conn = self.get_connection_with_tls_context(
+src/requests/adapters.py:663:                request, verify, proxies=proxies, cert=cert
+src/requests/adapters.py:664:            )
+src/requests/adapters.py:665:        except LocationValueError as e:
+src/requests/adapters.py:666:            raise InvalidURL(e, request=request)
+src/requests/adapters.py:668:        self.cert_verify(conn, request.url, verify, cert)
+src/requests/adapters.py:669:        url = self.request_url(request, proxies)
+src/requests/adapters.py:670:        self.add_headers(
+src/requests/adapters.py:671:            request,
+src/requests/adapters.py:672:            stream=stream,
+src/requests/adapters.py:673:            timeout=timeout,
+src/requests/adapters.py:674:            verify=verify,
+src/requests/adapters.py:675:            cert=cert,
+src/requests/adapters.py:676:            proxies=proxies,
+src/requests/adapters.py:677:        )
+src/requests/adapters.py:679:        chunked = not (request.body is None or "Content-Length" in request.headers)
+src/requests/adapters.py:681:        if isinstance(timeout, tuple):
+src/requests/adapters.py:682:            try:
+src/requests/adapters.py:683:                connect, read = timeout
+src/requests/adapters.py:684:                resolved_timeout = TimeoutSauce(connect=connect, read=read)
+src/requests/adapters.py:685:            except ValueError:
+src/requests/adapters.py:686:                raise ValueError(
+src/requests/adapters.py:687:                    f"Invalid timeout {timeout}. Pass a (connect, read) timeout tuple, "
+src/requests/adapters.py:688:                    f"or a single float to set both timeouts to the same value."
+src/requests/adapters.py:689:                )
+src/requests/adapters.py:690:        elif isinstance(timeout, TimeoutSauce):
+src/requests/adapters.py:691:            resolved_timeout = timeout
+src/requests/adapters.py:692:        else:
+src/requests/adapters.py:693:            resolved_timeout = TimeoutSauce(connect=timeout, read=timeout)
+src/requests/adapters.py:695:        try:
+src/requests/adapters.py:696:            resp = conn.urlopen(
+src/requests/adapters.py:697:                method=request.method,
+src/requests/adapters.py:698:                url=url,
+src/requests/adapters.py:699:                body=request.body,  # type: ignore[arg-type]  # urllib3 stubs don't accept Iterable[bytes | str]
+src/requests/adapters.py:700:                headers=request.headers,  # type: ignore[arg-type]  # urllib3#3072
+src/requests/adapters.py:701:                redirect=False,
+src/requests/adapters.py:702:                assert_same_host=False,
+src/requests/adapters.py:703:                preload_content=False,
+src/requests/adapters.py:704:                decode_content=False,
+src/requests/adapters.py:705:                retries=self.max_retries,
+src/requests/adapters.py:706:                timeout=resolved_timeout,
+src/requests/adapters.py:707:                chunked=chunked,
+src/requests/adapters.py:708:            )
+src/requests/adapters.py:710:        except (ProtocolError, OSError) as err:
+src/requests/adapters.py:711:            raise ConnectionError(err, request=request)
+src/requests/adapters.py:713:        except MaxRetryError as e:
+src/requests/adapters.py:714:            if isinstance(e.reason, ConnectTimeoutError):
+src/requests/adapters.py:715:                # TODO: Remove this in 3.0.0: see #2811
+src/requests/adapters.py:716:                if not isinstance(e.reason, NewConnectionError):
+src/requests/adapters.py:717:                    raise ConnectTimeout(e, request=request)
+src/requests/adapters.py:719:            if isinstance(e.reason, ResponseError):
+src/requests/adapters.py:720:                raise RetryError(e, request=request)
+src/requests/adapters.py:722:            if isinstance(e.reason, _ProxyError):
+src/requests/adapters.py:723:                raise ProxyError(e, request=request)
+src/requests/adapters.py:725:            if isinstance(e.reason, _SSLError):
+src/requests/adapters.py:726:                # This branch is for urllib3 v1.22 and later.
+src/requests/adapters.py:727:                raise SSLError(e, request=request)
+src/requests/adapters.py:729:            raise ConnectionError(e, request=request)
+src/requests/adapters.py:731:        except ClosedPoolError as e:
+src/requests/adapters.py:732:            raise ConnectionError(e, request=request)
+src/requests/adapters.py:734:        except _ProxyError as e:
+src/requests/adapters.py:735:            raise ProxyError(e)
+src/requests/adapters.py:737:        except (_SSLError, _HTTPError) as e:
+src/requests/adapters.py:738:            if isinstance(e, _SSLError):
+src/requests/adapters.py:739:                # This branch is for urllib3 versions earlier than v1.22
+src/requests/adapters.py:740:                raise SSLError(e, request=request)
+src/requests/adapters.py:741:            elif isinstance(e, ReadTimeoutError):
+src/requests/adapters.py:742:                raise ReadTimeout(e, request=request)
+src/requests/adapters.py:743:            elif isinstance(e, _InvalidHeader):
+src/requests/adapters.py:744:                raise InvalidHeader(e, request=request)
+src/requests/adapters.py:745:            else:
+src/requests/adapters.py:746:                raise
+src/requests/adapters.py:748:        return self.build_response(request, resp)
+src/requests/sessions.py:1:"""
+src/requests/sessions.py:2:requests.sessions
+src/requests/sessions.py:3:~~~~~~~~~~~~~~~~~
+src/requests/sessions.py:5:This module provides a Session object to manage and persist settings across
+src/requests/sessions.py:6:requests (cookies, auth, proxies).
+src/requests/sessions.py:7:"""
+src/requests/sessions.py:9:from __future__ import annotations
+src/requests/sessions.py:11:import os
+src/requests/sessions.py:12:import sys
+src/requests/sessions.py:13:import time
+src/requests/sessions.py:14:from collections import OrderedDict
+src/requests/sessions.py:15:from collections.abc import Generator, Mapping, MutableMapping
+src/requests/sessions.py:16:from datetime import timedelta
+src/requests/sessions.py:17:from typing import TYPE_CHECKING, Any, cast
+src/requests/sessions.py:19:from ._internal_utils import to_native_string
+src/requests/sessions.py:20:from ._types import is_prepared as _is_prepared
+src/requests/sessions.py:21:from .adapters import HTTPAdapter
+src/requests/sessions.py:22:from .auth import _basic_auth_str
+src/requests/sessions.py:23:from .compat import cookielib, urljoin, urlparse
+src/requests/sessions.py:24:from .cookies import (
+src/requests/sessions.py:25:    RequestsCookieJar,
+src/requests/sessions.py:26:    cookiejar_from_dict,
+src/requests/sessions.py:27:    extract_cookies_to_jar,
+src/requests/sessions.py:28:    merge_cookies,
+src/requests/sessions.py:29:)
+src/requests/sessions.py:30:from .exceptions import (
+src/requests/sessions.py:31:    ChunkedEncodingError,
+src/requests/sessions.py:32:    ContentDecodingError,
+src/requests/sessions.py:33:    InvalidSchema,
+src/requests/sessions.py:34:    TooManyRedirects,
+src/requests/sessions.py:35:)
+src/requests/sessions.py:36:from .hooks import default_hooks, dispatch_hook
+src/requests/sessions.py:38:# formerly defined here, reexposed here for backward compatibility
+src/requests/sessions.py:39:from .models import (  # noqa: F401
+src/requests/sessions.py:40:    DEFAULT_REDIRECT_LIMIT,
+src/requests/sessions.py:41:    REDIRECT_STATI,
+src/requests/sessions.py:42:    PreparedRequest,
+src/requests/sessions.py:43:    Request,
+src/requests/sessions.py:44:    Response,
+src/requests/sessions.py:45:)
+src/requests/sessions.py:46:from .status_codes import codes
+src/requests/sessions.py:47:from .structures import CaseInsensitiveDict
+src/requests/sessions.py:48:from .utils import (  # noqa: F401
+src/requests/sessions.py:49:    DEFAULT_PORTS,
+src/requests/sessions.py:50:    default_headers,
+src/requests/sessions.py:51:    get_auth_from_url,
+src/requests/sessions.py:52:    get_environ_proxies,
+src/requests/sessions.py:53:    get_netrc_auth,
+src/requests/sessions.py:54:    requote_uri,
+src/requests/sessions.py:55:    resolve_proxies,
+src/requests/sessions.py:56:    rewind_body,
+src/requests/sessions.py:57:    should_bypass_proxies,  # re-export for external consumers
+src/requests/sessions.py:58:    to_key_val_list,
+src/requests/sessions.py:59:)
+src/requests/sessions.py:61:if TYPE_CHECKING:
+src/requests/sessions.py:62:    from http.cookiejar import CookieJar
+src/requests/sessions.py:64:    from typing_extensions import Self, Unpack
+src/requests/sessions.py:66:    from . import _types as _t
+src/requests/sessions.py:67:    from .adapters import BaseAdapter
+src/requests/sessions.py:69:# Preferred clock, based on which one is more accurate on a given system.
+src/requests/sessions.py:70:if sys.platform == "win32":
+src/requests/sessions.py:71:    preferred_clock = time.perf_counter
+src/requests/sessions.py:72:else:
+src/requests/sessions.py:73:    preferred_clock = time.time
+src/requests/sessions.py:76:def merge_setting(
+src/requests/sessions.py:77:    request_setting: Any, session_setting: Any, dict_class: type = OrderedDict
+src/requests/sessions.py:78:) -> Any:
+src/requests/sessions.py:79:    """Determines appropriate setting for a given request, taking into account
+src/requests/sessions.py:80:    the explicit setting on that request, and the setting in the session. If a
+src/requests/sessions.py:81:    setting is a dictionary, they will be merged together using `dict_class`
+src/requests/sessions.py:82:    """
+src/requests/sessions.py:84:    if session_setting is None:
+src/requests/sessions.py:85:        return request_setting
+src/requests/sessions.py:87:    if request_setting is None:
+src/requests/sessions.py:88:        return session_setting
+src/requests/sessions.py:90:    # Bypass if not a dictionary (e.g. verify)
+src/requests/sessions.py:91:    if not (
+src/requests/sessions.py:92:        isinstance(session_setting, Mapping) and isinstance(request_setting, Mapping)
+src/requests/sessions.py:93:    ):
+src/requests/sessions.py:94:        return request_setting
+src/requests/sessions.py:96:    merged_setting = dict_class(to_key_val_list(session_setting))  # type: ignore[arg-type]  # isinstance narrows Any to Mapping[Unknown]
+src/requests/sessions.py:97:    merged_setting.update(to_key_val_list(request_setting))  # type: ignore[arg-type]
+src/requests/sessions.py:99:    # Remove keys that are set to None. Extract keys first to avoid altering
+src/requests/sessions.py:100:    # the dictionary during iteration.
+src/requests/sessions.py:101:    none_keys = [k for (k, v) in merged_setting.items() if v is None]
+src/requests/sessions.py:102:    for key in none_keys:
+src/requests/sessions.py:103:        del merged_setting[key]
+src/requests/sessions.py:105:    return merged_setting
+src/requests/sessions.py:108:def merge_hooks(
+src/requests/sessions.py:109:    request_hooks: _t.HooksType,
+src/requests/sessions.py:110:    session_hooks: _t.HooksType,
+src/requests/sessions.py:111:    dict_class: type = OrderedDict,
+src/requests/sessions.py:112:) -> _t.HooksType:
+src/requests/sessions.py:113:    """Properly merges both requests and session hooks.
+src/requests/sessions.py:115:    This is necessary because when request_hooks == {'response': []}, the
+src/requests/sessions.py:116:    merge breaks Session hooks entirely.
+src/requests/sessions.py:117:    """
+src/requests/sessions.py:118:    if session_hooks is None or session_hooks.get("response") == []:
+src/requests/sessions.py:119:        return request_hooks
+src/requests/sessions.py:121:    if request_hooks is None or request_hooks.get("response") == []:
+src/requests/sessions.py:122:        return session_hooks
+src/requests/sessions.py:124:    return merge_setting(request_hooks, session_hooks, dict_class)
+src/requests/sessions.py:127:class SessionRedirectMixin:
+src/requests/sessions.py:128:    max_redirects: int
+src/requests/sessions.py:129:    trust_env: bool
+src/requests/sessions.py:130:    cookies: RequestsCookieJar
+src/requests/sessions.py:132:    def send(self, request: PreparedRequest, **kwargs: Any) -> Response: ...
+src/requests/sessions.py:134:    def get_redirect_target(self, resp: Response) -> str | None:
+src/requests/sessions.py:135:        """Receives a Response. Returns a redirect URI or ``None``"""
+src/requests/sessions.py:136:        # Due to the nature of how requests processes redirects this method will
+src/requests/sessions.py:137:        # be called at least once upon the original response and at least twice
+src/requests/sessions.py:138:        # on each subsequent redirect response (if any).
+src/requests/sessions.py:139:        # If a custom mixin is used to handle this logic, it may be advantageous
+src/requests/sessions.py:140:        # to cache the redirect location onto the response object as a private
+src/requests/sessions.py:141:        # attribute.
+src/requests/sessions.py:142:        if resp.is_redirect:
+src/requests/sessions.py:143:            location = resp.headers["location"]
+src/requests/sessions.py:144:            # Currently the underlying http module on py3 decode headers
+src/requests/sessions.py:145:            # in latin1, but empirical evidence suggests that latin1 is very
+src/requests/sessions.py:146:            # rarely used with non-ASCII characters in HTTP headers.
+src/requests/sessions.py:147:            # It is more likely to get UTF8 header rather than latin1.
+src/requests/sessions.py:148:            # This causes incorrect handling of UTF8 encoded location headers.
+src/requests/sessions.py:149:            # To solve this, we re-encode the location in latin1.
+src/requests/sessions.py:150:            location = location.encode("latin1")
+src/requests/sessions.py:151:            return to_native_string(location, "utf8")
+src/requests/sessions.py:152:        return None
+src/requests/sessions.py:154:    def should_strip_auth(self, old_url: str, new_url: str) -> bool:
+src/requests/sessions.py:155:        """Decide whether Authorization header should be removed when redirecting"""
+src/requests/sessions.py:156:        old_parsed = urlparse(old_url)
+src/requests/sessions.py:157:        new_parsed = urlparse(new_url)
+src/requests/sessions.py:158:        if old_parsed.hostname != new_parsed.hostname:
+src/requests/sessions.py:159:            return True
+src/requests/sessions.py:160:        # Special case: allow http -> https redirect when using the standard
+src/requests/sessions.py:161:        # ports. This isn't specified by RFC 7235, but is kept to avoid
+src/requests/sessions.py:162:        # breaking backwards compatibility with older versions of requests
+src/requests/sessions.py:163:        # that allowed any redirects on the same host.
+src/requests/sessions.py:164:        if (
+src/requests/sessions.py:165:            old_parsed.scheme == "http"
+src/requests/sessions.py:166:            and old_parsed.port in (80, None)
+src/requests/sessions.py:167:            and new_parsed.scheme == "https"
+src/requests/sessions.py:168:            and new_parsed.port in (443, None)
+src/requests/sessions.py:169:        ):
+src/requests/sessions.py:170:            return False
+src/requests/sessions.py:172:        # Handle default port usage corresponding to scheme.
+src/requests/sessions.py:173:        changed_port = old_parsed.port != new_parsed.port
+src/requests/sessions.py:174:        changed_scheme = old_parsed.scheme != new_parsed.scheme
+src/requests/sessions.py:175:        default_port = (DEFAULT_PORTS.get(old_parsed.scheme, None), None)
+src/requests/sessions.py:176:        if (
+src/requests/sessions.py:177:            not changed_scheme
+src/requests/sessions.py:178:            and old_parsed.port in default_port
+src/requests/sessions.py:179:            and new_parsed.port in default_port
+src/requests/sessions.py:180:        ):
+src/requests/sessions.py:181:            return False
+src/requests/sessions.py:183:        # Standard case: root URI must match
+src/requests/sessions.py:184:        return changed_port or changed_scheme
+src/requests/sessions.py:186:    def resolve_redirects(
+src/requests/sessions.py:187:        self,
+src/requests/sessions.py:188:        resp: Response,
+src/requests/sessions.py:189:        req: PreparedRequest,
+src/requests/sessions.py:190:        stream: bool = False,
+src/requests/sessions.py:191:        timeout: _t.TimeoutType = None,
+src/requests/sessions.py:192:        verify: _t.VerifyType = True,
+src/requests/sessions.py:193:        cert: _t.CertType = None,
+src/requests/sessions.py:194:        proxies: dict[str, str] | None = None,
+src/requests/sessions.py:195:        yield_requests: bool = False,
+src/requests/sessions.py:196:        **adapter_kwargs: Any,
+src/requests/sessions.py:197:    ) -> Generator[Response, None, None]:
+src/requests/sessions.py:198:        """Receives a Response. Returns a generator of Responses or Requests."""
+src/requests/sessions.py:200:        hist: list[Response] = []  # keep track of history
+src/requests/sessions.py:202:        url = self.get_redirect_target(resp)
+src/requests/sessions.py:203:        previous_fragment = urlparse(req.url).fragment
+src/requests/sessions.py:204:        while url:
+src/requests/sessions.py:205:            prepared_request = req.copy()
+src/requests/sessions.py:207:            # Update history and keep track of redirects.
+src/requests/sessions.py:208:            resp.history = hist[:]
+src/requests/sessions.py:209:            hist.append(resp)
+src/requests/sessions.py:211:            try:
+src/requests/sessions.py:212:                resp.content  # Consume socket so it can be released
+src/requests/sessions.py:213:            except (ChunkedEncodingError, ContentDecodingError, RuntimeError):
+src/requests/sessions.py:214:                resp.raw.read(decode_content=False)
+src/requests/sessions.py:216:            if len(resp.history) >= self.max_redirects:
+src/requests/sessions.py:217:                raise TooManyRedirects(
+src/requests/sessions.py:218:                    f"Exceeded {self.max_redirects} redirects.", response=resp
+src/requests/sessions.py:219:                )
+src/requests/sessions.py:221:            # Release the connection back into the pool.
+src/requests/sessions.py:222:            resp.close()
+src/requests/sessions.py:224:            # Handle redirection without scheme (see: RFC 1808 Section 4)
+src/requests/sessions.py:225:            if url.startswith("//"):
+src/requests/sessions.py:226:                parsed_rurl = urlparse(resp.url)
+src/requests/sessions.py:227:                url = ":".join([to_native_string(parsed_rurl.scheme), url])
+src/requests/sessions.py:229:            # Normalize url case and attach previous fragment if needed (RFC 7231 7.1.2)
+src/requests/sessions.py:230:            parsed = urlparse(url)
+src/requests/sessions.py:231:            if parsed.fragment == "" and previous_fragment:
+src/requests/sessions.py:232:                parsed = parsed._replace(fragment=previous_fragment)
+src/requests/sessions.py:233:            elif parsed.fragment:
+src/requests/sessions.py:234:                previous_fragment = parsed.fragment
+src/requests/sessions.py:235:            url = parsed.geturl()
+src/requests/sessions.py:237:            # Facilitate relative 'location' headers, as allowed by RFC 7231.
+src/requests/sessions.py:238:            # (e.g. '/path/to/resource' instead of 'http://domain.tld/path/to/resource')
+src/requests/sessions.py:239:            # Compliant with RFC3986, we percent encode the url.
+src/requests/sessions.py:240:            if not parsed.netloc:
+src/requests/sessions.py:241:                url = urljoin(resp.url, requote_uri(url))
+src/requests/sessions.py:242:            else:
+src/requests/sessions.py:243:                url = requote_uri(url)
+src/requests/sessions.py:245:            prepared_request.url = to_native_string(url)
+src/requests/sessions.py:247:            self.rebuild_method(prepared_request, resp)
+src/requests/sessions.py:249:            # https://github.com/psf/requests/issues/1084
+src/requests/sessions.py:250:            if resp.status_code not in (
+src/requests/sessions.py:251:                codes.temporary_redirect,
+src/requests/sessions.py:252:                codes.permanent_redirect,
+src/requests/sessions.py:253:            ):
+src/requests/sessions.py:254:                # https://github.com/psf/requests/issues/3490
+src/requests/sessions.py:255:                purged_headers = ("Content-Length", "Content-Type", "Transfer-Encoding")
+src/requests/sessions.py:256:                for header in purged_headers:
+src/requests/sessions.py:257:                    prepared_request.headers.pop(header, None)
+src/requests/sessions.py:258:                prepared_request.body = None
+src/requests/sessions.py:260:            headers = prepared_request.headers
+src/requests/sessions.py:261:            headers.pop("Cookie", None)
+src/requests/sessions.py:263:            # Extract any cookies sent on the response to the cookiejar
+src/requests/sessions.py:264:            # in the new request. Because we've mutated our copied prepared
+src/requests/sessions.py:265:            # request, use the old one that we haven't yet touched.
+src/requests/sessions.py:266:            cookie_jar = cast("CookieJar", prepared_request._cookies)
+src/requests/sessions.py:267:            extract_cookies_to_jar(cookie_jar, req, resp.raw)
+src/requests/sessions.py:268:            merge_cookies(cookie_jar, self.cookies)
+src/requests/sessions.py:269:            prepared_request.prepare_cookies(cookie_jar)
+src/requests/sessions.py:271:            # Rebuild auth and proxy information.
+src/requests/sessions.py:272:            proxies = self.rebuild_proxies(prepared_request, proxies)
+src/requests/sessions.py:273:            self.rebuild_auth(prepared_request, resp)
+src/requests/sessions.py:275:            # A failed tell() sets `_body_position` to `object()`. This non-None
+src/requests/sessions.py:276:            # value ensures `rewindable` will be True, allowing us to raise an
+src/requests/sessions.py:277:            # UnrewindableBodyError, instead of hanging the connection.
+src/requests/sessions.py:278:            rewindable = prepared_request._body_position is not None and (
+src/requests/sessions.py:279:                "Content-Length" in headers or "Transfer-Encoding" in headers
+src/requests/sessions.py:280:            )
+src/requests/sessions.py:282:            # Attempt to rewind consumed file-like object.
+src/requests/sessions.py:283:            if rewindable:
+src/requests/sessions.py:284:                rewind_body(prepared_request)
+src/requests/sessions.py:286:            # Override the original request.
+src/requests/sessions.py:287:            req = prepared_request
+src/requests/sessions.py:289:            if yield_requests:
+src/requests/sessions.py:290:                yield req  # type: ignore[misc]  # Internal use only, returns PreparedRequest
+src/requests/sessions.py:291:            else:
+src/requests/sessions.py:292:                resp = self.send(
+src/requests/sessions.py:293:                    req,
+src/requests/sessions.py:294:                    stream=stream,
+src/requests/sessions.py:295:                    timeout=timeout,
+src/requests/sessions.py:296:                    verify=verify,
+src/requests/sessions.py:297:                    cert=cert,
+src/requests/sessions.py:298:                    proxies=proxies,
+src/requests/sessions.py:299:                    allow_redirects=False,
+src/requests/sessions.py:300:                    **adapter_kwargs,
+src/requests/sessions.py:301:                )
+src/requests/sessions.py:303:                extract_cookies_to_jar(self.cookies, prepared_request, resp.raw)
+src/requests/sessions.py:305:                # extract redirect url, if any, for the next loop
+src/requests/sessions.py:306:                url = self.get_redirect_target(resp)
+src/requests/sessions.py:307:                yield resp
+src/requests/sessions.py:309:    def rebuild_auth(
+src/requests/sessions.py:310:        self, prepared_request: PreparedRequest, response: Response
+src/requests/sessions.py:311:    ) -> None:
+src/requests/sessions.py:312:        """When being redirected we may want to strip authentication from the
+src/requests/sessions.py:313:        request to avoid leaking credentials. This method intelligently removes
+src/requests/sessions.py:314:        and reapplies authentication where possible to avoid credential loss.
+src/requests/sessions.py:315:        """
+src/requests/sessions.py:316:        original_request = response.request
+src/requests/sessions.py:317:        assert _is_prepared(original_request)
+src/requests/sessions.py:318:        assert _is_prepared(prepared_request)
+src/requests/sessions.py:320:        headers = prepared_request.headers
+src/requests/sessions.py:321:        original_url = original_request.url
+src/requests/sessions.py:322:        url = prepared_request.url
+src/requests/sessions.py:324:        if "Authorization" in headers and self.should_strip_auth(original_url, url):
+src/requests/sessions.py:325:            # If we get redirected to a new host, we should strip out any
+src/requests/sessions.py:326:            # authentication headers.
+src/requests/sessions.py:327:            del headers["Authorization"]
+src/requests/sessions.py:329:        # .netrc might have more auth for us on our new host.
+src/requests/sessions.py:330:        new_auth = get_netrc_auth(url) if self.trust_env else None
+src/requests/sessions.py:331:        if new_auth is not None:
+src/requests/sessions.py:332:            prepared_request.prepare_auth(new_auth)
+src/requests/sessions.py:334:    def rebuild_proxies(
+src/requests/sessions.py:335:        self,
+src/requests/sessions.py:336:        prepared_request: PreparedRequest,
+src/requests/sessions.py:337:        proxies: dict[str, str] | None,
+src/requests/sessions.py:338:    ) -> dict[str, str]:
+src/requests/sessions.py:339:        """This method re-evaluates the proxy configuration by considering the
+src/requests/sessions.py:340:        environment variables. If we are redirected to a URL covered by
+src/requests/sessions.py:341:        NO_PROXY, we strip the proxy configuration. Otherwise, we set missing
+src/requests/sessions.py:342:        proxy keys for this URL (in case they were stripped by a previous
+src/requests/sessions.py:343:        redirect).
+src/requests/sessions.py:345:        This method also replaces the Proxy-Authorization header where
+src/requests/sessions.py:346:        necessary.
+src/requests/sessions.py:348:        :rtype: dict
+src/requests/sessions.py:349:        """
+src/requests/sessions.py:350:        assert _is_prepared(prepared_request)
+src/requests/sessions.py:351:        headers = prepared_request.headers
+src/requests/sessions.py:352:        scheme = urlparse(prepared_request.url).scheme
+src/requests/sessions.py:353:        new_proxies = resolve_proxies(prepared_request, proxies, self.trust_env)
+src/requests/sessions.py:355:        if "Proxy-Authorization" in headers:
+src/requests/sessions.py:356:            del headers["Proxy-Authorization"]
+src/requests/sessions.py:358:        try:
+src/requests/sessions.py:359:            username, password = get_auth_from_url(new_proxies[scheme])
+src/requests/sessions.py:360:        except KeyError:
+src/requests/sessions.py:361:            username, password = None, None
+src/requests/sessions.py:363:        # urllib3 handles proxy authorization for us in the standard adapter.
+src/requests/sessions.py:364:        # Avoid appending this to TLS tunneled requests where it may be leaked.
+src/requests/sessions.py:365:        if not scheme.startswith("https") and username and password:
+src/requests/sessions.py:366:            headers["Proxy-Authorization"] = _basic_auth_str(username, password)
+src/requests/sessions.py:368:        return new_proxies
+src/requests/sessions.py:370:    def rebuild_method(
+src/requests/sessions.py:371:        self, prepared_request: PreparedRequest, response: Response
+src/requests/sessions.py:372:    ) -> None:
+src/requests/sessions.py:373:        """When being redirected we may want to change the method of the request
+src/requests/sessions.py:374:        based on certain specs or browser behavior.
+src/requests/sessions.py:375:        """
+src/requests/sessions.py:376:        method = prepared_request.method
+src/requests/sessions.py:378:        # https://tools.ietf.org/html/rfc7231#section-6.4.4
+src/requests/sessions.py:379:        if response.status_code == codes.see_other and method != "HEAD":
+src/requests/sessions.py:380:            method = "GET"
+src/requests/sessions.py:382:        # Do what the browsers do, despite standards...
+src/requests/sessions.py:383:        # First, turn 302s into GETs.
+src/requests/sessions.py:384:        if response.status_code == codes.found and method != "HEAD":
+src/requests/sessions.py:385:            method = "GET"
+src/requests/sessions.py:387:        # Second, if a POST is responded to with a 301, turn it into a GET.
+src/requests/sessions.py:388:        # This bizarre behaviour is explained in Issue 1704.
+src/requests/sessions.py:389:        if response.status_code == codes.moved and method == "POST":
+src/requests/sessions.py:390:            method = "GET"
+src/requests/sessions.py:392:        prepared_request.method = method
+src/requests/sessions.py:395:class Session(SessionRedirectMixin):
+src/requests/sessions.py:396:    """A Requests session.
+src/requests/sessions.py:398:    Provides cookie persistence, connection-pooling, and configuration.
+src/requests/sessions.py:400:    Basic Usage::
+src/requests/sessions.py:402:      >>> import requests
+src/requests/sessions.py:403:      >>> s = requests.Session()
+src/requests/sessions.py:404:      >>> s.get('https://httpbin.org/get')
+src/requests/sessions.py:405:      <Response [200]>
+src/requests/sessions.py:407:    Or as a context manager::
+src/requests/sessions.py:409:      >>> with requests.Session() as s:
+src/requests/sessions.py:410:      ...     s.get('https://httpbin.org/get')
+src/requests/sessions.py:411:      <Response [200]>
+src/requests/sessions.py:412:    """
+src/requests/sessions.py:414:    headers: CaseInsensitiveDict[str]
+src/requests/sessions.py:415:    auth: _t.AuthType
+src/requests/sessions.py:416:    proxies: dict[str, str]
+src/requests/sessions.py:417:    hooks: dict[str, list[_t.HookType]]
+src/requests/sessions.py:418:    params: MutableMapping[str, Any]
+src/requests/sessions.py:419:    stream: bool
+src/requests/sessions.py:420:    verify: _t.VerifyType
+src/requests/sessions.py:421:    cert: _t.CertType
+src/requests/sessions.py:422:    max_redirects: int
+src/requests/sessions.py:423:    trust_env: bool
+src/requests/sessions.py:424:    cookies: RequestsCookieJar
+src/requests/sessions.py:425:    adapters: MutableMapping[str, BaseAdapter]
+src/requests/sessions.py:427:    __attrs__: list[str] = [
+src/requests/sessions.py:428:        "headers",
+src/requests/sessions.py:429:        "cookies",
+src/requests/sessions.py:430:        "auth",
+src/requests/sessions.py:431:        "proxies",
+src/requests/sessions.py:432:        "hooks",
+src/requests/sessions.py:433:        "params",
+src/requests/sessions.py:434:        "verify",
+src/requests/sessions.py:435:        "cert",
+src/requests/sessions.py:436:        "adapters",
+src/requests/sessions.py:437:        "stream",
+src/requests/sessions.py:438:        "trust_env",
+src/requests/sessions.py:439:        "max_redirects",
+src/requests/sessions.py:440:    ]
+src/requests/sessions.py:442:    def __init__(self) -> None:
+src/requests/sessions.py:443:        #: A case-insensitive dictionary of headers to be sent on each
+src/requests/sessions.py:444:        #: :class:`Request <Request>` sent from this
+src/requests/sessions.py:445:        #: :class:`Session <Session>`.
+src/requests/sessions.py:446:        self.headers = default_headers()
+src/requests/sessions.py:448:        #: Default Authentication tuple or object to attach to
+src/requests/sessions.py:449:        #: :class:`Request <Request>`.
+src/requests/sessions.py:450:        self.auth = None
+src/requests/sessions.py:452:        #: Dictionary mapping protocol or protocol and host to the URL of the proxy
+src/requests/sessions.py:453:        #: (e.g. {'http': 'foo.bar:3128', 'http://host.name': 'foo.bar:4012'}) to
+src/requests/sessions.py:454:        #: be used on each :class:`Request <Request>`.
+src/requests/sessions.py:455:        self.proxies = {}
+src/requests/sessions.py:457:        #: Event-handling hooks.
+src/requests/sessions.py:458:        self.hooks = default_hooks()
+src/requests/sessions.py:460:        #: Dictionary of querystring data to attach to each
+src/requests/sessions.py:461:        #: :class:`Request <Request>`. The dictionary values may be lists for
+src/requests/sessions.py:462:        #: representing multivalued query parameters.
+src/requests/sessions.py:463:        self.params = {}
+src/requests/sessions.py:465:        #: Stream response content default.
+src/requests/sessions.py:466:        self.stream = False
+src/requests/sessions.py:468:        #: SSL Verification default.
+src/requests/sessions.py:469:        #: Defaults to `True`, requiring requests to verify the TLS certificate at the
+src/requests/sessions.py:470:        #: remote end.
+src/requests/sessions.py:471:        #: If verify is set to `False`, requests will accept any TLS certificate
+src/requests/sessions.py:472:        #: presented by the server, and will ignore hostname mismatches and/or
+src/requests/sessions.py:473:        #: expired certificates, which will make your application vulnerable to
+src/requests/sessions.py:474:        #: man-in-the-middle (MitM) attacks.
+src/requests/sessions.py:475:        #: Only set this to `False` for testing.
+src/requests/sessions.py:476:        #: If verify is set to a string, it must be the path to a CA bundle file
+src/requests/sessions.py:477:        #: that will be used to verify the TLS certificate.
+src/requests/sessions.py:478:        self.verify = True
+src/requests/sessions.py:480:        #: SSL client certificate default, if String, path to ssl client
+src/requests/sessions.py:481:        #: cert file (.pem). If Tuple, ('cert', 'key') pair.
+src/requests/sessions.py:482:        self.cert = None
+src/requests/sessions.py:484:        #: Maximum number of redirects allowed. If the request exceeds this
+src/requests/sessions.py:485:        #: limit, a :class:`TooManyRedirects` exception is raised.
+src/requests/sessions.py:486:        #: This defaults to requests.models.DEFAULT_REDIRECT_LIMIT, which is
+src/requests/sessions.py:487:        #: 30.
+src/requests/sessions.py:488:        self.max_redirects = DEFAULT_REDIRECT_LIMIT
+src/requests/sessions.py:490:        #: Trust environment settings for proxy configuration, default
+src/requests/sessions.py:491:        #: authentication and similar.
+src/requests/sessions.py:492:        self.trust_env = True
+src/requests/sessions.py:494:        #: A CookieJar containing all currently outstanding cookies set on this
+src/requests/sessions.py:495:        #: session. By default it is a
+src/requests/sessions.py:496:        #: :class:`RequestsCookieJar <requests.cookies.RequestsCookieJar>`, but
+src/requests/sessions.py:497:        #: may be any other ``cookielib.CookieJar`` compatible object.
+src/requests/sessions.py:498:        self.cookies = cookiejar_from_dict({})
+src/requests/sessions.py:500:        # Default connection adapters.
+src/requests/sessions.py:501:        self.adapters = OrderedDict()
+src/requests/sessions.py:502:        self.mount("https://", HTTPAdapter())
+src/requests/sessions.py:503:        self.mount("http://", HTTPAdapter())
+src/requests/sessions.py:505:    def __enter__(self) -> Self:
+src/requests/sessions.py:506:        return self
+src/requests/sessions.py:508:    def __exit__(self, *args: Any) -> None:
+src/requests/sessions.py:509:        self.close()
+src/requests/sessions.py:511:    def prepare_request(self, request: Request) -> PreparedRequest:
+src/requests/sessions.py:512:        """Constructs a :class:`PreparedRequest <PreparedRequest>` for
+src/requests/sessions.py:513:        transmission and returns it. The :class:`PreparedRequest` has settings
+src/requests/sessions.py:514:        merged from the :class:`Request <Request>` instance and those of the
+src/requests/sessions.py:515:        :class:`Session`.
+src/requests/sessions.py:517:        :param request: :class:`Request` instance to prepare with this
+src/requests/sessions.py:518:            session's settings.
+src/requests/sessions.py:519:        :rtype: requests.PreparedRequest
+src/requests/sessions.py:520:        """
+src/requests/sessions.py:521:        url = cast("_t.UriType", request.url)
+src/requests/sessions.py:522:        method = cast(str, request.method)
+src/requests/sessions.py:524:        cookies = request.cookies or {}
+src/requests/sessions.py:526:        # Bootstrap CookieJar.
+src/requests/sessions.py:527:        if not isinstance(cookies, cookielib.CookieJar):
+src/requests/sessions.py:528:            cookies = cookiejar_from_dict(cookies)
+src/requests/sessions.py:530:        # Merge with session cookies
+src/requests/sessions.py:531:        merged_cookies = merge_cookies(
+src/requests/sessions.py:532:            merge_cookies(RequestsCookieJar(), self.cookies), cookies
+src/requests/sessions.py:533:        )
+src/requests/sessions.py:535:        # Set environment's basic authentication if not explicitly set.
+src/requests/sessions.py:536:        auth = request.auth
+src/requests/sessions.py:537:        if self.trust_env and not auth and not self.auth:
+src/requests/sessions.py:538:            auth = get_netrc_auth(url)
+src/requests/sessions.py:540:        p = PreparedRequest()
+src/requests/sessions.py:541:        p.prepare(
+src/requests/sessions.py:542:            method=method.upper(),
+src/requests/sessions.py:543:            url=url,
+src/requests/sessions.py:544:            files=request.files,
+src/requests/sessions.py:545:            data=request.data,
+src/requests/sessions.py:546:            json=request.json,
+src/requests/sessions.py:547:            headers=merge_setting(
+src/requests/sessions.py:548:                request.headers, self.headers, dict_class=CaseInsensitiveDict
+src/requests/sessions.py:549:            ),
+src/requests/sessions.py:550:            params=merge_setting(request.params, self.params),
+src/requests/sessions.py:551:            auth=merge_setting(auth, self.auth),
+src/requests/sessions.py:552:            cookies=merged_cookies,
+src/requests/sessions.py:553:            hooks=merge_hooks(request.hooks, self.hooks),
+src/requests/sessions.py:554:        )
+src/requests/sessions.py:555:        return p
+src/requests/sessions.py:557:    def request(
+src/requests/sessions.py:558:        self,
+src/requests/sessions.py:559:        method: str,
+src/requests/sessions.py:560:        url: _t.UriType,
+src/requests/sessions.py:561:        params: _t.ParamsType = None,
+src/requests/sessions.py:562:        data: _t.DataType = None,
+src/requests/sessions.py:563:        headers: _t.HeadersType = None,
+src/requests/sessions.py:564:        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,
+src/requests/sessions.py:565:        files: _t.FilesType = None,
+src/requests/sessions.py:566:        auth: _t.AuthType = None,
+src/requests/sessions.py:567:        timeout: _t.TimeoutType = None,
+src/requests/sessions.py:568:        allow_redirects: bool = True,
+src/requests/sessions.py:569:        proxies: dict[str, str] | None = None,
+src/requests/sessions.py:570:        hooks: _t.HooksInputType | None = None,
+src/requests/sessions.py:571:        stream: bool | None = None,
+src/requests/sessions.py:572:        verify: _t.VerifyType | None = None,
+src/requests/sessions.py:573:        cert: _t.CertType = None,
+src/requests/sessions.py:574:        json: _t.JsonType = None,
+src/requests/sessions.py:575:    ) -> Response:
+src/requests/sessions.py:576:        """Constructs a :class:`Request <Request>`, prepares it and sends it.
+src/requests/sessions.py:577:        Returns :class:`Response <Response>` object.
+src/requests/sessions.py:579:        :param method: method for the new :class:`Request` object.
+src/requests/sessions.py:580:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:581:        :param params: (optional) Dictionary or bytes to be sent in the query
+src/requests/sessions.py:582:            string for the :class:`Request`.
+src/requests/sessions.py:583:        :param data: (optional) Dictionary, list of tuples, bytes, or file-like
+src/requests/sessions.py:584:            object to send in the body of the :class:`Request`.
+src/requests/sessions.py:585:        :param json: (optional) json to send in the body of the
+src/requests/sessions.py:586:            :class:`Request`.
+src/requests/sessions.py:587:        :param headers: (optional) Dictionary of HTTP Headers to send with the
+src/requests/sessions.py:588:            :class:`Request`.
+src/requests/sessions.py:589:        :param cookies: (optional) Dict or CookieJar object to send with the
+src/requests/sessions.py:590:            :class:`Request`.
+src/requests/sessions.py:591:        :param files: (optional) Dictionary of ``'filename': file-like-objects``
+src/requests/sessions.py:592:            for multipart encoding upload.
+src/requests/sessions.py:593:        :param auth: (optional) Auth tuple or callable to enable
+src/requests/sessions.py:594:            Basic/Digest/Custom HTTP Auth.
+src/requests/sessions.py:595:        :param timeout: (optional) How many seconds to wait for the server to send
+src/requests/sessions.py:596:            data before giving up, as a float, or a :ref:`(connect timeout,
+src/requests/sessions.py:597:            read timeout) <timeouts>` tuple.
+src/requests/sessions.py:598:        :type timeout: float or tuple
+src/requests/sessions.py:599:        :param allow_redirects: (optional) Set to True by default.
+src/requests/sessions.py:600:        :type allow_redirects: bool
+src/requests/sessions.py:601:        :param proxies: (optional) Dictionary mapping protocol or protocol and
+src/requests/sessions.py:602:            hostname to the URL of the proxy.
+src/requests/sessions.py:603:        :param hooks: (optional) Dictionary mapping hook name to one event or
+src/requests/sessions.py:604:            list of events, event must be callable.
+src/requests/sessions.py:605:        :param stream: (optional) whether to immediately download the response
+src/requests/sessions.py:606:            content. Defaults to ``False``.
+src/requests/sessions.py:607:        :param verify: (optional) Either a boolean, in which case it controls whether we verify
+src/requests/sessions.py:608:            the server's TLS certificate, or a string, in which case it must be a path
+src/requests/sessions.py:609:            to a CA bundle to use. Defaults to ``True``. When set to
+src/requests/sessions.py:610:            ``False``, requests will accept any TLS certificate presented by
+src/requests/sessions.py:611:            the server, and will ignore hostname mismatches and/or expired
+src/requests/sessions.py:612:            certificates, which will make your application vulnerable to
+src/requests/sessions.py:613:            man-in-the-middle (MitM) attacks. Setting verify to ``False``
+src/requests/sessions.py:614:            may be useful during local development or testing.
+src/requests/sessions.py:615:        :param cert: (optional) if String, path to ssl client cert file (.pem).
+src/requests/sessions.py:616:            If Tuple, ('cert', 'key') pair.
+src/requests/sessions.py:617:        :rtype: requests.Response
+src/requests/sessions.py:618:        """
+src/requests/sessions.py:619:        if isinstance(url, bytes):
+src/requests/sessions.py:620:            url = url.decode("utf-8")
+src/requests/sessions.py:622:        # Create the Request.
+src/requests/sessions.py:623:        req = Request(
+src/requests/sessions.py:624:            method=method.upper(),
+src/requests/sessions.py:625:            url=url,
+src/requests/sessions.py:626:            headers=headers,
+src/requests/sessions.py:627:            files=files,
+src/requests/sessions.py:628:            data=data or {},
+src/requests/sessions.py:629:            json=json,
+src/requests/sessions.py:630:            params=params or {},
+src/requests/sessions.py:631:            auth=auth,
+src/requests/sessions.py:632:            cookies=cookies,
+src/requests/sessions.py:633:            hooks=hooks,
+src/requests/sessions.py:634:        )
+src/requests/sessions.py:635:        prep = self.prepare_request(req)
+src/requests/sessions.py:637:        assert _is_prepared(prep)
+src/requests/sessions.py:639:        proxies = proxies or {}
+src/requests/sessions.py:641:        settings = self.merge_environment_settings(
+src/requests/sessions.py:642:            prep.url, proxies, stream, verify, cert
+src/requests/sessions.py:643:        )
+src/requests/sessions.py:645:        # Send the request.
+src/requests/sessions.py:646:        send_kwargs = {
+src/requests/sessions.py:647:            "timeout": timeout,
+src/requests/sessions.py:648:            "allow_redirects": allow_redirects,
+src/requests/sessions.py:649:        }
+src/requests/sessions.py:650:        send_kwargs.update(settings)
+src/requests/sessions.py:651:        resp = self.send(prep, **send_kwargs)
+src/requests/sessions.py:653:        return resp
+src/requests/sessions.py:655:    def get(
+src/requests/sessions.py:656:        self,
+src/requests/sessions.py:657:        url: _t.UriType,
+src/requests/sessions.py:658:        params: _t.ParamsType = None,
+src/requests/sessions.py:659:        **kwargs: Unpack[_t.GetKwargs],
+src/requests/sessions.py:660:    ) -> Response:
+src/requests/sessions.py:661:        r"""Sends a GET request. Returns :class:`Response` object.
+src/requests/sessions.py:663:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:664:        :param params: (optional) Dictionary, list of tuples or bytes to send
+src/requests/sessions.py:665:            in the query string for the :class:`Request`.
+src/requests/sessions.py:666:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:667:        :rtype: requests.Response
+src/requests/sessions.py:668:        """
+src/requests/sessions.py:670:        kwargs.setdefault("allow_redirects", True)
+src/requests/sessions.py:671:        return self.request("GET", url, params=params, **kwargs)
+src/requests/sessions.py:673:    def options(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs]) -> Response:
+src/requests/sessions.py:674:        r"""Sends a OPTIONS request. Returns :class:`Response` object.
+src/requests/sessions.py:676:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:677:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:678:        :rtype: requests.Response
+src/requests/sessions.py:679:        """
+src/requests/sessions.py:681:        kwargs.setdefault("allow_redirects", True)
+src/requests/sessions.py:682:        return self.request("OPTIONS", url, **kwargs)
+src/requests/sessions.py:684:    def head(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs]) -> Response:
+src/requests/sessions.py:685:        r"""Sends a HEAD request. Returns :class:`Response` object.
+src/requests/sessions.py:687:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:688:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:689:        :rtype: requests.Response
+src/requests/sessions.py:690:        """
+src/requests/sessions.py:692:        kwargs.setdefault("allow_redirects", False)
+src/requests/sessions.py:693:        return self.request("HEAD", url, **kwargs)
+src/requests/sessions.py:695:    def post(
+src/requests/sessions.py:696:        self,
+src/requests/sessions.py:697:        url: _t.UriType,
+src/requests/sessions.py:698:        data: _t.DataType = None,
+src/requests/sessions.py:699:        json: _t.JsonType = None,
+src/requests/sessions.py:700:        **kwargs: Unpack[_t.PostKwargs],
+src/requests/sessions.py:701:    ) -> Response:
+src/requests/sessions.py:702:        r"""Sends a POST request. Returns :class:`Response` object.
+src/requests/sessions.py:704:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:705:        :param data: (optional) Dictionary, list of tuples, bytes, or file-like
+src/requests/sessions.py:706:            object to send in the body of the :class:`Request`.
+src/requests/sessions.py:707:        :param json: (optional) json to send in the body of the :class:`Request`.
+src/requests/sessions.py:708:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:709:        :rtype: requests.Response
+src/requests/sessions.py:710:        """
+src/requests/sessions.py:712:        return self.request("POST", url, data=data, json=json, **kwargs)
+src/requests/sessions.py:714:    def put(
+src/requests/sessions.py:715:        self, url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]
+src/requests/sessions.py:716:    ) -> Response:
+src/requests/sessions.py:717:        r"""Sends a PUT request. Returns :class:`Response` object.
+src/requests/sessions.py:719:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:720:        :param data: (optional) Dictionary, list of tuples, bytes, or file-like
+src/requests/sessions.py:721:            object to send in the body of the :class:`Request`.
+src/requests/sessions.py:722:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:723:        :rtype: requests.Response
+src/requests/sessions.py:724:        """
+src/requests/sessions.py:726:        return self.request("PUT", url, data=data, **kwargs)
+src/requests/sessions.py:728:    def patch(
+src/requests/sessions.py:729:        self, url: _t.UriType, data: _t.DataType = None, **kwargs: Unpack[_t.DataKwargs]
+src/requests/sessions.py:730:    ) -> Response:
+src/requests/sessions.py:731:        r"""Sends a PATCH request. Returns :class:`Response` object.
+src/requests/sessions.py:733:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:734:        :param data: (optional) Dictionary, list of tuples, bytes, or file-like
+src/requests/sessions.py:735:            object to send in the body of the :class:`Request`.
+src/requests/sessions.py:736:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:737:        :rtype: requests.Response
+src/requests/sessions.py:738:        """
+src/requests/sessions.py:740:        return self.request("PATCH", url, data=data, **kwargs)
+src/requests/sessions.py:742:    def delete(self, url: _t.UriType, **kwargs: Unpack[_t.RequestKwargs]) -> Response:
+src/requests/sessions.py:743:        r"""Sends a DELETE request. Returns :class:`Response` object.
+src/requests/sessions.py:745:        :param url: URL for the new :class:`Request` object.
+src/requests/sessions.py:746:        :param \*\*kwargs: Optional arguments that ``request`` takes.
+src/requests/sessions.py:747:        :rtype: requests.Response
+src/requests/sessions.py:748:        """
+src/requests/sessions.py:750:        return self.request("DELETE", url, **kwargs)
+src/requests/sessions.py:752:    def send(self, request: PreparedRequest, **kwargs: Any) -> Response:
+src/requests/sessions.py:753:        """Send a given PreparedRequest.
+src/requests/sessions.py:755:        :rtype: requests.Response
+src/requests/sessions.py:756:        """
+src/requests/sessions.py:757:        # Set defaults that the hooks can utilize to ensure they always have
+src/requests/sessions.py:758:        # the correct parameters to reproduce the previous request.
+src/requests/sessions.py:759:        kwargs.setdefault("stream", self.stream)
+src/requests/sessions.py:760:        kwargs.setdefault("verify", self.verify)
+src/requests/sessions.py:761:        kwargs.setdefault("cert", self.cert)
+src/requests/sessions.py:762:        if "proxies" not in kwargs:
+src/requests/sessions.py:763:            kwargs["proxies"] = resolve_proxies(request, self.proxies, self.trust_env)
+src/requests/sessions.py:765:        # It's possible that users might accidentally send a Request object.
+src/requests/sessions.py:766:        # Guard against that specific failure case.
+src/requests/sessions.py:767:        if isinstance(request, Request):
+src/requests/sessions.py:768:            raise ValueError("You can only send PreparedRequests.")
+src/requests/sessions.py:770:        assert _is_prepared(request)
+src/requests/sessions.py:772:        # Set up variables needed for resolve_redirects and dispatching of hooks
+src/requests/sessions.py:773:        allow_redirects = kwargs.pop("allow_redirects", True)
+src/requests/sessions.py:774:        stream = kwargs.get("stream")
+src/requests/sessions.py:775:        hooks = request.hooks
+src/requests/sessions.py:777:        # Get the appropriate adapter to use
+src/requests/sessions.py:778:        adapter = self.get_adapter(url=request.url)
+src/requests/sessions.py:780:        # Start time (approximately) of the request
+src/requests/sessions.py:781:        start = preferred_clock()
+src/requests/sessions.py:783:        # Send the request
+src/requests/sessions.py:784:        r = adapter.send(request, **kwargs)
+src/requests/sessions.py:786:        # Total elapsed time of the request (approximately)
+src/requests/sessions.py:787:        elapsed = preferred_clock() - start
+src/requests/sessions.py:788:        r.elapsed = timedelta(seconds=elapsed)
+src/requests/sessions.py:790:        # Response manipulation hooks
+src/requests/sessions.py:791:        r = dispatch_hook("response", hooks, r, **kwargs)
+src/requests/sessions.py:793:        # Persist cookies
+src/requests/sessions.py:794:        if r.history:
+src/requests/sessions.py:795:            # If the hooks create history then we want those cookies too
+src/requests/sessions.py:796:            for resp in r.history:
+src/requests/sessions.py:797:                extract_cookies_to_jar(self.cookies, resp.request, resp.raw)
+src/requests/sessions.py:799:        extract_cookies_to_jar(self.cookies, request, r.raw)
+src/requests/sessions.py:801:        # Resolve redirects if allowed.
+src/requests/sessions.py:802:        if allow_redirects:
+src/requests/sessions.py:803:            # Redirect resolving generator.
+src/requests/sessions.py:804:            gen = self.resolve_redirects(r, request, **kwargs)
+src/requests/sessions.py:805:            history = [resp for resp in gen]
+src/requests/sessions.py:806:        else:
+src/requests/sessions.py:807:            history = []
+src/requests/sessions.py:809:        # Shuffle things around if there's history.
+src/requests/sessions.py:810:        if history:
+src/requests/sessions.py:811:            # Insert the first (original) request at the start
+src/requests/sessions.py:812:            history.insert(0, r)
+src/requests/sessions.py:813:            # Get the last request made
+src/requests/sessions.py:814:            r = history.pop()
+src/requests/sessions.py:815:            r.history = history
+src/requests/sessions.py:817:        # If redirects aren't being followed, store the response on the Request for Response.next().
+src/requests/sessions.py:818:        if not allow_redirects:
+src/requests/sessions.py:819:            try:
+src/requests/sessions.py:820:                r._next = next(  # type: ignore[assignment]  # yield_requests=True returns PreparedRequest
+src/requests/sessions.py:821:                    self.resolve_redirects(r, request, yield_requests=True, **kwargs)
+src/requests/sessions.py:822:                )
+src/requests/sessions.py:823:            except StopIteration:
+src/requests/sessions.py:824:                pass
+src/requests/sessions.py:826:        if not stream:
+src/requests/sessions.py:827:            r.content
+src/requests/sessions.py:829:        return r
+src/requests/sessions.py:831:    def merge_environment_settings(
+src/requests/sessions.py:832:        self,
+src/requests/sessions.py:833:        url: str,
+src/requests/sessions.py:834:        proxies: dict[str, str] | None,
+src/requests/sessions.py:835:        stream: bool | None,
+src/requests/sessions.py:836:        verify: _t.VerifyType | None,
+src/requests/sessions.py:837:        cert: _t.CertType,
+src/requests/sessions.py:838:    ) -> dict[str, Any]:
+src/requests/sessions.py:839:        """
+src/requests/sessions.py:840:        Check the environment and merge it with some settings.
+src/requests/sessions.py:842:        :rtype: dict
+src/requests/sessions.py:843:        """
+src/requests/sessions.py:844:        # Gather clues from the surrounding environment.
+src/requests/sessions.py:845:        if self.trust_env:
+src/requests/sessions.py:846:            # Set environment's proxies.
+src/requests/sessions.py:847:            no_proxy = proxies.get("no_proxy") if proxies is not None else None
+src/requests/sessions.py:848:            env_proxies = get_environ_proxies(url, no_proxy=no_proxy)
+src/requests/sessions.py:849:            if proxies is not None:
+src/requests/sessions.py:850:                for k, v in env_proxies.items():
+src/requests/sessions.py:851:                    proxies.setdefault(k, v)
+src/requests/sessions.py:853:            # Look for requests environment configuration
+src/requests/sessions.py:854:            # and be compatible with cURL.
+src/requests/sessions.py:855:            if verify is True or verify is None:
+src/requests/sessions.py:856:                verify = (
+src/requests/sessions.py:857:                    os.environ.get("REQUESTS_CA_BUNDLE")
+src/requests/sessions.py:858:                    or os.environ.get("CURL_CA_BUNDLE")
+src/requests/sessions.py:859:                    or verify
+src/requests/sessions.py:860:                )
+src/requests/sessions.py:862:        # Merge all the kwargs.
+src/requests/sessions.py:863:        proxies = merge_setting(proxies, self.proxies)
+src/requests/sessions.py:864:        stream = merge_setting(stream, self.stream)
+src/requests/sessions.py:865:        verify = merge_setting(verify, self.verify)
+src/requests/sessions.py:866:        cert = merge_setting(cert, self.cert)
+src/requests/sessions.py:868:        return {"proxies": proxies, "stream": stream, "verify": verify, "cert": cert}
+src/requests/sessions.py:870:    def get_adapter(self, url: str) -> BaseAdapter:
+src/requests/sessions.py:871:        """
+src/requests/sessions.py:872:        Returns the appropriate connection adapter for the given URL.
+src/requests/sessions.py:874:        :rtype: requests.adapters.BaseAdapter
+src/requests/sessions.py:875:        """
+src/requests/sessions.py:876:        for prefix, adapter in self.adapters.items():
+src/requests/sessions.py:877:            if url.lower().startswith(prefix.lower()):
+src/requests/sessions.py:878:                return adapter
+src/requests/sessions.py:880:        # Nothing matches :-/
+src/requests/sessions.py:881:        raise InvalidSchema(f"No connection adapters were found for {url!r}")
+src/requests/sessions.py:883:    def close(self) -> None:
+src/requests/sessions.py:884:        """Closes all adapters and as such the session"""
+src/requests/sessions.py:885:        for v in self.adapters.values():
+src/requests/sessions.py:886:            v.close()
+src/requests/sessions.py:888:    def mount(self, prefix: str, adapter: BaseAdapter) -> None:
+src/requests/sessions.py:889:        """Registers a connection adapter to a prefix.
+src/requests/sessions.py:891:        Adapters are sorted in descending order by prefix length.
+src/requests/sessions.py:892:        """
+src/requests/sessions.py:893:        self.adapters[prefix] = adapter
+src/requests/sessions.py:894:        keys_to_move = [k for k in self.adapters if len(k) < len(prefix)]
+src/requests/sessions.py:896:        for key in keys_to_move:
+src/requests/sessions.py:897:            self.adapters[key] = self.adapters.pop(key)
+src/requests/sessions.py:899:    def __getstate__(self) -> dict[str, Any]:
+src/requests/sessions.py:900:        state = {attr: getattr(self, attr, None) for attr in self.__attrs__}
+src/requests/sessions.py:901:        return state
+src/requests/sessions.py:903:    def __setstate__(self, state: dict[str, Any]) -> None:
+src/requests/sessions.py:904:        for attr, value in state.items():
+src/requests/sessions.py:905:            setattr(self, attr, value)
+src/requests/sessions.py:908:def session() -> Session:
+src/requests/sessions.py:909:    """
+src/requests/sessions.py:910:    Returns a :class:`Session` for context-management.
+src/requests/sessions.py:912:    .. deprecated:: 1.0.0
+src/requests/sessions.py:914:        This method has been deprecated since version 1.0.0 and is only kept for
+src/requests/sessions.py:915:        backwards compatibility. New code should use :class:`~requests.sessions.Session`
+src/requests/sessions.py:916:        to create a session. This may be removed at a future date.
+src/requests/sessions.py:918:    :rtype: Session
+src/requests/sessions.py:919:    """
+src/requests/sessions.py:920:    return Session()
+src/requests/models.py:1:"""
+src/requests/models.py:2:requests.models
+src/requests/models.py:3:~~~~~~~~~~~~~~~
+src/requests/models.py:5:This module contains the primary objects that power Requests.
+src/requests/models.py:6:"""
+src/requests/models.py:8:from __future__ import annotations
+src/requests/models.py:10:import datetime
+src/requests/models.py:12:# Import encoding now, to avoid implicit import later.
+src/requests/models.py:13:# Implicit import within threads may cause LookupError when standard library is in a ZIP,
+src/requests/models.py:14:# such as in Embedded Python. See https://github.com/psf/requests/issues/3578.
+src/requests/models.py:15:import encodings.idna  # noqa: F401
+src/requests/models.py:16:from collections.abc import Callable, Generator, Iterable, Iterator, Mapping
+src/requests/models.py:17:from io import UnsupportedOperation
+src/requests/models.py:18:from typing import (
+src/requests/models.py:19:    TYPE_CHECKING,
+src/requests/models.py:20:    Any,
+src/requests/models.py:21:    Final,
+src/requests/models.py:22:    Literal,
+src/requests/models.py:23:    cast,
+src/requests/models.py:24:    overload,
+src/requests/models.py:25:)
+src/requests/models.py:27:from urllib3.exceptions import (
+src/requests/models.py:28:    DecodeError,
+src/requests/models.py:29:    LocationParseError,
+src/requests/models.py:30:    ProtocolError,
+src/requests/models.py:31:    ReadTimeoutError,
+src/requests/models.py:32:    SSLError,
+src/requests/models.py:33:)
+src/requests/models.py:34:from urllib3.fields import RequestField
+src/requests/models.py:35:from urllib3.filepost import encode_multipart_formdata
+src/requests/models.py:36:from urllib3.util import parse_url
+src/requests/models.py:38:from . import _types as _t
+src/requests/models.py:39:from ._internal_utils import to_native_string, unicode_is_ascii
+src/requests/models.py:40:from .auth import HTTPBasicAuth
+src/requests/models.py:41:from .compat import (
+src/requests/models.py:42:    JSONDecodeError,
+src/requests/models.py:43:    basestring,
+src/requests/models.py:44:    builtin_str,
+src/requests/models.py:45:    chardet,
+src/requests/models.py:46:    cookielib,
+src/requests/models.py:47:    urlencode,
+src/requests/models.py:48:    urlsplit,
+src/requests/models.py:49:    urlunparse,
+src/requests/models.py:50:)
+src/requests/models.py:51:from .compat import json as complexjson
+src/requests/models.py:52:from .cookies import (
+src/requests/models.py:53:    _copy_cookie_jar,
+src/requests/models.py:54:    cookiejar_from_dict,
+src/requests/models.py:55:    get_cookie_header,
+src/requests/models.py:56:)
+src/requests/models.py:57:from .exceptions import (
+src/requests/models.py:58:    ChunkedEncodingError,
+src/requests/models.py:59:    ConnectionError,
+src/requests/models.py:60:    ContentDecodingError,
+src/requests/models.py:61:    HTTPError,
+src/requests/models.py:62:    InvalidJSONError,
+src/requests/models.py:63:    InvalidURL,
+src/requests/models.py:64:    MissingSchema,
+src/requests/models.py:65:    StreamConsumedError,
+src/requests/models.py:66:)
+src/requests/models.py:67:from .exceptions import JSONDecodeError as RequestsJSONDecodeError
+src/requests/models.py:68:from .exceptions import SSLError as RequestsSSLError
+src/requests/models.py:69:from .hooks import default_hooks
+src/requests/models.py:70:from .status_codes import codes
+src/requests/models.py:71:from .structures import CaseInsensitiveDict
+src/requests/models.py:72:from .utils import (
+src/requests/models.py:73:    check_header_validity,
+src/requests/models.py:74:    get_auth_from_url,
+src/requests/models.py:75:    guess_filename,
+src/requests/models.py:76:    guess_json_utf,
+src/requests/models.py:77:    iter_slices,
+src/requests/models.py:78:    parse_header_links,
+src/requests/models.py:79:    requote_uri,
+src/requests/models.py:80:    stream_decode_response_unicode,
+src/requests/models.py:81:    super_len,
+src/requests/models.py:82:    to_key_val_list,
+src/requests/models.py:83:)
+src/requests/models.py:85:if TYPE_CHECKING:
+src/requests/models.py:86:    from http.cookiejar import CookieJar
+src/requests/models.py:88:    from typing_extensions import Self
+src/requests/models.py:90:    from .adapters import HTTPAdapter
+src/requests/models.py:91:    from .cookies import RequestsCookieJar
+src/requests/models.py:93:#: The set of HTTP status codes that indicate an automatically
+src/requests/models.py:94:#: processable redirect.
+src/requests/models.py:95:REDIRECT_STATI: Final[tuple[int, ...]] = (  # type: ignore[assignment]
+src/requests/models.py:96:    codes.moved,  # 301
+src/requests/models.py:97:    codes.found,  # 302
+src/requests/models.py:98:    codes.other,  # 303
+src/requests/models.py:99:    codes.temporary_redirect,  # 307
+src/requests/models.py:100:    codes.permanent_redirect,  # 308
+src/requests/models.py:101:)
+src/requests/models.py:103:DEFAULT_REDIRECT_LIMIT: int = 30
+src/requests/models.py:104:CONTENT_CHUNK_SIZE: int = 10 * 1024
+src/requests/models.py:105:ITER_CHUNK_SIZE: int = 512
+src/requests/models.py:108:class RequestEncodingMixin:
+src/requests/models.py:109:    url: str | None
+src/requests/models.py:111:    @property
+src/requests/models.py:112:    def path_url(self) -> str:
+src/requests/models.py:113:        """Build the path URL to use."""
+src/requests/models.py:115:        url: list[str] = []
+src/requests/models.py:117:        p = urlsplit(cast(str, self.url))
+src/requests/models.py:119:        path = p.path
+src/requests/models.py:120:        if not path:
+src/requests/models.py:121:            path = "/"
+src/requests/models.py:123:        url.append(path)
+src/requests/models.py:125:        query = p.query
+src/requests/models.py:126:        if query:
+src/requests/models.py:127:            url.append("?")
+src/requests/models.py:128:            url.append(query)
+src/requests/models.py:130:        return "".join(url)
+src/requests/models.py:132:    @overload
+src/requests/models.py:133:    @staticmethod
+src/requests/models.py:134:    def _encode_params(data: str) -> str: ...
+src/requests/models.py:136:    @overload
+src/requests/models.py:137:    @staticmethod
+src/requests/models.py:138:    def _encode_params(data: bytes) -> bytes: ...
+src/requests/models.py:140:    @overload
+src/requests/models.py:141:    @staticmethod
+src/requests/models.py:142:    def _encode_params(
+src/requests/models.py:143:        data: _t.SupportsRead[str | bytes],
+src/requests/models.py:144:    ) -> _t.SupportsRead[str | bytes]: ...
+src/requests/models.py:146:    @overload
+src/requests/models.py:147:    @staticmethod
+src/requests/models.py:148:    def _encode_params(data: _t.KVDataType) -> str: ...
+src/requests/models.py:150:    @staticmethod
+src/requests/models.py:151:    def _encode_params(
+src/requests/models.py:152:        data: _t.EncodableDataType,
+src/requests/models.py:153:    ) -> str | bytes | _t.SupportsRead[str | bytes]:
+src/requests/models.py:154:        """Encode parameters in a piece of data.
+src/requests/models.py:156:        Will successfully encode parameters when passed as a dict or a list of
+src/requests/models.py:157:        2-tuples. Order is retained if data is a list of 2-tuples but arbitrary
+src/requests/models.py:158:        if parameters are supplied as a dict.
+src/requests/models.py:159:        """
+src/requests/models.py:161:        if isinstance(data, (str, bytes)):
+src/requests/models.py:162:            return data
+src/requests/models.py:163:        elif _t.has_read(data):
+src/requests/models.py:164:            return data
+src/requests/models.py:165:        elif hasattr(data, "__iter__"):
+src/requests/models.py:166:            result: list[tuple[bytes, bytes]] = []
+src/requests/models.py:167:            for k, vs in to_key_val_list(data):
+src/requests/models.py:168:                if isinstance(vs, basestring) or not hasattr(vs, "__iter__"):
+src/requests/models.py:169:                    vs = [vs]
+src/requests/models.py:170:                for v in vs:
+src/requests/models.py:171:                    if v is not None:
+src/requests/models.py:172:                        result.append(
+src/requests/models.py:173:                            (
+src/requests/models.py:174:                                k.encode("utf-8") if isinstance(k, str) else k,
+src/requests/models.py:175:                                v.encode("utf-8") if isinstance(v, str) else v,
+src/requests/models.py:176:                            )
+src/requests/models.py:177:                        )
+src/requests/models.py:178:            return urlencode(result, doseq=True)
+src/requests/models.py:179:        else:
+src/requests/models.py:180:            return data  # type: ignore[return-value]  # unreachable for valid _t.DataType
+src/requests/models.py:182:    @staticmethod
+src/requests/models.py:183:    def _encode_files(
+src/requests/models.py:184:        files: _t.FilesType, data: _t.RawDataType | None
+src/requests/models.py:185:    ) -> tuple[bytes, str]:
+src/requests/models.py:186:        """Build the body for a multipart/form-data request.
+src/requests/models.py:188:        Will successfully encode files when passed as a dict or a list of
+src/requests/models.py:189:        tuples. Order is retained if data is a list of tuples but arbitrary
+src/requests/models.py:190:        if parameters are supplied as a dict.
+src/requests/models.py:191:        The tuples may be 2-tuples (filename, fileobj), 3-tuples (filename, fileobj, contentype)
+src/requests/models.py:192:        or 4-tuples (filename, fileobj, contentype, custom_headers).
+src/requests/models.py:193:        """
+src/requests/models.py:194:        if not files:
+src/requests/models.py:195:            raise ValueError("Files must be provided.")
+src/requests/models.py:196:        elif isinstance(data, basestring):
+src/requests/models.py:197:            raise ValueError("Data must not be a string.")
+src/requests/models.py:199:        new_fields: list[RequestField | tuple[str, bytes]] = []
+src/requests/models.py:200:        fields = to_key_val_list(data or {})
+src/requests/models.py:201:        files = to_key_val_list(files or {})
+src/requests/models.py:203:        for field, val in fields:
+src/requests/models.py:204:            if isinstance(val, basestring) or not hasattr(val, "__iter__"):
+src/requests/models.py:205:                val = [val]
+src/requests/models.py:206:            for v in val:
+src/requests/models.py:207:                if v is not None:
+src/requests/models.py:208:                    # Don't call str() on bytestrings: in Py3 it all goes wrong.
+src/requests/models.py:209:                    if not isinstance(v, bytes):
+src/requests/models.py:210:                        v = str(v)
+src/requests/models.py:212:                    new_fields.append(
+src/requests/models.py:213:                        (
+src/requests/models.py:214:                            field.decode("utf-8")
+src/requests/models.py:215:                            if isinstance(field, bytes)
+src/requests/models.py:216:                            else field,
+src/requests/models.py:217:                            v.encode("utf-8") if isinstance(v, str) else v,
+src/requests/models.py:218:                        )
+src/requests/models.py:219:                    )
+src/requests/models.py:221:        for k, v in files:
+src/requests/models.py:222:            # support for explicit filename
+src/requests/models.py:223:            ft = None
+src/requests/models.py:224:            fh = None
+src/requests/models.py:225:            if isinstance(v, (tuple, list)):
+src/requests/models.py:226:                if len(v) == 2:
+src/requests/models.py:227:                    fn, fp = v
+src/requests/models.py:228:                elif len(v) == 3:
+src/requests/models.py:229:                    fn, fp, ft = v
+src/requests/models.py:230:                else:
+src/requests/models.py:231:                    fn, fp, ft, fh = v
+src/requests/models.py:232:            else:
+src/requests/models.py:233:                fn = guess_filename(v) or k
+src/requests/models.py:234:                fp = v
+src/requests/models.py:236:            if isinstance(fp, (str, bytes, bytearray)):
+src/requests/models.py:237:                fdata = fp
+src/requests/models.py:238:            elif _t.has_read(fp):
+src/requests/models.py:239:                fdata = fp.read()
+src/requests/models.py:240:            elif fp is None:  # defensive check for untyped callers
+src/requests/models.py:241:                continue
+src/requests/models.py:242:            else:
+src/requests/models.py:243:                fdata = fp
+src/requests/models.py:245:            rf = RequestField(name=k, data=fdata, filename=fn, headers=fh)
+src/requests/models.py:246:            rf.make_multipart(content_type=ft)
+src/requests/models.py:247:            new_fields.append(rf)
+src/requests/models.py:249:        body, content_type = encode_multipart_formdata(new_fields)
+src/requests/models.py:251:        return body, content_type
+src/requests/models.py:254:class RequestHooksMixin:
+src/requests/models.py:255:    hooks: dict[str, list[_t.HookType]]
+src/requests/models.py:257:    def register_hook(
+src/requests/models.py:258:        self, event: str, hook: Iterable[_t.HookType] | _t.HookType
+src/requests/models.py:259:    ) -> None:
+src/requests/models.py:260:        """Properly register a hook."""
+src/requests/models.py:262:        if event not in self.hooks:
+src/requests/models.py:263:            raise ValueError(f'Unsupported event specified, with event name "{event}"')
+src/requests/models.py:265:        if isinstance(hook, Callable):
+src/requests/models.py:266:            self.hooks[event].append(hook)
+src/requests/models.py:267:        elif hasattr(hook, "__iter__"):
+src/requests/models.py:268:            self.hooks[event].extend(
+src/requests/models.py:269:                h for h in hook if isinstance(h, Callable)
+src/requests/models.py:270:            )  # defensive runtime filter
+src/requests/models.py:272:    def deregister_hook(self, event: str, hook: _t.HookType) -> bool:
+src/requests/models.py:273:        """Deregister a previously registered hook.
+src/requests/models.py:274:        Returns True if the hook existed, False if not.
+src/requests/models.py:275:        """
+src/requests/models.py:277:        try:
+src/requests/models.py:278:            self.hooks[event].remove(hook)
+src/requests/models.py:279:            return True
+src/requests/models.py:280:        except ValueError:
+src/requests/models.py:281:            return False
+src/requests/models.py:284:class Request(RequestHooksMixin):
+src/requests/models.py:285:    """A user-created :class:`Request <Request>` object.
+src/requests/models.py:287:    Used to prepare a :class:`PreparedRequest <PreparedRequest>`, which is sent to the server.
+src/requests/models.py:289:    :param method: HTTP method to use.
+src/requests/models.py:290:    :param url: URL to send.
+src/requests/models.py:291:    :param headers: dictionary of headers to send.
+src/requests/models.py:292:    :param files: dictionary of {filename: fileobject} files to multipart upload.
+src/requests/models.py:293:    :param data: the body to attach to the request. If a dictionary or
+src/requests/models.py:294:        list of tuples ``[(key, value)]`` is provided, form-encoding will
+src/requests/models.py:295:        take place.
+src/requests/models.py:296:    :param json: json for the body to attach to the request (if files or data is not specified).
+src/requests/models.py:297:    :param params: URL parameters to append to the URL. If a dictionary or
+src/requests/models.py:298:        list of tuples ``[(key, value)]`` is provided, form-encoding will
+src/requests/models.py:299:        take place.
+src/requests/models.py:300:    :param auth: Auth handler or (user, pass) tuple.
+src/requests/models.py:301:    :param cookies: dictionary or CookieJar of cookies to attach to this request.
+src/requests/models.py:302:    :param hooks: dictionary of callback hooks, for internal usage.
+src/requests/models.py:304:    Usage::
+src/requests/models.py:306:      >>> import requests
+src/requests/models.py:307:      >>> req = requests.Request('GET', 'https://httpbin.org/get')
+src/requests/models.py:308:      >>> req.prepare()
+src/requests/models.py:309:      <PreparedRequest [GET]>
+src/requests/models.py:310:    """
+src/requests/models.py:312:    hooks: dict[str, list[_t.HookType]]
+src/requests/models.py:313:    method: str | None
+src/requests/models.py:314:    url: _t.UriType | None
+src/requests/models.py:315:    headers: Mapping[str, str | bytes]
+src/requests/models.py:316:    files: _t.FilesType
+src/requests/models.py:317:    data: _t.DataType
+src/requests/models.py:318:    json: _t.JsonType
+src/requests/models.py:319:    params: _t.ParamsType
+src/requests/models.py:320:    auth: _t.AuthType
+src/requests/models.py:321:    cookies: RequestsCookieJar | CookieJar | dict[str, str] | None
+src/requests/models.py:323:    def __init__(
+src/requests/models.py:324:        self,
+src/requests/models.py:325:        method: str | None = None,
+src/requests/models.py:326:        url: _t.UriType | None = None,
+src/requests/models.py:327:        headers: _t.HeadersType = None,
+src/requests/models.py:328:        files: _t.FilesType = None,
+src/requests/models.py:329:        data: _t.DataType = None,
+src/requests/models.py:330:        params: _t.ParamsType = None,
+src/requests/models.py:331:        auth: _t.AuthType = None,
+src/requests/models.py:332:        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,
+src/requests/models.py:333:        hooks: _t.HooksInputType | None = None,
+src/requests/models.py:334:        json: _t.JsonType = None,
+src/requests/models.py:335:    ) -> None:
+src/requests/models.py:336:        # Default empty dicts for dict params.
+src/requests/models.py:337:        data = [] if data is None else data
+src/requests/models.py:338:        files = [] if files is None else files
+src/requests/models.py:339:        headers = {} if headers is None else headers
+src/requests/models.py:340:        params = {} if params is None else params
+src/requests/models.py:341:        hooks = {} if hooks is None else hooks
+src/requests/models.py:343:        self.hooks = default_hooks()
+src/requests/models.py:344:        for k, v in list(hooks.items()):
+src/requests/models.py:345:            self.register_hook(event=k, hook=v)
+src/requests/models.py:347:        self.method = method
+src/requests/models.py:348:        self.url = url
+src/requests/models.py:349:        self.headers = headers
+src/requests/models.py:350:        self.files = files
+src/requests/models.py:351:        self.data = data
+src/requests/models.py:352:        self.json = json
+src/requests/models.py:353:        self.params = params
+src/requests/models.py:354:        self.auth = auth
+src/requests/models.py:355:        self.cookies = cookies
+src/requests/models.py:357:    def __repr__(self) -> str:
+src/requests/models.py:358:        return f"<Request [{self.method}]>"
+src/requests/models.py:360:    def prepare(self) -> PreparedRequest:
+src/requests/models.py:361:        """Constructs a :class:`PreparedRequest <PreparedRequest>` for transmission and returns it."""
+src/requests/models.py:362:        p = PreparedRequest()
+src/requests/models.py:363:        p.prepare(
+src/requests/models.py:364:            method=self.method,
+src/requests/models.py:365:            url=self.url,
+src/requests/models.py:366:            headers=self.headers,
+src/requests/models.py:367:            files=self.files,
+src/requests/models.py:368:            data=self.data,
+src/requests/models.py:369:            json=self.json,
+src/requests/models.py:370:            params=self.params,
+src/requests/models.py:371:            auth=self.auth,
+src/requests/models.py:372:            cookies=self.cookies,
+src/requests/models.py:373:            hooks=self.hooks,
+src/requests/models.py:374:        )
+src/requests/models.py:375:        return p
+src/requests/models.py:378:class PreparedRequest(RequestEncodingMixin, RequestHooksMixin):
+src/requests/models.py:379:    """The fully mutable :class:`PreparedRequest <PreparedRequest>` object,
+src/requests/models.py:380:    containing the exact bytes that will be sent to the server.
+src/requests/models.py:382:    Instances are generated from a :class:`Request <Request>` object, and
+src/requests/models.py:383:    should not be instantiated manually; doing so may produce undesirable
+src/requests/models.py:384:    effects.
+src/requests/models.py:386:    Usage::
+src/requests/models.py:388:      >>> import requests
+src/requests/models.py:389:      >>> req = requests.Request('GET', 'https://httpbin.org/get')
+src/requests/models.py:390:      >>> r = req.prepare()
+src/requests/models.py:391:      >>> r
+src/requests/models.py:392:      <PreparedRequest [GET]>
+src/requests/models.py:394:      >>> s = requests.Session()
+src/requests/models.py:395:      >>> s.send(r)
+src/requests/models.py:396:      <Response [200]>
+src/requests/models.py:397:    """
+src/requests/models.py:399:    method: str | None
+src/requests/models.py:400:    url: str | None
+src/requests/models.py:401:    headers: CaseInsensitiveDict[str | bytes]
+src/requests/models.py:402:    _cookies: RequestsCookieJar | CookieJar | None
+src/requests/models.py:403:    body: _t.BodyType
+src/requests/models.py:404:    hooks: dict[str, list[_t.HookType]]
+src/requests/models.py:405:    _body_position: int | object | None
+src/requests/models.py:407:    def __init__(self) -> None:
+src/requests/models.py:408:        #: HTTP verb to send to the server.
+src/requests/models.py:409:        self.method = None
+src/requests/models.py:410:        #: HTTP URL to send the request to.
+src/requests/models.py:411:        self.url = None
+src/requests/models.py:412:        #: dictionary of HTTP headers.
+src/requests/models.py:413:        self.headers = None  # type: ignore[assignment]
+src/requests/models.py:414:        # The `CookieJar` used to create the Cookie header will be stored here
+src/requests/models.py:415:        # after prepare_cookies is called
+src/requests/models.py:416:        self._cookies = None
+src/requests/models.py:417:        #: request body to send to the server.
+src/requests/models.py:418:        self.body = None
+src/requests/models.py:419:        #: dictionary of callback hooks, for internal usage.
+src/requests/models.py:420:        self.hooks = default_hooks()
+src/requests/models.py:421:        #: integer denoting starting position of a readable file-like body.
+src/requests/models.py:422:        self._body_position = None
+src/requests/models.py:424:    def prepare(
+src/requests/models.py:425:        self,
+src/requests/models.py:426:        method: str | None = None,
+src/requests/models.py:427:        url: _t.UriType | None = None,
+src/requests/models.py:428:        headers: Mapping[str, str | bytes] | None = None,
+src/requests/models.py:429:        files: _t.FilesType = None,
+src/requests/models.py:430:        data: _t.DataType = None,
+src/requests/models.py:431:        params: _t.ParamsType = None,
+src/requests/models.py:432:        auth: _t.AuthType = None,
+src/requests/models.py:433:        cookies: RequestsCookieJar | CookieJar | dict[str, str] | None = None,
+src/requests/models.py:434:        hooks: _t.HooksInputType | None = None,
+src/requests/models.py:435:        json: _t.JsonType = None,
+src/requests/models.py:436:    ) -> None:
+src/requests/models.py:437:        """Prepares the entire request with the given parameters."""
+src/requests/models.py:439:        url = cast("_t.UriType", url)
+src/requests/models.py:440:        self.prepare_method(method)
+src/requests/models.py:441:        self.prepare_url(url, params)
+src/requests/models.py:442:        self.prepare_headers(headers)
+src/requests/models.py:443:        self.prepare_cookies(cookies)
+src/requests/models.py:444:        self.prepare_body(data, files, json)
+src/requests/models.py:445:        self.prepare_auth(auth, url)
+src/requests/models.py:447:        # Note that prepare_auth must be last to enable authentication schemes
+src/requests/models.py:448:        # such as OAuth to work on a fully prepared request.
+src/requests/models.py:450:        # This MUST go after prepare_auth. Authenticators could add a hook
+src/requests/models.py:451:        self.prepare_hooks(hooks)
+src/requests/models.py:453:    def __repr__(self) -> str:
+src/requests/models.py:454:        return f"<PreparedRequest [{self.method}]>"
+src/requests/models.py:456:    def copy(self) -> PreparedRequest:
+src/requests/models.py:457:        p = PreparedRequest()
+src/requests/models.py:458:        p.method = self.method
+src/requests/models.py:459:        p.url = self.url
+src/requests/models.py:460:        p.headers = self.headers.copy() if self.headers is not None else None  # type: ignore[assignment]
+src/requests/models.py:461:        p._cookies = _copy_cookie_jar(self._cookies)
+src/requests/models.py:462:        p.body = self.body
+src/requests/models.py:463:        p.hooks = self.hooks
+src/requests/models.py:464:        p._body_position = self._body_position
+src/requests/models.py:465:        return p
+src/requests/models.py:467:    def prepare_method(self, method: str | None) -> None:
+src/requests/models.py:468:        """Prepares the given HTTP method."""
+src/requests/models.py:469:        self.method = method
+src/requests/models.py:470:        if self.method is not None:
+src/requests/models.py:471:            self.method = to_native_string(self.method.upper())
+src/requests/models.py:473:    @staticmethod
+src/requests/models.py:474:    def _get_idna_encoded_host(host: str) -> str:
+src/requests/models.py:475:        import idna
+src/requests/models.py:477:        try:
+src/requests/models.py:478:            host = idna.encode(host, uts46=True).decode("utf-8")
+src/requests/models.py:479:        except idna.IDNAError:
+src/requests/models.py:480:            raise UnicodeError
+src/requests/models.py:481:        return host
+src/requests/models.py:483:    def prepare_url(
+src/requests/models.py:484:        self,
+src/requests/models.py:485:        url: _t.UriType,
+src/requests/models.py:486:        params: _t.ParamsType,
+src/requests/models.py:487:    ) -> None:
+src/requests/models.py:488:        """Prepares the given HTTP URL."""
+src/requests/models.py:489:        #: Accept objects that have string representations.
+src/requests/models.py:490:        #: We're unable to blindly call unicode/str functions
+src/requests/models.py:491:        #: as this will include the bytestring indicator (b'')
+src/requests/models.py:492:        #: on python 3.x.
+src/requests/models.py:493:        #: https://github.com/psf/requests/pull/2238
+src/requests/models.py:494:        if isinstance(url, bytes):
+src/requests/models.py:495:            url = url.decode("utf8")
+src/requests/models.py:496:        else:
+src/requests/models.py:497:            url = str(url)
+src/requests/models.py:499:        # Remove leading whitespaces from url
+src/requests/models.py:500:        url = url.lstrip()
+src/requests/models.py:502:        # Don't do any URL preparation for non-HTTP schemes like `mailto`,
+src/requests/models.py:503:        # `data` etc to work around exceptions from `url_parse`, which
+src/requests/models.py:504:        # handles RFC 3986 only.
+src/requests/models.py:505:        if ":" in url and not url.lower().startswith("http"):
+src/requests/models.py:506:            self.url = url
+src/requests/models.py:507:            return
+src/requests/models.py:509:        # Support for unicode domain names and paths.
+src/requests/models.py:510:        try:
+src/requests/models.py:511:            scheme, auth, host, port, path, query, fragment = parse_url(url)
+src/requests/models.py:512:        except LocationParseError as e:
+src/requests/models.py:513:            raise InvalidURL(*e.args)
+src/requests/models.py:515:        if not scheme:
+src/requests/models.py:516:            raise MissingSchema(
+src/requests/models.py:517:                f"Invalid URL {url!r}: No scheme supplied. "
+src/requests/models.py:518:                f"Perhaps you meant https://{url}?"
+src/requests/models.py:519:            )
+src/requests/models.py:521:        if not host:
+src/requests/models.py:522:            raise InvalidURL(f"Invalid URL {url!r}: No host supplied")
+src/requests/models.py:524:        # In general, we want to try IDNA encoding the hostname if the string contains
+src/requests/models.py:525:        # non-ASCII characters. This allows users to automatically get the correct IDNA
+src/requests/models.py:526:        # behaviour. For strings containing only ASCII characters, we need to also verify
+src/requests/models.py:527:        # it doesn't start with a wildcard (*), before allowing the unencoded hostname.
+src/requests/models.py:528:        if not unicode_is_ascii(host):
+src/requests/models.py:529:            try:
+src/requests/models.py:530:                host = self._get_idna_encoded_host(host)
+src/requests/models.py:531:            except UnicodeError:
+src/requests/models.py:532:                raise InvalidURL("URL has an invalid label.")
+src/requests/models.py:533:        elif host.startswith(("*", ".")):
+src/requests/models.py:534:            raise InvalidURL("URL has an invalid label.")
+src/requests/models.py:536:        # Carefully reconstruct the network location
+src/requests/models.py:537:        netloc = auth or ""
+src/requests/models.py:538:        if netloc:
+src/requests/models.py:539:            netloc += "@"
+src/requests/models.py:540:        netloc += host
+src/requests/models.py:541:        if port:
+src/requests/models.py:542:            netloc += f":{port}"
+src/requests/models.py:544:        # Bare domains aren't valid URLs.
+src/requests/models.py:545:        if not path:
+src/requests/models.py:546:            path = "/"
+src/requests/models.py:548:        if isinstance(params, (str, bytes)):
+src/requests/models.py:549:            params = to_native_string(params)
+src/requests/models.py:551:        if params is not None:
+src/requests/models.py:552:            enc_params = self._encode_params(params)
+src/requests/models.py:553:        else:
+src/requests/models.py:554:            enc_params = ""
+src/requests/models.py:556:        if enc_params:
+src/requests/models.py:557:            if query:
+src/requests/models.py:558:                query = f"{query}&{enc_params}"
+src/requests/models.py:559:            else:
+src/requests/models.py:560:                query = enc_params
+src/requests/models.py:562:        url = requote_uri(urlunparse((scheme, netloc, path, "", query, fragment)))
+src/requests/models.py:563:        self.url = url
+src/requests/models.py:565:    def prepare_headers(self, headers: Mapping[str, str | bytes] | None) -> None:
+src/requests/models.py:566:        """Prepares the given HTTP headers."""
+src/requests/models.py:568:        self.headers = CaseInsensitiveDict()
+src/requests/models.py:569:        if headers:
+src/requests/models.py:570:            for header in headers.items():
+src/requests/models.py:571:                # Raise exception on invalid header value.
+src/requests/models.py:572:                check_header_validity(header)
+src/requests/models.py:573:                name, value = header
+src/requests/models.py:574:                self.headers[to_native_string(name)] = value
+src/requests/models.py:576:    def prepare_body(
+src/requests/models.py:577:        self, data: _t.DataType, files: _t.FilesType, json: _t.JsonType = None
+src/requests/models.py:578:    ) -> None:
+src/requests/models.py:579:        """Prepares the given HTTP body data."""
+src/requests/models.py:581:        # Check if file, fo, generator, iterator.
+src/requests/models.py:582:        # If not, run through normal process.
+src/requests/models.py:584:        # Nottin' on you.
+src/requests/models.py:585:        body = None
+src/requests/models.py:586:        content_type = None
+src/requests/models.py:588:        if not data and json is not None:
+src/requests/models.py:589:            # urllib3 requires a bytes-like body. Python 2's json.dumps
+src/requests/models.py:590:            # provides this natively, but Python 3 gives a Unicode string.
+src/requests/models.py:591:            content_type = "application/json"
+src/requests/models.py:593:            try:
+src/requests/models.py:594:                body = complexjson.dumps(json, allow_nan=False)
+src/requests/models.py:595:            except ValueError as ve:
+src/requests/models.py:596:                raise InvalidJSONError(ve, request=self)
+src/requests/models.py:598:            if not isinstance(body, bytes):
+src/requests/models.py:599:                body = body.encode("utf-8")
+src/requests/models.py:601:        # data that proxies attributes to underlying objects needs hasattr
+src/requests/models.py:602:        is_iterable = isinstance(data, Iterable) or hasattr(data, "__iter__")
+src/requests/models.py:603:        if is_iterable and not isinstance(data, (str, bytes, list, tuple, Mapping)):
+src/requests/models.py:604:            try:
+src/requests/models.py:605:                length = super_len(data)
+src/requests/models.py:606:            except (TypeError, AttributeError, UnsupportedOperation):
+src/requests/models.py:607:                length = None
+src/requests/models.py:609:            body = data
+src/requests/models.py:611:            if getattr(body, "tell", None) is not None:
+src/requests/models.py:612:                # Record the current file position before reading.
+src/requests/models.py:613:                # This will allow us to rewind a file in the event
+src/requests/models.py:614:                # of a redirect.
+src/requests/models.py:615:                try:
+src/requests/models.py:616:                    self._body_position = body.tell()  # type: ignore[union-attr]  # guarded by getattr check
+src/requests/models.py:617:                except OSError:
+src/requests/models.py:618:                    # This differentiates from None, allowing us to catch
+src/requests/models.py:619:                    # a failed `tell()` later when trying to rewind the body
+src/requests/models.py:620:                    self._body_position = object()
+src/requests/models.py:622:            if files:
+src/requests/models.py:623:                raise NotImplementedError(
+src/requests/models.py:624:                    "Streamed bodies and files are mutually exclusive."
+src/requests/models.py:625:                )
+src/requests/models.py:627:            if length:
+src/requests/models.py:628:                self.headers["Content-Length"] = builtin_str(length)
+src/requests/models.py:629:            else:
+src/requests/models.py:630:                self.headers["Transfer-Encoding"] = "chunked"
+src/requests/models.py:631:        else:
+src/requests/models.py:632:            # After is_stream filtering, remaining data is raw (not streamed)
+src/requests/models.py:633:            raw_data = cast("_t.RawDataType | None", data)
+src/requests/models.py:635:            # Multi-part file uploads.
+src/requests/models.py:636:            if files:
+src/requests/models.py:637:                (body, content_type) = self._encode_files(files, raw_data)
+src/requests/models.py:638:            else:
+src/requests/models.py:639:                if raw_data:
+src/requests/models.py:640:                    body = self._encode_params(raw_data)
+src/requests/models.py:641:                    if isinstance(data, basestring) or _t.has_read(data):
+src/requests/models.py:642:                        content_type = None
+src/requests/models.py:643:                    else:
+src/requests/models.py:644:                        content_type = "application/x-www-form-urlencoded"
+src/requests/models.py:646:            self.prepare_content_length(body)
+src/requests/models.py:648:            # Add content-type if it wasn't explicitly provided.
+src/requests/models.py:649:            if content_type and ("content-type" not in self.headers):
+src/requests/models.py:650:                self.headers["Content-Type"] = content_type
+src/requests/models.py:652:        self.body = body  # type: ignore[assignment]  # body transforms from DataType to BodyType
+src/requests/models.py:654:    def prepare_content_length(self, body: _t.BodyType) -> None:
+src/requests/models.py:655:        """Prepare Content-Length header based on request method and body"""
+src/requests/models.py:656:        if body is not None:
+src/requests/models.py:657:            length = super_len(body)
+src/requests/models.py:658:            if length:
+src/requests/models.py:659:                # If length exists, set it. Otherwise, we fallback
+src/requests/models.py:660:                # to Transfer-Encoding: chunked.
+src/requests/models.py:661:                self.headers["Content-Length"] = builtin_str(length)
+src/requests/models.py:662:        elif (
+src/requests/models.py:663:            self.method not in ("GET", "HEAD")
+src/requests/models.py:664:            and self.headers.get("Content-Length") is None
+src/requests/models.py:665:        ):
+src/requests/models.py:666:            # Set Content-Length to 0 for methods that can have a body
+src/requests/models.py:667:            # but don't provide one. (i.e. not GET or HEAD)
+src/requests/models.py:668:            self.headers["Content-Length"] = "0"
+src/requests/models.py:670:    def prepare_auth(
+src/requests/models.py:671:        self,
+src/requests/models.py:672:        auth: _t.AuthType,
+src/requests/models.py:673:        url: _t.UriType = "",
+src/requests/models.py:674:    ) -> None:
+src/requests/models.py:675:        """Prepares the given HTTP auth data."""
+src/requests/models.py:677:        # If no Auth is explicitly provided, extract it from the URL first.
+src/requests/models.py:678:        if auth is None:
+src/requests/models.py:679:            url_auth = get_auth_from_url(cast(str, self.url))
+src/requests/models.py:680:            auth = url_auth if any(url_auth) else None
+src/requests/models.py:682:        if auth:
+src/requests/models.py:683:            if isinstance(auth, tuple) and len(auth) == 2:  # type: ignore[arg-type]  # pyright widens tuple from Callable in AuthType
+src/requests/models.py:684:                # special-case basic HTTP auth
+src/requests/models.py:685:                auth_handler = HTTPBasicAuth(*auth)  # type: ignore[arg-type]  # pyright widens tuple from Callable in AuthType
+src/requests/models.py:686:            else:
+src/requests/models.py:687:                # TODO: can be fixed by flipping the conditionals
+src/requests/models.py:688:                auth_handler = cast("Callable[..., PreparedRequest]", auth)
+src/requests/models.py:690:            # Allow auth to make its changes.
+src/requests/models.py:691:            r = auth_handler(self)
+src/requests/models.py:693:            # Update self to reflect the auth changes.
+src/requests/models.py:694:            self.__dict__.update(r.__dict__)
+src/requests/models.py:696:            # Recompute Content-Length
+src/requests/models.py:697:            self.prepare_content_length(self.body)
+src/requests/models.py:699:    def prepare_cookies(
+src/requests/models.py:700:        self, cookies: RequestsCookieJar | CookieJar | dict[str, str] | None
+src/requests/models.py:701:    ) -> None:
+src/requests/models.py:702:        """Prepares the given HTTP cookie data.
+src/requests/models.py:704:        This function eventually generates a ``Cookie`` header from the
+src/requests/models.py:705:        given cookies using cookielib. Due to cookielib's design, the header
+src/requests/models.py:706:        will not be regenerated if it already exists, meaning this function
+src/requests/models.py:707:        can only be called once for the life of the
+src/requests/models.py:708:        :class:`PreparedRequest <PreparedRequest>` object. Any subsequent calls
+src/requests/models.py:709:        to ``prepare_cookies`` will have no actual effect, unless the "Cookie"
+src/requests/models.py:710:        header is removed beforehand.
+src/requests/models.py:711:        """
+src/requests/models.py:712:        if isinstance(cookies, cookielib.CookieJar):
+src/requests/models.py:713:            self._cookies = cookies
+src/requests/models.py:714:        else:
+src/requests/models.py:715:            self._cookies = cookiejar_from_dict(cookies)
+src/requests/models.py:717:        cookies_jar = cast("CookieJar", self._cookies)
+src/requests/models.py:718:        cookie_header = get_cookie_header(cookies_jar, self)
+src/requests/models.py:719:        if cookie_header is not None:
+src/requests/models.py:720:            self.headers["Cookie"] = cookie_header
+src/requests/models.py:722:    def prepare_hooks(self, hooks: _t.HooksInputType | None) -> None:
+src/requests/models.py:723:        """Prepares the given hooks."""
+src/requests/models.py:724:        # hooks can be passed as None to the prepare method and to this
+src/requests/models.py:725:        # method. To prevent iterating over None, simply use an empty list
+src/requests/models.py:726:        # if hooks is False-y
+src/requests/models.py:727:        hooks = hooks or {}
+src/requests/models.py:728:        for event in hooks:
+src/requests/models.py:729:            self.register_hook(event, hooks[event])
+src/requests/models.py:732:class Response:
+src/requests/models.py:733:    """The :class:`Response <Response>` object, which contains a
+src/requests/models.py:734:    server's response to an HTTP request.
+src/requests/models.py:735:    """
+src/requests/models.py:737:    _content: bytes | Literal[False] | None
+src/requests/models.py:738:    _content_consumed: bool
+src/requests/models.py:739:    _next: PreparedRequest | None
+src/requests/models.py:740:    status_code: int
+src/requests/models.py:741:    headers: CaseInsensitiveDict[str]
+src/requests/models.py:742:    raw: Any
+src/requests/models.py:743:    url: str
+src/requests/models.py:744:    encoding: str | None
+src/requests/models.py:745:    history: list[Response]
+src/requests/models.py:746:    reason: str
+src/requests/models.py:747:    cookies: RequestsCookieJar
+src/requests/models.py:748:    elapsed: datetime.timedelta
+src/requests/models.py:749:    request: PreparedRequest
+src/requests/models.py:750:    connection: HTTPAdapter
+src/requests/models.py:752:    __attrs__: list[str] = [
+src/requests/models.py:753:        "_content",
+src/requests/models.py:754:        "status_code",
+src/requests/models.py:755:        "headers",
+src/requests/models.py:756:        "url",
+src/requests/models.py:757:        "history",
+src/requests/models.py:758:        "encoding",
+src/requests/models.py:759:        "reason",
+src/requests/models.py:760:        "cookies",
+src/requests/models.py:761:        "elapsed",
+src/requests/models.py:762:        "request",
+src/requests/models.py:763:    ]
+src/requests/models.py:765:    def __init__(self) -> None:
+src/requests/models.py:766:        self._content = False
+src/requests/models.py:767:        self._content_consumed = False
+src/requests/models.py:768:        self._next = None
+src/requests/models.py:770:        #: Integer Code of responded HTTP Status, e.g. 404 or 200.
+src/requests/models.py:771:        self.status_code = None  # type: ignore[assignment]
+src/requests/models.py:773:        #: Case-insensitive Dictionary of Response Headers.
+src/requests/models.py:774:        #: For example, ``headers['content-encoding']`` will return the
+src/requests/models.py:775:        #: value of a ``'Content-Encoding'`` response header.
+src/requests/models.py:776:        self.headers = CaseInsensitiveDict()
+src/requests/models.py:778:        #: File-like object representation of response (for advanced usage).
+src/requests/models.py:779:        #: Use of ``raw`` requires that ``stream=True`` be set on the request.
+src/requests/models.py:780:        #: This requirement does not apply for use internally to Requests.
+src/requests/models.py:781:        self.raw = None
+src/requests/models.py:783:        #: Final URL location of Response.
+src/requests/models.py:784:        self.url = None  # type: ignore[assignment]
+src/requests/models.py:786:        #: Encoding to decode with when accessing r.text.
+src/requests/models.py:787:        self.encoding = None
+src/requests/models.py:789:        #: A list of :class:`Response <Response>` objects from
+src/requests/models.py:790:        #: the history of the Request. Any redirect responses will end
+src/requests/models.py:791:        #: up here. The list is sorted from the oldest to the most recent request.
+src/requests/models.py:792:        self.history = []
+src/requests/models.py:794:        #: Textual reason of responded HTTP Status, e.g. "Not Found" or "OK".
+src/requests/models.py:795:        self.reason = None  # type: ignore[assignment]
+src/requests/models.py:797:        #: A CookieJar of Cookies the server sent back.
+src/requests/models.py:798:        self.cookies = cookiejar_from_dict({})
+src/requests/models.py:800:        #: The amount of time elapsed between sending the request
+src/requests/models.py:801:        #: and the arrival of the response (as a timedelta).
+src/requests/models.py:802:        #: This property specifically measures the time taken between sending
+src/requests/models.py:803:        #: the first byte of the request and finishing parsing the headers. It
+src/requests/models.py:804:        #: is therefore unaffected by consuming the response content or the
+src/requests/models.py:805:        #: value of the ``stream`` keyword argument.
+src/requests/models.py:806:        self.elapsed = datetime.timedelta(0)
+src/requests/models.py:808:        #: The :class:`PreparedRequest <PreparedRequest>` object to which this
+src/requests/models.py:809:        #: is a response.
+src/requests/models.py:810:        self.request = None  # type: ignore[assignment]
+src/requests/models.py:812:    def __enter__(self) -> Self:
+src/requests/models.py:813:        return self
+src/requests/models.py:815:    def __exit__(self, *args: Any) -> None:
+src/requests/models.py:816:        self.close()
+src/requests/models.py:818:    def __getstate__(self) -> dict[str, Any]:
+src/requests/models.py:819:        # Consume everything; accessing the content attribute makes
+src/requests/models.py:820:        # sure the content has been fully read.
+src/requests/models.py:821:        if not self._content_consumed:
+src/requests/models.py:822:            self.content
+src/requests/models.py:824:        return {attr: getattr(self, attr, None) for attr in self.__attrs__}
+src/requests/models.py:826:    def __setstate__(self, state: dict[str, Any]) -> None:
+src/requests/models.py:827:        for name, value in state.items():
+src/requests/models.py:828:            setattr(self, name, value)
+src/requests/models.py:830:        # pickled objects do not have .raw
+src/requests/models.py:831:        setattr(self, "_content_consumed", True)
+src/requests/models.py:832:        setattr(self, "raw", None)
+src/requests/models.py:834:    def __repr__(self) -> str:
+src/requests/models.py:835:        return f"<Response [{self.status_code}]>"
+src/requests/models.py:837:    def __bool__(self) -> bool:
+src/requests/models.py:838:        """Returns True if :attr:`status_code` is less than 400.
+src/requests/models.py:840:        This attribute checks if the status code of the response is between
+src/requests/models.py:841:        400 and 600 to see if there was a client error or a server error. If
+src/requests/models.py:842:        the status code, is between 200 and 400, this will return True. This
+src/requests/models.py:843:        is **not** a check to see if the response code is ``200 OK``.
+src/requests/models.py:844:        """
+src/requests/models.py:845:        return self.ok
+src/requests/models.py:847:    def __nonzero__(self) -> bool:
+src/requests/models.py:848:        """Returns True if :attr:`status_code` is less than 400.
+src/requests/models.py:850:        This attribute checks if the status code of the response is between
+src/requests/models.py:851:        400 and 600 to see if there was a client error or a server error. If
+src/requests/models.py:852:        the status code, is between 200 and 400, this will return True. This
+src/requests/models.py:853:        is **not** a check to see if the response code is ``200 OK``.
+src/requests/models.py:854:        """
+src/requests/models.py:855:        return self.ok
+src/requests/models.py:857:    def __iter__(self) -> Iterator[bytes]:
+src/requests/models.py:858:        """Allows you to use a response as an iterator."""
+src/requests/models.py:859:        return self.iter_content(128)
+src/requests/models.py:861:    @property
+src/requests/models.py:862:    def ok(self) -> bool:
+src/requests/models.py:863:        """Returns True if :attr:`status_code` is less than 400, False if not.
+src/requests/models.py:865:        This attribute checks if the status code of the response is between
+src/requests/models.py:866:        400 and 600 to see if there was a client error or a server error. If
+src/requests/models.py:867:        the status code is between 200 and 400, this will return True. This
+src/requests/models.py:868:        is **not** a check to see if the response code is ``200 OK``.
+src/requests/models.py:869:        """
+src/requests/models.py:870:        try:
+src/requests/models.py:871:            self.raise_for_status()
+src/requests/models.py:872:        except HTTPError:
+src/requests/models.py:873:            return False
+src/requests/models.py:874:        return True
+src/requests/models.py:876:    @property
+src/requests/models.py:877:    def is_redirect(self) -> bool:
+src/requests/models.py:878:        """True if this Response is a well-formed HTTP redirect that could have
+src/requests/models.py:879:        been processed automatically (by :meth:`Session.resolve_redirects`).
+src/requests/models.py:880:        """
+src/requests/models.py:881:        return "location" in self.headers and self.status_code in REDIRECT_STATI
+src/requests/models.py:883:    @property
+src/requests/models.py:884:    def is_permanent_redirect(self) -> bool:
+src/requests/models.py:885:        """True if this Response one of the permanent versions of redirect."""
+src/requests/models.py:886:        return "location" in self.headers and self.status_code in (
+src/requests/models.py:887:            codes.moved_permanently,
+src/requests/models.py:888:            codes.permanent_redirect,
+src/requests/models.py:889:        )
+src/requests/models.py:891:    @property
+src/requests/models.py:892:    def next(self) -> PreparedRequest | None:
+src/requests/models.py:893:        """Returns a PreparedRequest for the next request in a redirect chain, if there is one."""
+src/requests/models.py:894:        return self._next
+src/requests/models.py:896:    @property
+src/requests/models.py:897:    def apparent_encoding(self) -> str | None:
+src/requests/models.py:898:        """The apparent encoding, provided by the charset_normalizer or chardet libraries."""
+src/requests/models.py:899:        if chardet is not None:
+src/requests/models.py:900:            return chardet.detect(self.content)["encoding"]
+src/requests/models.py:901:        else:
+src/requests/models.py:902:            # If no character detection library is available, we'll fall back
+src/requests/models.py:903:            # to a standard Python utf-8 str.
+src/requests/models.py:904:            return "utf-8"
+src/requests/models.py:906:    @overload
+src/requests/models.py:907:    def iter_content(
+src/requests/models.py:908:        self, chunk_size: int | None = 1, decode_unicode: Literal[False] = False
+src/requests/models.py:909:    ) -> Iterator[bytes]: ...
+src/requests/models.py:910:    @overload
+src/requests/models.py:911:    def iter_content(
+src/requests/models.py:912:        self, chunk_size: int | None = 1, *, decode_unicode: Literal[True]
+src/requests/models.py:913:    ) -> Iterator[str | bytes]: ...
+src/requests/models.py:914:    def iter_content(
+src/requests/models.py:915:        self, chunk_size: int | None = 1, decode_unicode: bool = False
+src/requests/models.py:916:    ) -> Iterator[str | bytes]:
+src/requests/models.py:917:        """Iterates over the response data.  When stream=True is set on the
+src/requests/models.py:918:        request, this avoids reading the content at once into memory for
+src/requests/models.py:919:        large responses.  The chunk size is the number of bytes it should
+src/requests/models.py:920:        read into memory.  This is not necessarily the length of each item
+src/requests/models.py:921:        returned as decoding can take place.
+src/requests/models.py:923:        chunk_size must be of type int or None. A value of None will
+src/requests/models.py:924:        function differently depending on the value of `stream`.
+src/requests/models.py:925:        stream=True will read data as it arrives in whatever size the
+src/requests/models.py:926:        chunks are received. If stream=False, data is returned as
+src/requests/models.py:927:        a single chunk.
+src/requests/models.py:929:        If decode_unicode is True, content will be decoded using encoding
+src/requests/models.py:930:        information from the response. If no encoding information is available,
+src/requests/models.py:931:        bytes will be returned. This can be bypassed by manually setting
+src/requests/models.py:932:        `encoding` on the response.
+src/requests/models.py:933:        """
+src/requests/models.py:935:        def generate() -> Generator[bytes, None, None]:
+src/requests/models.py:936:            # Special case for urllib3.
+src/requests/models.py:937:            if hasattr(self.raw, "stream"):
+src/requests/models.py:938:                try:
+src/requests/models.py:939:                    yield from self.raw.stream(chunk_size, decode_content=True)
+src/requests/models.py:940:                except ProtocolError as e:
+src/requests/models.py:941:                    raise ChunkedEncodingError(e)
+src/requests/models.py:942:                except DecodeError as e:
+src/requests/models.py:943:                    raise ContentDecodingError(e)
+src/requests/models.py:944:                except ReadTimeoutError as e:
+src/requests/models.py:945:                    raise ConnectionError(e)
+src/requests/models.py:946:                except SSLError as e:
+src/requests/models.py:947:                    raise RequestsSSLError(e)
+src/requests/models.py:948:            else:
+src/requests/models.py:949:                # Standard file-like object.
+src/requests/models.py:950:                while True:
+src/requests/models.py:951:                    chunk = self.raw.read(chunk_size)
+src/requests/models.py:952:                    if not chunk:
+src/requests/models.py:953:                        break
+src/requests/models.py:954:                    yield chunk
+src/requests/models.py:956:            self._content_consumed = True
+src/requests/models.py:958:        if self._content_consumed and isinstance(self._content, bool):
+src/requests/models.py:959:            raise StreamConsumedError()
+src/requests/models.py:960:        elif chunk_size is not None and not isinstance(
+src/requests/models.py:961:            chunk_size, int
+src/requests/models.py:962:        ):  # runtime guard for untyped callers
+src/requests/models.py:963:            raise TypeError(
+src/requests/models.py:964:                f"chunk_size must be an int, it is instead a {type(chunk_size)}."
+src/requests/models.py:965:            )
+src/requests/models.py:967:        if self._content_consumed:
+src/requests/models.py:968:            # simulate reading small chunks of the content
+src/requests/models.py:969:            content = cast(bytes, self._content)
+src/requests/models.py:970:            chunks = iter_slices(content, chunk_size)
+src/requests/models.py:971:        else:
+src/requests/models.py:972:            chunks = generate()
+src/requests/models.py:974:        if decode_unicode:
+src/requests/models.py:975:            chunks = stream_decode_response_unicode(chunks, self)
+src/requests/models.py:977:        return chunks
+src/requests/models.py:979:    @overload
+src/requests/models.py:980:    def iter_lines(
+src/requests/models.py:981:        self,
+src/requests/models.py:982:        chunk_size: int = ITER_CHUNK_SIZE,
+src/requests/models.py:983:        decode_unicode: Literal[False] = False,
+src/requests/models.py:984:        delimiter: bytes | None = None,
+src/requests/models.py:985:    ) -> Iterator[bytes]: ...
+src/requests/models.py:986:    @overload
+src/requests/models.py:987:    def iter_lines(
+src/requests/models.py:988:        self,
+src/requests/models.py:989:        chunk_size: int = ITER_CHUNK_SIZE,
+src/requests/models.py:990:        *,
+src/requests/models.py:991:        decode_unicode: Literal[True],
+src/requests/models.py:992:        delimiter: str | bytes | None = None,
+src/requests/models.py:993:    ) -> Iterator[str | bytes]: ...
+src/requests/models.py:994:    def iter_lines(
+src/requests/models.py:995:        self,
+src/requests/models.py:996:        chunk_size: int = ITER_CHUNK_SIZE,
+src/requests/models.py:997:        decode_unicode: bool = False,
+src/requests/models.py:998:        delimiter: str | bytes | None = None,
+src/requests/models.py:999:    ) -> Iterator[str | bytes]:
+src/requests/models.py:1000:        """Iterates over the response data, one line at a time.  When
+src/requests/models.py:1001:        stream=True is set on the request, this avoids reading the
+src/requests/models.py:1002:        content at once into memory for large responses.
+src/requests/models.py:1004:        The decode_unicode param works the same as in `iter_content`, with the
+src/requests/models.py:1005:        same caveats.
+src/requests/models.py:1007:        .. note:: This method is not reentrant safe.
+src/requests/models.py:1008:        """
+src/requests/models.py:1010:        pending: str | bytes | None = None
+src/requests/models.py:1012:        for chunk in self.iter_content(
+src/requests/models.py:1013:            chunk_size=chunk_size, decode_unicode=decode_unicode
+src/requests/models.py:1014:        ):
+src/requests/models.py:1015:            if pending is not None:
+src/requests/models.py:1016:                # TODO: remove cast after iter_lines rewrite
+src/requests/models.py:1017:                chunk = cast("str | bytes", pending + chunk)
+src/requests/models.py:1019:            if delimiter:
+src/requests/models.py:1020:                lines = chunk.split(delimiter)  # type: ignore[arg-type]
+src/requests/models.py:1021:            else:
+src/requests/models.py:1022:                lines = chunk.splitlines()
+src/requests/models.py:1024:            if lines and lines[-1] and chunk and lines[-1][-1] == chunk[-1]:
+src/requests/models.py:1025:                pending = lines.pop()
+src/requests/models.py:1026:            else:
+src/requests/models.py:1027:                pending = None
+src/requests/models.py:1029:            yield from lines
+src/requests/models.py:1031:        if pending is not None:
+src/requests/models.py:1032:            yield pending
+src/requests/models.py:1034:    @property
+src/requests/models.py:1035:    def content(self) -> bytes:
+src/requests/models.py:1036:        """Content of the response, in bytes."""
+src/requests/models.py:1038:        if self._content is False:
+src/requests/models.py:1039:            # Read the contents.
+src/requests/models.py:1040:            if self._content_consumed:
+src/requests/models.py:1041:                raise RuntimeError("The content for this response was already consumed")
+src/requests/models.py:1043:            if self.status_code == 0 or self.raw is None:
+src/requests/models.py:1044:                self._content = None
+src/requests/models.py:1045:            else:
+src/requests/models.py:1046:                self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+src/requests/models.py:1048:        self._content_consumed = True
+src/requests/models.py:1049:        # don't need to release the connection; that's been handled by urllib3
+src/requests/models.py:1050:        # since we exhausted the data.
+src/requests/models.py:1051:        return self._content  # type: ignore[return-value]
+src/requests/models.py:1053:    @property
+src/requests/models.py:1054:    def text(self) -> str:
+src/requests/models.py:1055:        """Content of the response, in unicode.
+src/requests/models.py:1057:        If Response.encoding is None, encoding will be guessed using
+src/requests/models.py:1058:        ``charset_normalizer`` or ``chardet``.
+src/requests/models.py:1060:        The encoding of the response content is determined based solely on HTTP
+src/requests/models.py:1061:        headers, following RFC 2616 to the letter. If you can take advantage of
+src/requests/models.py:1062:        non-HTTP knowledge to make a better guess at the encoding, you should
+src/requests/models.py:1063:        set ``r.encoding`` appropriately before accessing this property.
+src/requests/models.py:1064:        """
+src/requests/models.py:1066:        # Try charset from content-type
+src/requests/models.py:1067:        content = None
+src/requests/models.py:1068:        encoding = self.encoding
+src/requests/models.py:1070:        if not self.content:
+src/requests/models.py:1071:            return ""
+src/requests/models.py:1073:        # Fallback to auto-detected encoding.
+src/requests/models.py:1074:        if self.encoding is None:
+src/requests/models.py:1075:            encoding = self.apparent_encoding
+src/requests/models.py:1077:        # Decode unicode from given encoding.
+src/requests/models.py:1078:        try:
+src/requests/models.py:1079:            content = str(self.content, encoding or "utf-8", errors="replace")
+src/requests/models.py:1080:        except (LookupError, TypeError):
+src/requests/models.py:1081:            # A LookupError is raised if the encoding was not found which could
+src/requests/models.py:1082:            # indicate a misspelling or similar mistake.
+src/requests/models.py:1083:            #
+src/requests/models.py:1084:            # A TypeError can be raised if encoding is None
+src/requests/models.py:1085:            #
+src/requests/models.py:1086:            # So we try blindly encoding.
+src/requests/models.py:1087:            content = str(self.content, errors="replace")
+src/requests/models.py:1089:        return content
+src/requests/models.py:1091:    def json(self, **kwargs: Any) -> Any:
+src/requests/models.py:1092:        r"""Decodes the JSON response body (if any) as a Python object.
+src/requests/models.py:1094:        This may return a dictionary, list, etc. depending on what is in the response.
+src/requests/models.py:1096:        :param \*\*kwargs: Optional arguments that ``json.loads`` takes.
+src/requests/models.py:1097:        :raises requests.exceptions.JSONDecodeError: If the response body does not
+src/requests/models.py:1098:            contain valid json.
+src/requests/models.py:1099:        """
+src/requests/models.py:1101:        if not self.encoding and self.content and len(self.content) > 3:
+src/requests/models.py:1102:            # No encoding set. JSON RFC 4627 section 3 states we should expect
+src/requests/models.py:1103:            # UTF-8, -16 or -32. Detect which one to use; If the detection or
+src/requests/models.py:1104:            # decoding fails, fall back to `self.text` (using charset_normalizer to make
+src/requests/models.py:1105:            # a best guess).
+src/requests/models.py:1106:            encoding = guess_json_utf(self.content)
+src/requests/models.py:1107:            if encoding is not None:
+src/requests/models.py:1108:                try:
+src/requests/models.py:1109:                    return complexjson.loads(self.content.decode(encoding), **kwargs)
+src/requests/models.py:1110:                except UnicodeDecodeError:
+src/requests/models.py:1111:                    # Wrong UTF codec detected; usually because it's not UTF-8
+src/requests/models.py:1112:                    # but some other 8-bit codec.  This is an RFC violation,
+src/requests/models.py:1113:                    # and the server didn't bother to tell us what codec *was*
+src/requests/models.py:1114:                    # used.
+src/requests/models.py:1115:                    pass
+src/requests/models.py:1116:                except JSONDecodeError as e:
+src/requests/models.py:1117:                    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+src/requests/models.py:1119:        try:
+src/requests/models.py:1120:            return complexjson.loads(self.text, **kwargs)
+src/requests/models.py:1121:        except JSONDecodeError as e:
+src/requests/models.py:1122:            # Catch JSON-related errors and raise as requests.JSONDecodeError
+src/requests/models.py:1123:            # This aliases json.JSONDecodeError and simplejson.JSONDecodeError
+src/requests/models.py:1124:            raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+src/requests/models.py:1126:    @property
+src/requests/models.py:1127:    def links(self) -> dict[str, dict[str, str]]:
+src/requests/models.py:1128:        """Returns the parsed header links of the response, if any."""
+src/requests/models.py:1130:        header = self.headers.get("link")
+src/requests/models.py:1132:        resolved_links: dict[str, dict[str, str]] = {}
+src/requests/models.py:1134:        if header:
+src/requests/models.py:1135:            links = parse_header_links(header)
+src/requests/models.py:1137:            for link in links:
+src/requests/models.py:1138:                key = link.get("rel") or link.get("url")
+src/requests/models.py:1139:                if key is not None:
+src/requests/models.py:1140:                    resolved_links[key] = link
+src/requests/models.py:1142:        return resolved_links
+src/requests/models.py:1144:    def raise_for_status(self) -> None:
+src/requests/models.py:1145:        """Raises :class:`HTTPError`, if one occurred."""
+src/requests/models.py:1147:        http_error_msg = ""
+src/requests/models.py:1148:        if isinstance(self.reason, bytes):
+src/requests/models.py:1149:            # We attempt to decode utf-8 first because some servers
+src/requests/models.py:1150:            # choose to localize their reason strings. If the string
+src/requests/models.py:1151:            # isn't utf-8, we fall back to iso-8859-1 for all other
+src/requests/models.py:1152:            # encodings. (See PR #3538)
+src/requests/models.py:1153:            try:
+src/requests/models.py:1154:                reason = self.reason.decode("utf-8")
+src/requests/models.py:1155:            except UnicodeDecodeError:
+src/requests/models.py:1156:                reason = self.reason.decode("iso-8859-1")
+src/requests/models.py:1157:        else:
+src/requests/models.py:1158:            reason = self.reason
+src/requests/models.py:1160:        if 400 <= self.status_code < 500:
+src/requests/models.py:1161:            http_error_msg = (
+src/requests/models.py:1162:                f"{self.status_code} Client Error: {reason} for url: {self.url}"
+src/requests/models.py:1163:            )
+src/requests/models.py:1165:        elif 500 <= self.status_code < 600:
+src/requests/models.py:1166:            http_error_msg = (
+src/requests/models.py:1167:                f"{self.status_code} Server Error: {reason} for url: {self.url}"
+src/requests/models.py:1168:            )
+src/requests/models.py:1170:        if http_error_msg:
+src/requests/models.py:1171:            raise HTTPError(http_error_msg, response=self)
+src/requests/models.py:1173:    def close(self) -> None:
+src/requests/models.py:1174:        """Releases the connection back to the pool. Once this method has been
+src/requests/models.py:1175:        called the underlying ``raw`` object must not be accessed again.
+src/requests/models.py:1177:        *Note: Should not normally need to be called explicitly.*
+src/requests/models.py:1178:        """
+src/requests/models.py:1179:        if not self._content_consumed:
+src/requests/models.py:1180:            self.raw.close()
+src/requests/models.py:1182:        release_conn = getattr(self.raw, "release_conn", None)
+src/requests/models.py:1183:        if release_conn is not None:
+src/requests/models.py:1184:            release_conn()

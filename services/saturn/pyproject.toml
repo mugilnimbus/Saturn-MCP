@@ -1,0 +1,57 @@
+[project]
+name = "saturn"
+version = "0.1.0"
+description = "MCP server that keeps long tool output out of a coding agent's context."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.143.0",
+    "httpx>=0.28.1",
+    "langchain-core>=1.6.9",
+    "langchain-openai>=1.7.0",
+    "langgraph>=1.2.14",
+    "mcp>=2.3.0",
+    "pydantic-settings>=2.15.0",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/saturn"]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.10",
+]
+
+[project.scripts]
+saturn = "saturn.bootstrap.cli:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+norecursedirs = ["evals"]
+markers = ["live: needs the real local server (deselect with -m 'not live')"]
+
+[tool.ruff]
+line-length = 130
+extend-exclude = ["evals/fixtures"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "BLE"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["saturn", "bench"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+files = ["src"]

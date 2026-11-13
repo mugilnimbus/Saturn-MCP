@@ -1,0 +1,826 @@
+[
+  {
+    "id": "click-tests-pass",
+    "family": "click",
+    "asset": "captures/click/click-tests-pass.txt",
+    "format": "pytest",
+    "exit_code": 0,
+    "original_sha256": "8be4adf9ea755cbf8a3ccea3f896483a440cda08befafc368bda5e94938fd793",
+    "normalization": [
+      {
+        "kind": "path",
+        "original_scope": "local capture workspace",
+        "replacement": "<checkout>"
+      }
+    ],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{python}",
+      "-m",
+      "pytest",
+      "tests/test_types/test_IntRange.py",
+      "-v",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "var/bench/acquisition/click",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "click-tests-fail",
+    "family": "click",
+    "asset": "captures/click/click-tests-fail.txt",
+    "format": "pytest",
+    "exit_code": 1,
+    "original_sha256": "2f09fe9538c3a994c1d7db3487b3531967cc9f315f2d49785ea25ce35cb1f5c4",
+    "normalization": [
+      {
+        "kind": "path",
+        "original_scope": "local capture workspace",
+        "replacement": "<checkout>"
+      }
+    ],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{python}",
+      "-m",
+      "pytest",
+      "tests/test_types/test_IntRange.py",
+      "-v",
+      "-p",
+      "no:cacheprovider"
+    ],
+    "cwd": "var/bench/acquisition/click-controlled",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": {
+      "asset": "sources/click/controlled/types-open-bound.py",
+      "original_sha256": "30a39185da37bbd98ef47153f7bfd310b04eac44bd9b9b2fe15998406337757e",
+      "operation": "Reverse open-bound adjustment sign; retain upstream tests unchanged."
+    },
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "commander-build",
+    "family": "commander",
+    "asset": "captures/commander/commander-build.txt",
+    "format": "build",
+    "exit_code": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "node",
+      "--check",
+      "lib/option.js"
+    ],
+    "cwd": "var/bench/acquisition/commander",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "commander-diff",
+    "family": "commander",
+    "asset": "captures/commander/commander-diff.txt",
+    "format": "diff",
+    "exit_code": 1,
+    "original_sha256": "0dca88e62df5ae07e2e76a59ef5fc8bda05a84fcc23a78388c40065dd7492a35",
+    "normalization": [
+      {
+        "kind": "path",
+        "original_scope": "local capture workspace",
+        "replacement": "<checkout>"
+      }
+    ],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "git",
+      "diff",
+      "--no-index",
+      "--",
+      "{checkout}/bench/dataset/sources/commander/lib/option.js",
+      "{checkout}/var/bench/acquisition/commander-negation.js"
+    ],
+    "cwd": ".",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": {
+      "asset": "sources/commander/controlled/option-negation.js",
+      "original_sha256": "29fc1d0311f16f33fd0df2d8589c93b0a7e37fb89afd852672ba3b7083fa1515",
+      "operation": "Change the explicit negation prefix once."
+    },
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "requests-lint",
+    "family": "requests",
+    "asset": "captures/requests/requests-lint.txt",
+    "format": "diagnostics",
+    "exit_code": 1,
+    "original_sha256": "ae8cd913af772add7b5b0e89907ffc5ce8ac2010361106b50043452882cb8160",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{checkout}/services/saturn/.venv/bin/ruff",
+      "check",
+      "--isolated",
+      "--select",
+      "E,F",
+      "--no-cache",
+      "src/requests/models.py",
+      "src/requests/sessions.py"
+    ],
+    "cwd": "var/bench/acquisition/requests",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "requests-build",
+    "family": "requests",
+    "asset": "captures/requests/requests-build.txt",
+    "format": "build",
+    "exit_code": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{python}",
+      "-m",
+      "compileall",
+      "-q",
+      "src/requests"
+    ],
+    "cwd": "var/bench/acquisition/requests",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "ripgrep-json",
+    "family": "ripgrep",
+    "asset": "captures/ripgrep/ripgrep-json.txt",
+    "format": "jsonl",
+    "exit_code": 0,
+    "original_sha256": "7858ae9e6b4f3ba47ebe41e8f106241706228729b67695dc9bb03947f522d2dc",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--json",
+      "--stats",
+      "-e",
+      "pub |impl |fn ",
+      "crates/core/flags/hiargs.rs"
+    ],
+    "cwd": "var/bench/acquisition/ripgrep",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "ripgrep-help",
+    "family": "ripgrep",
+    "asset": "captures/ripgrep/ripgrep-help.txt",
+    "format": "help",
+    "exit_code": 0,
+    "original_sha256": "537946d556964600879c6290f6d9efa4010e11872d6185f5ebf039f0cfc4e92b",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--help"
+    ],
+    "cwd": "var/bench/acquisition/ripgrep",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "chi-context",
+    "family": "chi",
+    "asset": "captures/chi/chi-context.txt",
+    "format": "plain-matches",
+    "exit_code": 0,
+    "original_sha256": "2fbb44966a3a77e719510303bba534477d226b280a75905488a54552a06449d7",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--no-heading",
+      "context|Timeout",
+      "middleware/timeout.go"
+    ],
+    "cwd": "var/bench/acquisition/chi",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "chi-source",
+    "family": "chi",
+    "asset": "captures/chi/chi-source.txt",
+    "format": "plain-matches",
+    "exit_code": 0,
+    "original_sha256": "c54aa1185c19b4cb51a72885cf3531f91a10bb9489a8ad16a41ab1af05173182",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--no-heading",
+      "func |panic|Status",
+      "middleware/recoverer.go"
+    ],
+    "cwd": "var/bench/acquisition/chi",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "p-limit-package",
+    "family": "p-limit",
+    "asset": "captures/p-limit/p-limit-package.txt",
+    "format": "package-log",
+    "exit_code": 0,
+    "original_sha256": "2463176f3c1fdc366682dc4b43c94282cc2a177607249425e3a2e2b6b007f08e",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "npm",
+      "pack",
+      "--dry-run",
+      "--ignore-scripts"
+    ],
+    "cwd": "var/bench/acquisition/p-limit",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "p-limit-build",
+    "family": "p-limit",
+    "asset": "captures/p-limit/p-limit-build.txt",
+    "format": "build",
+    "exit_code": 0,
+    "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "node",
+      "--check",
+      "index.js"
+    ],
+    "cwd": "var/bench/acquisition/p-limit",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "click-inventory",
+    "family": "click",
+    "asset": "captures/click/click-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "5f4228748302b043b7c990f201475b5982701ae12c7737365224e8a1e5df69b7",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "src/click/types.py",
+      "src/click/exceptions.py",
+      "docs/parameter-types.md"
+    ],
+    "cwd": "var/bench/acquisition/click",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "commander-inventory",
+    "family": "commander",
+    "asset": "captures/commander/commander-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "f66f5784847d8cda7aca17f7a03ed363cf46b99f6f3bd3e02a8e2ce69a8b6d49",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "lib/option.js",
+      "lib/error.js",
+      "Readme.md"
+    ],
+    "cwd": "var/bench/acquisition/commander",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "requests-inventory",
+    "family": "requests",
+    "asset": "captures/requests/requests-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "139d49b2fabd686c2f3ddd8ef53de2f4d8a58f31faac2aea46cc15e3c5cb313d",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "src/requests/models.py",
+      "src/requests/sessions.py",
+      "src/requests/adapters.py",
+      "README.md"
+    ],
+    "cwd": "var/bench/acquisition/requests",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "ripgrep-inventory",
+    "family": "ripgrep",
+    "asset": "captures/ripgrep/ripgrep-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "6ea19f87162c6725525b73ef5f155757b345a21dba9e47431a2684cbd26a1317",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "crates/core/flags/defs.rs",
+      "crates/core/flags/hiargs.rs",
+      "GUIDE.md",
+      "README.md"
+    ],
+    "cwd": "var/bench/acquisition/ripgrep",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "chi-inventory",
+    "family": "chi",
+    "asset": "captures/chi/chi-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "8b2a40a9f044fb9811ece5b21b9f052489c1a68cfd7742ceb85a3c427f43c8d0",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "middleware/timeout.go",
+      "middleware/recoverer.go",
+      "README.md"
+    ],
+    "cwd": "var/bench/acquisition/chi",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "p-limit-inventory",
+    "family": "p-limit",
+    "asset": "captures/p-limit/p-limit-inventory.txt",
+    "format": "numbered-source",
+    "exit_code": 0,
+    "original_sha256": "2d19120c16a13f296f9ccd88416caa7460d31eee9a7d42e02d261377c80b508c",
+    "normalization": [],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{rg}",
+      "--line-number",
+      "--with-filename",
+      "--no-heading",
+      "--color",
+      "never",
+      ".",
+      "index.js",
+      "readme.md"
+    ],
+    "cwd": "var/bench/acquisition/p-limit",
+    "versions": {
+      "python": "3.12.15",
+      "node": "v24.22.0",
+      "rg": "ripgrep 15.2.0 (rev e89fff89ac)",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "requests-tests-pass",
+    "family": "requests",
+    "asset": "captures/requests/requests-tests-pass.txt",
+    "format": "pytest",
+    "exit_code": 0,
+    "original_sha256": "5e5101ac17c20891d8b13477d18f6dfe07d55b9a68f9f68445cd1bcd6a55893b",
+    "normalization": [
+      {
+        "kind": "path",
+        "original_scope": "local capture workspace",
+        "replacement": "<checkout>"
+      }
+    ],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{python}",
+      "-m",
+      "pytest",
+      "tests/test_utils.py::TestSuperLen",
+      "-k",
+      "test_string or test_io_streams or test_super_len_with_tell",
+      "-v",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "addopts="
+    ],
+    "cwd": "var/bench/acquisition/requests",
+    "versions": {
+      "python": "Python 3.12.15",
+      "pytest": "pytest 9.1.1",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": null,
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  },
+  {
+    "id": "requests-tests-fail",
+    "family": "requests",
+    "asset": "captures/requests/requests-tests-fail.txt",
+    "format": "pytest",
+    "exit_code": 1,
+    "original_sha256": "50e54ce6165db9315f0f2f5c978c55f87e6b466d434639ce80ad884467ad998e",
+    "normalization": [
+      {
+        "kind": "path",
+        "original_scope": "local capture workspace",
+        "replacement": "<checkout>"
+      }
+    ],
+    "stream": "stdout and stderr merged in capture order",
+    "argv": [
+      "{python}",
+      "-m",
+      "pytest",
+      "tests/test_utils.py::TestSuperLen",
+      "-k",
+      "test_string or test_io_streams or test_super_len_with_tell",
+      "-v",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "addopts="
+    ],
+    "cwd": "var/bench/acquisition/requests-controlled",
+    "versions": {
+      "python": "Python 3.12.15",
+      "pytest": "pytest 9.1.1",
+      "capture_controller_python": "3.14.4"
+    },
+    "controlled_change": {
+      "asset": "sources/requests/controlled/utils-zero-length.py",
+      "original_sha256": "b879cb3f671cf1c28e8ff9b2b02151bcdb8974b4820a514cfdd1f5a038443cd2",
+      "operation": "Return zero for every body length; retain upstream expected lengths."
+    },
+    "environment": {
+      "os": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+      "controlled_variables": {
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
+        "NO_COLOR": "1",
+        "TERM": "dumb",
+        "COLUMNS": "100",
+        "PYTHONHASHSEED": "0"
+      },
+      "source_import": "Pinned source src directory through PYTHONPATH for pytest captures; no source import for other captures.",
+      "date": "2026-10-29"
+    }
+  }
+]

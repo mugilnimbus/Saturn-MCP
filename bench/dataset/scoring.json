@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "exact-evidence-v1": {
+    "facts": "Match declared facts and source excerpts; check exit status separately from MCP tool error.",
+    "evidence": "Reference must resolve to the correct lines and substantiate the fact.",
+    "empty": "Recall is zero when required facts are missing; precision without asserted facts is undefined.",
+    "aggregate": "Macro-average by primary tool; show source-family results and denominators."
+  },
+  "semantic-rubric-v1": {
+    "required_fact_recall": "supported required facts returned / required facts",
+    "factual_precision": "supported assertions / all checkable assertions; report undefined when none",
+    "evidence_support": "supported cited assertions / cited assertions",
+    "completeness": "Whether the fixed initial-plus-follow-up workflow answers every required part",
+    "abstention": "Correctly refuses to invent an answer when evidence is insufficient",
+    "review": "Blinded human scoring; a model judge is supplementary only."
+  }
+}

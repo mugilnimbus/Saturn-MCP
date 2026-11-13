@@ -1,0 +1,88 @@
+======================================= test session starts ========================================
+platform linux -- Python 3.12.15, pytest-9.1.1, pluggy-1.6.0 -- <checkout>/services/saturn/.venv/bin/python
+rootdir: <checkout>/var/bench/acquisition/requests-controlled
+configfile: pyproject.toml
+collecting ... collected 17 items / 12 deselected / 5 selected
+
+tests/test_utils.py::TestSuperLen::test_io_streams[StringIO-Test] FAILED                     [ 20%]
+tests/test_utils.py::TestSuperLen::test_io_streams[BytesIO-Test] FAILED                      [ 40%]
+tests/test_utils.py::TestSuperLen::test_io_streams[None-Test] SKIPPED (condition: cStrin...) [ 60%]
+tests/test_utils.py::TestSuperLen::test_string FAILED                                        [ 80%]
+tests/test_utils.py::TestSuperLen::test_super_len_with_tell FAILED                           [100%]
+
+============================================= FAILURES =============================================
+___________________________ TestSuperLen.test_io_streams[StringIO-Test] ____________________________
+
+self = <tests.test_utils.TestSuperLen object at 0x739a9c98f530>, stream = <class '_io.StringIO'>
+value = 'Test'
+
+    @pytest.mark.parametrize(
+        "stream, value",
+        (
+            (StringIO.StringIO, "Test"),
+            (BytesIO, b"Test"),
+            pytest.param(
+                cStringIO, "Test", marks=pytest.mark.skipif("cStringIO is None")
+            ),
+        ),
+    )
+    def test_io_streams(self, stream, value):
+        """Ensures that we properly deal with different kinds of IO streams."""
+        assert super_len(stream()) == 0
+>       assert super_len(stream(value)) == 4
+E       AssertionError: assert 0 == 4
+E        +  where 0 = super_len(<_io.StringIO object at 0x739a9caddcc0>)
+E        +    where <_io.StringIO object at 0x739a9caddcc0> = <class '_io.StringIO'>('Test')
+
+../requests/tests/test_utils.py:64: AssertionError
+____________________________ TestSuperLen.test_io_streams[BytesIO-Test] ____________________________
+
+self = <tests.test_utils.TestSuperLen object at 0x739a9c98f6e0>, stream = <class '_io.BytesIO'>
+value = b'Test'
+
+    @pytest.mark.parametrize(
+        "stream, value",
+        (
+            (StringIO.StringIO, "Test"),
+            (BytesIO, b"Test"),
+            pytest.param(
+                cStringIO, "Test", marks=pytest.mark.skipif("cStringIO is None")
+            ),
+        ),
+    )
+    def test_io_streams(self, stream, value):
+        """Ensures that we properly deal with different kinds of IO streams."""
+        assert super_len(stream()) == 0
+>       assert super_len(stream(value)) == 4
+E       AssertionError: assert 0 == 4
+E        +  where 0 = super_len(<_io.BytesIO object at 0x739a9c9d7740>)
+E        +    where <_io.BytesIO object at 0x739a9c9d7740> = <class '_io.BytesIO'>(b'Test')
+
+../requests/tests/test_utils.py:64: AssertionError
+_____________________________________ TestSuperLen.test_string _____________________________________
+
+self = <tests.test_utils.TestSuperLen object at 0x739a9c9b4830>
+
+    def test_string(self):
+>       assert super_len("Test") == 4
+E       AssertionError: assert 0 == 4
+E        +  where 0 = super_len('Test')
+
+../requests/tests/test_utils.py:99: AssertionError
+______________________________ TestSuperLen.test_super_len_with_tell _______________________________
+
+self = <tests.test_utils.TestSuperLen object at 0x739a9c98e120>
+
+    def test_super_len_with_tell(self):
+        foo = StringIO.StringIO("12345")
+>       assert super_len(foo) == 5
+E       assert 0 == 5
+E        +  where 0 = super_len(<_io.StringIO object at 0x739a9cadef80>)
+
+../requests/tests/test_utils.py:141: AssertionError
+===================================== short test summary info ======================================
+FAILED tests/test_utils.py::TestSuperLen::test_io_streams[StringIO-Test] - AssertionError: assert...
+FAILED tests/test_utils.py::TestSuperLen::test_io_streams[BytesIO-Test] - AssertionError: assert ...
+FAILED tests/test_utils.py::TestSuperLen::test_string - AssertionError: assert 0 == 4
+FAILED tests/test_utils.py::TestSuperLen::test_super_len_with_tell - assert 0 == 5
+=========================== 4 failed, 1 skipped, 12 deselected in 0.05s ============================

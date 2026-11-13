@@ -1,0 +1,6 @@
+Saturn MCP
+
+Licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+The benchmark corpus in bench/dataset contains files from other projects.
+Each keeps its own licence and attribution files. See the table in bench/README.md.
