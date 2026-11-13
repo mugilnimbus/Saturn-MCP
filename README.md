@@ -113,10 +113,26 @@ The [benchmark procedure and full results](bench/README.md) show how to reproduc
    ```bash
    uv run --project services/saturn --no-sync saturn serve
    ```
-6. Open `http://127.0.0.1:9000/`.
-7. In **Settings**, choose an optional worker model.
-8. In **Connections**, preview and install the client configuration.
+6. In a second terminal, connect your client. See [Connect Claude Code and Codex](#connect-claude-code-and-codex) for each option:
+   ```bash
+   uv run --project services/saturn --no-sync saturn connect claude --preset standard
+   uv run --project services/saturn --no-sync saturn connect codex --preset standard
+   ```
+7. Optional: choose a worker model from the terminal. Use the id your model server lists:
+   ```bash
+   uv run --project services/saturn --no-sync saturn settings set model <model-id>
+   ```
+8. Check everything:
+   ```bash
+   uv run --project services/saturn --no-sync saturn doctor
+   ```
 9. Start a new Claude Code session, or restart Codex.
+
+| Prefer the browser? | Where |
+|---|---|
+| Dashboard | `http://127.0.0.1:9000/` |
+| Choose a worker model | **Settings** |
+| Connect a client | **Connections** |
 
 | About setup | Detail |
 |---|---|
@@ -154,7 +170,7 @@ The [benchmark procedure and full results](bench/README.md) show how to reproduc
 |---|---|
 | Dashboard | **Connections** previews and installs the same changes with a click |
 | `--preset` | `standard`: read tools run without asking, and the client asks before Saturn runs a command. `read-only`: no command running. `hands-off`: nothing asks |
-| `--no-hooks` | Leaves out the shell hooks |
+| `--hooks`, `--no-hooks` | Add the shell hooks, or leave them out. See [Optional: shell hooks](#optional-shell-hooks) |
 | `--print` | Shows the entries without writing them |
 | Connected already | Run `saturn disconnect claude` or `saturn disconnect codex` first, or Saturn adds a second harness such as `claude-code-2` |
 | Undo | `saturn disconnect <client>`, or `saturn uninstall` for every client |
@@ -328,6 +344,17 @@ All three work from any folder and accept `--port`, `--timeout`, and `--json`. T
 | After a successful command with long output | Claude Code shows Saturn's digest instead. Codex cannot replace output, so it gets the first hook only |
 | Scope | Only for a harness that has reached Saturn's tools |
 | When Saturn is down | Hooks never block: the command runs as usual |
+
+| Hook task | Command |
+|---|---|
+| Add hooks when you connect Claude Code | `saturn connect claude --hooks` |
+| Add hooks when you connect Codex | `saturn connect codex --hooks` |
+| Add hooks to a client that is already connected | `saturn connect claude --harness claude-code --hooks`, or `saturn connect codex --harness codex --hooks` |
+| Preview the hook entries without writing | Add `--print` (or `--diff` for the changed lines) |
+| Choose which commands hooks catch | `saturn policy hooks noisy` (test, build, lint), `saturn policy hooks all`, or `saturn policy hooks off` |
+| Turn hooks off without changing the client | `saturn policy hooks off` |
+| Trust the Codex hook | Run `/hooks` inside Codex |
+| Check the result | `saturn doctor` |
 
 ## How it works
 
